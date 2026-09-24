@@ -36,9 +36,15 @@ MetaTrader5 Python package communicates with a GUI-dependent terminal. Pipeline
 #39 verified local-principal matching and `WTSQueryUserToken` for the active
 Session 1 principal, but `CreateProcessAsUser` returned `ERROR_ACCESS_DENIED`.
 Pipeline #40 explicitly targeted `winsta0\\default` and returned the same error.
-No Window Station/Desktop DACL was changed: Microsoft documents that the selected
-user or logon session must have access to both objects. This remains a blocked
-Windows-security prerequisite, not evidence of a working unattended launcher.
+Pipeline #43 / Job #382 repeated that result on `WINDOW10-TEST` under the
+LocalSystem Session 0 Runner after rediscovering the policy-bound active
+session. The next gate is a dedicated transaction harness: an allowlisted,
+selected-session helper snapshots both DACL descriptors, grants one temporary
+ACE to the token's exact logon SID, signals the Session 0 launcher gate, and
+restores and verifies both original descriptors even on timeout or exception.
+It is hard-gated to `WINDOW10-TEST` and LocalSystem, is never run by ordinary
+tests, and records hashes without tokens or credentials. Microsoft documents
+that the selected user or logon session must have access to both objects.
 
 ## Decision
 
