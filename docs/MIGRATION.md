@@ -1,4 +1,4 @@
-# Stage 1: canonical repository layout
+# Stage 1: canonical repository layout (historical record)
 
 Baseline: `1a133e6c6ea1b02a039f45610182037d347390ba` on `develop`.
 Active source: `Version 0_0_9`. No source, dependencies, tests, configuration,
@@ -56,9 +56,15 @@ Commits and tags are not rewritten. The migration does not promote develop to
 staging/main or create a release. Known behavioral, versioning, and historical
 record discrepancies are listed individually in [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
 
-## Future work
+## Status after the migration
 
-Register and validate GitLab runners and the isolated smoke VM before retiring
-the legacy workflow. Review older regression coverage separately. Any future
-Kafka/Worker/Service integration requires a separate compatibility design;
-copying historical files over the active package is not part of stage 1.
+This page records the original Stage 1 source-layout migration. Subsequent
+phases have added the Runtime Worker, authenticated pipe, dedicated-user
+provisioning, and three-Runner CI design in the canonical `agent/` tree. The
+historical statement that those components were not activated applied to the
+Stage 1 baseline only. Current implementation and acceptance status are in
+[Architecture](ARCHITECTURE.md), [CI](CI.md), and [Action Plan](ACTION_PLAN.md).
+
+Historical version directories remain historical recovery sources; do not
+copy their files over the active package without a separate compatibility
+review.

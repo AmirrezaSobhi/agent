@@ -1,4 +1,4 @@
-# Error Model — v0.0.8
+# Error Model — v0.1.3 development
 
 The request-time error model remains unchanged: Transport, Validation, Authentication, Authorization, Application, and Infrastructure failures remain distinct and sanitized at their established boundaries.
 
@@ -12,4 +12,34 @@ v0.0.8 adds process-lifecycle outcomes outside the client request model:
 
 Raw hosting exceptions are logged internally and are not converted into HTTP client responses.
 
+## Runtime Worker errors
+
+On the Windows production path, IPC, authentication, protocol, timeout, Worker,
+and MT5 errors are translated at the adapter boundary into bounded
+`MT5ReadError`/health codes. The Agent remains alive in degraded mode when the
+Worker is temporarily unavailable. Malformed or mismatched protocol responses
+fail closed. Raw account-information values and credentials are not copied into
+error details. A failed read does not authorize a retry of any trading action;
+the current Worker command allowlist contains no trading operation.
+
 Failure precedence is deterministic: when hosting fails and Agent cleanup also fails, the hosting failure remains primary and cleanup failure is logged. Cleanup is attempted whenever Agent startup succeeded.
+
+## Target error model — planned
+
+The future server protocol will retain distinct, versioned categories for
+protocol, validation, authentication, authorization, unsupported capability,
+busy/degraded, MT5 unavailable/initialization, broker or execution rejection,
+timeout, transport, persistence, partial transfer, cancellation and internal
+errors. Where safe, MT5 `last_error`/trade retcode data will be preserved as
+bounded provider metadata, not collapsed into a boolean. This is a design
+requirement, not current runtime behavior; see [TARGET_ARCHITECTURE.md](TARGET_ARCHITECTURE.md).
+
+## Lifecycle error foundation (implemented in v0.1.3)
+
+`StructuredError` provides an immutable, serializable safe error contract with a
+stable code, domain, UTC timestamp, retryability and ambiguity as separate flags,
+optional command/execution IDs and bounded safe details. `CommandLifecycle`
+models received, validated, queued, running, terminal and ambiguous states;
+expiry prevents a queued command from entering running, and cancellation never
+undoes work beyond its point of no return. No scheduler, durable storage or trade
+execution is introduced by these contracts.

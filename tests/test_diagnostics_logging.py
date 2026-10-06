@@ -3,7 +3,6 @@ import json
 import logging
 import subprocess
 import sys
-from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -11,7 +10,6 @@ import pytest
 
 from agent import __version__
 from agent.main import run
-from agent.application.diagnostics import diagnose
 from agent.contracts.configuration import AgentConfig, ConfigurationError, LoggingConfig
 from agent.contracts.models import AgentIdentity
 from agent.contracts.operational_observability import OperationalEvent, OperationalEventType
@@ -58,11 +56,17 @@ def test_version_module_entry_point():
 
 
 @pytest.mark.parametrize('json_mode', [True, False])
-def test_diagnose_success_no_host_or_file(capsys, monkeypatch, tmp_path, json_mode):
+def test_diagnose_queries_worker_without_initializing_mt5_or_hosting(capsys, monkeypatch, tmp_path, json_mode):
     log_path = tmp_path / 'must-not-exist.log'
     monkeypatch.setenv('MT5_AGENT_LOG_FILE', str(log_path))
-    monkeypatch.setattr('agent.infrastructure.terminal_inspection.inspect_terminal', lambda: READY)
-    monkeypatch.setattr('agent.composition.compose_agent', lambda *a: pytest.fail('host created'))
+    calls = []
+    adapter = SimpleNamespace(inspect_runtime=lambda: calls.append('health') or {
+        'worker_available': True, 'runtime_state': 'MT5_CONNECTED',
+        'mt5_initialized': True, 'mt5_connected': True, 'protocol_version': '1',
+        'worker_identity': {'account': 'HOST\\MT5RuntimeUser', 'session_id': 1},
+    })
+    monkeypatch.setattr('agent.composition.compose_agent',
+                        lambda config: SimpleNamespace(agent=SimpleNamespace(mt5=adapter)))
     assert run(['--diagnose'] + (['--json'] if json_mode else [])) == 0
     output = capsys.readouterr()
     if json_mode:
@@ -70,19 +74,27 @@ def test_diagnose_success_no_host_or_file(capsys, monkeypatch, tmp_path, json_mo
         assert result['ready'] is True
         assert result['agent_version'] == __version__
         assert result['configuration']['http_port'] == 8080
+        assert result['runtime']['runtime_state'] == 'MT5_CONNECTED'
     else:
         assert 'Ready: True' in output.out
+        assert 'Runtime state: MT5_CONNECTED' in output.out
+    assert calls == ['health']
     assert not log_path.exists()
     assert not output.err
 
 
-@pytest.mark.parametrize('inspection', [
-    replace(READY, paths=()), replace(READY, dependency_available=False),
-    replace(READY, process_running=None), replace(READY, errors=('probe_failed',)),
-    replace(READY, supported=False),
+@pytest.mark.parametrize('runtime', [
+    {'worker_available': False, 'runtime_state': 'RUNTIME_UNAVAILABLE'},
+    {'worker_available': True, 'runtime_state': 'WORKER_READY'},
+    {'worker_available': True, 'runtime_state': 'MT5_NOT_INITIALIZED'},
+    {'worker_available': True, 'runtime_state': 'MT5_DISCONNECTED', 'mt5_connected': False},
+    {'worker_available': True, 'runtime_state': 'MT5_CONNECTED', 'mt5_initialized': True,
+     'mt5_connected': False},
 ])
-def test_diagnostic_failed_required_checks(inspection, monkeypatch, capsys):
-    monkeypatch.setattr('agent.infrastructure.terminal_inspection.inspect_terminal', lambda: inspection)
+def test_diagnostic_requires_connected_runtime(runtime, monkeypatch, capsys):
+    adapter = SimpleNamespace(inspect_runtime=lambda: runtime)
+    monkeypatch.setattr('agent.composition.compose_agent',
+                        lambda config: SimpleNamespace(agent=SimpleNamespace(mt5=adapter)))
     assert run(['--diagnose', '--json']) == 1
     assert json.loads(capsys.readouterr().out)['ready'] is False
 
@@ -90,7 +102,7 @@ def test_diagnostic_failed_required_checks(inspection, monkeypatch, capsys):
 def test_diagnostic_bad_configuration_no_secret_leak(monkeypatch, capsys):
     monkeypatch.setenv('MT5_AGENT_HTTP_PORT', 'password=private-token')
     monkeypatch.setenv('MT5_PASSWORD', 'private-token')
-    monkeypatch.setattr('agent.infrastructure.terminal_inspection.inspect_terminal', lambda: READY)
+    monkeypatch.setattr('agent.composition.compose_agent', lambda config: pytest.fail('invalid config must not probe'))
     assert run(['--diagnose', '--json']) == 1
     output = capsys.readouterr().out
     assert not json.loads(output)['configuration']['valid']
@@ -257,10 +269,11 @@ def test_invalid_logging_config_preserves_exit_two(monkeypatch, capsys):
 def test_unexpected_inspection_failure_is_json_not_traceback(monkeypatch, capsys):
     def fail():
         raise RuntimeError('token=secret')
-    monkeypatch.setattr('agent.infrastructure.terminal_inspection.inspect_terminal', fail)
+    monkeypatch.setattr('agent.composition.compose_agent',
+                        lambda config: SimpleNamespace(agent=SimpleNamespace(mt5=SimpleNamespace(inspect_runtime=fail))))
     assert run(['--diagnose', '--json']) == 1
     output = capsys.readouterr()
-    assert json.loads(output.out)['terminal']['errors'] == ['inspection_failed']
+    assert json.loads(output.out)['runtime']['last_error_code'] == 'RUNTIME_INSPECTION_FAILED'
     assert 'secret' not in output.out and not output.err
 
 @pytest.mark.parametrize('output,expected', [

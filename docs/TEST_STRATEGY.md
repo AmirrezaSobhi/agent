@@ -1,4 +1,25 @@
-# Test Strategy — v0.1.2 development
+# Test Strategy — v0.1.3 development
+
+## Current acceptance layers
+
+The current suite separates portable source behavior from Windows runtime
+acceptance:
+
+- Linux: contracts, application logic, Worker protocol/adapter test doubles,
+  dependency isolation, and portable unit tests. The Windows launcher module
+  is excluded during collection because it imports Windows-only modules.
+- Windows no-MT5: Windows-compatible tests, clean Agent build, archive
+  inspection, invalid-configuration smoke, and degraded control-plane smoke.
+- Windows MT5: production Agent candidate through HTTP/application →
+  `MT5Port` → authenticated Worker IPC → interactive MT5 runtime; reads only.
+
+Phase 4D is **LIVE CI ACCEPTED / GO** in
+[Pipeline #11](evidence/v0.1.3/phase4d-live-ci-acceptance.md): Linux **209 passed,
+34 skipped** and Windows **248 passed, 2 skipped**. Windows skips are the
+non-mandatory dedicated ACL experiment; Linux skips cover native Windows and
+PowerShell gates, with the launcher module excluded at collection. Build,
+control/runtime smoke, and package artifacts independently matched SHA-256.
+Future candidates must retain their own evidence and pass all live gates.
 
 ## Contract tests
 
@@ -68,3 +89,21 @@ Git repositories and inert binary fixtures to test tag/commit validation,
 no-MT5 confirmation, and packaging rejection of missing or mismatched evidence.
 These fixture tests never launch MT5 and do not substitute for executable smoke
 validation. They require Git and PowerShell 7; otherwise pytest reports skips.
+
+## Future testing gates — planned
+
+Further product work adds schema/contract compatibility, durable persistence
+and crash recovery, idempotency, priority/fairness, transfer integrity and
+bounded-memory, remote transport, security/redaction, generalized
+Windows-hosting, failure injection, and release-acceptance layers. The current
+safe Real-MT5 read gate passed in Pipeline #11 through the production
+application path, including health before/after reads and persistent-runtime
+survival after candidate cleanup. No test may submit a financially consequential real
+trade without explicit authorization and a safe environment. The detailed
+status matrix is in [ROADMAP.md](ROADMAP.md).
+
+Mandatory safety scenarios before any execution capability include duplicate
+delivery, identical command retry, expired trade, cancellation before/after the
+point of no return, lost response after submission, crash after submission,
+ambiguous restart and reconciliation disagreement. These tests use fakes or a
+controlled demo environment only; CI never performs a real-money trade.

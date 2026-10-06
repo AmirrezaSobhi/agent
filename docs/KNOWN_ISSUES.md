@@ -8,10 +8,34 @@
 - **KI-002:** `agent.__version__` is the authority for package metadata,
   default runtime identity and executable naming. CI rejects mismatching tags.
 
-## Remaining historical issues
+## Current status
+
+The previous Session 0 limitation has been resolved for the accepted split
+runtime architecture. Phase 3F cold-boot acceptance demonstrated automatic
+`MT5RuntimeUser` interactive logon without RDP/console interaction, automatic
+Worker task startup, authenticated Session 0 IPC, MT5 initialization,
+connected health, same-session terminal ownership, safe reads, and persistent
+runtime health. This is lab evidence, not a general installer/support
+acceptance.
+
+Phase 4D is **LIVE CI ACCEPTED / GO** in
+[Pipeline #11](evidence/v0.1.3/phase4d-live-ci-acceptance.md). The accepted
+candidate's live CI gates are complete. The repository still lacks generally
+productized Windows Service installation/recovery, signed installer/upgrades,
+and customer provisioning. See [Action Plan](ACTION_PLAN.md).
+
+## Historical maintenance issues
 
 Historical paths below refer to baseline
 `1a133e6c6ea1b02a039f45610182037d347390ba` and remain accessible with `git show`.
+
+## KI-008: Direct Session 0 MT5 is unsupported; split runtime is lab validated
+
+The original Session 0 concern remains valid for direct in-process MT5 access,
+which is not the production architecture. It is resolved by the interactive
+Worker boundary and was validated in the lab, including a cold boot without
+human login. Do not regress to direct Session 0 MT5. Broader customer deployment
+remains an open gate; Phase 4D live CI acceptance passed.
 
 ## KI-003: historical Worker is syntactically incomplete
 
@@ -52,3 +76,21 @@ The migration preserved six active test files; v0.1.1 adds targeted regressions.
 (latest at `Version 0_0_5/tests/`) remain recoverable from the baseline.
 Some import the old `contracts.models.AgentConfig`; they need API adaptation
 and coverage review in a separate task, not blind collection in this migration.
+
+## KI-009: MT5-host clock skew
+
+Acceptance observed approximately **10h30m** disagreement between MT5-host and
+Linux UTC. Do not use cross-host log timestamps alone to order events or infer
+freshness, deadlines, or replay safety. Commit/pipeline/hash and correlated
+identity evidence remain the acceptance anchors. Controlled staging can proceed
+with the risk recorded; final publication requires approved remediation and
+revalidation or explicit release-owner risk acceptance. See the
+[operations plan](OPERATIONS.md#clock-skew-and-audit-correlation).
+
+## KI-010: Candidate retention and ref provenance
+
+Job #85's package is scheduled to expire on **2026-11-05**. Preserve it and its
+redacted receipts through an approved retention/publication action before
+expiry. Another pipeline builds a separately provenanced candidate; it cannot
+recover or replace the accepted hash by rebuilding. See
+[Release Process](RELEASE_PROCESS.md#controlled-promotion-and-publication-plan).

@@ -6,7 +6,55 @@ verification statements below describe those records, not fresh validation of
 old binaries. Release assets and publication dates have not been independently
 revalidated here, so no publication dates are inferred from commit timestamps.
 
-## [Unreleased] — v0.1.2 development
+## [Unreleased] — v0.1.3 accepted release candidate
+
+### Changed
+
+- Production Windows composition now uses `RuntimeWorkerMT5Adapter` and
+  authenticated local named-pipe IPC; the interactive Worker owns the
+  persistent MetaTrader5 API runtime.
+- The Agent/control-plane dependency set excludes MetaTrader5 and NumPy; Worker
+  and explicit legacy MT5 development dependencies are separate.
+- CI is organized into Linux source/unit, Windows no-MT5 build/control-plane,
+  and Windows real-MT5 runtime roles. Phase 4D is **LIVE CI ACCEPTED / GO**:
+  Pipeline #11 passed all eight gates at commit
+  `c4b945122ad7e7174dbbb433cb91b42cb66f1c72`; see the
+  [versioned evidence](docs/evidence/v0.1.3/phase4d-live-ci-acceptance.md).
+- Live CI corrections cover Windows pipe test synchronization/SID comparison,
+  approved Linux/Windows dependency-mirror access, recursive archive exclusion,
+  candidate child cleanup, Scheduled Task SID/logon validation, and strict-mode
+  redacted account field counting.
+- Documentation now distinguishes implemented, lab-validated, CI-accepted,
+  production-ready, and planned work. No v0.1.3 release is claimed.
+
+### Added
+
+- Versioned local command registry, capability classes and deterministic capability
+  manifest with fail-closed command/version and enablement validation.
+- Pure command-lifecycle, TTL/UTC expiration, cancellation/point-of-no-return and
+  structured-error contracts; no execution or scheduler behavior is added.
+- SQLite durable-command-state foundation with schema versioning, WAL, unique
+  command identity and recovery queries; no outbox, cleanup or execution replay.
+- Durable idempotency/correlation/reconciliation foundation: one execution identity
+  per server command, explicit post-point-of-no-return ambiguity and no blind replay.
+- Durable outbox with send-attempt versus acknowledgement semantics and resync snapshots.
+- First pure-READ MT5 slice: terminal information, terminal version, and account
+  information through explicit, typed allowlisted adapter calls only.
+- Persistent interactive Runtime Worker with bounded, serialized read-only MT5
+  operations, health/reconnect lifecycle, authenticated local IPC, and explicit
+  separation from the Session 0 Agent.
+- Safe `symbols_total`, terminal-version, and account-information reads through
+  the production Agent/Worker boundary. No trading operation is added.
+- Dedicated standard-user provisioning scripts, protected Worker code/data
+  separation, interactive task registration, machine-local runtime policy, and
+  unattended cold-boot lab validation using automatic interactive logon.
+- Worker-aware diagnostics, Agent/Worker dependency isolation, and Phase 4D
+  candidate artifact/evidence checks.
+- [Draft v0.1.3 release notes](docs/releases/v0.1.3-release-notes.md) and a
+  versioned acceptance record. Publication remains pending; no release date is
+  inferred from acceptance or commit timestamps.
+
+## [0.1.2] — Diagnostics, lifecycle logging, and dual-runner CI foundation
 
 ### Added
 

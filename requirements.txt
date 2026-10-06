@@ -1,5 +1,2 @@
-MetaTrader5
-numpy==1.26.4
-Pillow
-pyinstaller
-pytest
+# The production Agent uses Python's standard library and ships with no
+# third-party runtime dependencies. See requirements-dev.txt and Worker files.
