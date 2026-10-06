@@ -1,5 +1,14 @@
 # قابلیت اطمینان و انتقال داده
 
+> وضعیت v0.1.3: **Phase 4D = LIVE CI ACCEPTED / GO**، Pipeline #11.
+> [شواهد پذیرش](../evidence/v0.1.3/phase4d-live-ci-acceptance.md) و
+> [آمادگی انتشار](../evidence/v0.1.3/release-readiness.md) مرجع نسخه‌دار هستند؛
+> انتشار Wiki، promotion و tag/release هنوز نیازمند مجوز جداگانه‌اند.
+
+مدل‌های durability، idempotency و transfer در این صفحه foundation/طرح هستند؛
+حضور آن‌ها در source به معنی اتصال به مسیر production HTTP نیست. پذیرش
+Pipeline #11 محدود به runtime read-only و artifact gates مستند است.
+
 ## Command lifecycle — پیاده‌سازی‌شده (پایهٔ پایدار)
 
 `received → validated → authorized → accepted → execution_started → mt5_result_obtained → response_persisted → response_transmitted → server_acknowledged`
@@ -22,7 +31,7 @@ MT5 data UTC است؛ bars با Max. bars in chart محدود می‌شوند و
 
 ## Priority / Kafka / Gateway — برنامه‌ریزی‌شده
 
-urgent execution، normal control/read و bulk history classهای جدا دارند. deadline، aging و fairness مانع starvation می‌شوند؛ bulk بین partitionها yield می‌دهد. تا اثبات ایمنی concurrency، فراخوانی MT5 سریال است. Kafka transport اصلی high-throughput با durable inbound handling است؛ HTTPS/mTLS برای bootstrap/recovery است. هیچ‌کدام در v0.1.3 پیاده‌سازی نشده‌اند.
+urgent execution، normal control/read و bulk history classهای جدا دارند. deadline، aging و fairness مانع starvation می‌شوند؛ bulk بین partitionها yield می‌دهد. تا اثبات ایمنی concurrency، فراخوانی MT5 سریال است. Kafka transport اصلی high-throughput با durable inbound handling است؛ HTTPS/mTLS برای bootstrap/recovery است. هیچ‌کدام به‌عنوان مسیر production فعال پذیرفته نشده‌اند.
 ## ابهام و تأييد دریافت — پیاده‌سازی‌شده
 
 شناسه يکتاي فرمان سرور و شناسه اجرای عامل به‌صورت پايدار

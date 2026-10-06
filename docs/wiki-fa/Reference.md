@@ -1,5 +1,10 @@
 # واژه‌نامه، پیکربندی و پشتیبانی
 
+> وضعیت v0.1.3: **Phase 4D = LIVE CI ACCEPTED / GO**، Pipeline #11.
+> [شواهد پذیرش](../evidence/v0.1.3/phase4d-live-ci-acceptance.md) و
+> [آمادگی انتشار](../evidence/v0.1.3/release-readiness.md) مرجع نسخه‌دار هستند؛
+> انتشار Wiki، promotion و tag/release هنوز نیازمند مجوز جداگانه‌اند.
+
 | اصطلاح | معنی |
 | --- | --- |
 | Control Plane | Server که تصمیم و سیاست را دارد. |
@@ -15,7 +20,7 @@
 
 ## Configuration فعلی
 
-تنها environment settings مستند‌شده عبارت‌اند از HTTP host/port/max bytes و log level/file؛ [CONFIGURATION](../CONFIGURATION.md) مرجع است. JSONC، Kafka و credential production configuration فعال نیست.
+environment settings شامل HTTP host/port/max bytes و log level/file است؛ سیاست محلی Worker نیز در registry ویندوز نگهداری می‌شود؛ [CONFIGURATION](../CONFIGURATION.md) مرجع است. JSONC، Kafka و credential production configuration فعال نیست.
 
 ## Error handling و support
 

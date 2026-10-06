@@ -1,5 +1,10 @@
 # امنیت و عملیات
 
+> وضعیت v0.1.3: **Phase 4D = LIVE CI ACCEPTED / GO**، Pipeline #11.
+> [شواهد پذیرش](../evidence/v0.1.3/phase4d-live-ci-acceptance.md) و
+> [آمادگی انتشار](../evidence/v0.1.3/release-readiness.md) مرجع نسخه‌دار هستند؛
+> انتشار Wiki، promotion و tag/release هنوز نیازمند مجوز جداگانه‌اند.
+
 ## Identity و authentication — برنامه‌ریزی‌شده
 
 Installation ID به‌طور تصادفی هنگام provision ساخته می‌شود؛ Server Agent ID و credential را اختصاص می‌دهد. customer، subscription، installation، device fingerprint و credential یکی نیستند. fingerprint سخت‌افزار فقط signal بازیابی با بررسی privacy است، نه هویت اصلی. چرخه: provision → register → authenticate → rotate → revoke → reinstall/recover.
@@ -16,9 +21,15 @@ v0.1.3 logging lifecycle محدود دارد. هدف production: local structure
 
 heartbeat شامل version/uptime/lifecycle، MT5/transport/spool، queue age/bytes، active job، last success و CPU/memory/disk امن است. liveness یعنی process/supervisor alive؛ readiness یعنی پذیرش امن یک class کار.
 
-## Windows Service و Session 0 — مسدود
+## Runtime و Session 0 — پذیرفته‌شده در CI زنده
 
-Agent باید بعد از boot unattended شود، اما Runner service در Session 0 است و MT5 Python IPC GUI-dependent است. experiment کنترل‌شده در Session 1 با Worker مستقیم، `initialize`، `version`، `terminal_info` و presence-only `account_info` موفق بود؛ `shutdown` API نیز terminal را نکشت. این فقط viability interactive را اثبات می‌کند، نه boot/logon/locked/disconnected session یا launcher unattended. direct service integration ادعا نمی‌شود. راه بعدی: service/control با Worker session-bound و IPC authenticated، بدون desktop-interaction hack یا kill کردن `terminal64.exe`.
+Agent/control در Session 0 و Worker پایدار با MT5 در Session 1 است. cold-boot
+در lab و safe readها، identity/session، health و persistence بعد از candidate
+cleanup در Phase 4D پذیرفته شده‌اند. direct Session 0 MT5 معماری production
+نیست؛ installer/service lifecycle عمومی هنوز پذیرفته نشده است.
+اختلاف ساعت حدود 10h30m برای ترتیب رخدادها، freshness و audit ریسک است؛
+[Operations](../OPERATIONS.md#clock-skew-and-audit-correlation) برنامهٔ اصلاح
+با مجوز جداگانه را شرح می‌دهد. اطلاعات account و credential منتشر نمی‌شود.
 
 ## Maintenance/quiesce — پیاده‌سازی‌شده (بخش پایه)
 

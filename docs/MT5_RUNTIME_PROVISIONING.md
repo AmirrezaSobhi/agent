@@ -31,9 +31,10 @@ ownership/session match, and safe reads.
 
 **Not yet generally productionized:** signed installer/provisioning, Windows
 Service installation and recovery policy, customer-specific account/broker
-setup, supported upgrade/rollback packaging, and the first live Phase 4D
-GitLab pipeline. The Agent process and its composition support the Session 0
-control role; this does not mean a commercial Windows Service installer is
+setup, and supported upgrade/rollback packaging. The
+[Phase 4D live pipeline](evidence/v0.1.3/phase4d-live-ci-acceptance.md) passed;
+that acceptance does not validate general customer provisioning. The Agent
+process and its composition support the Session 0 control role; this does not mean a commercial Windows Service installer is
 present.
 
 ## Runtime account and access
@@ -204,4 +205,6 @@ created the runtime user's nonzero interactive session; the task started the
 Worker; Session 0 authenticated to the local pipe; Worker initialization
 succeeded; the terminal ran in the Worker session; connectivity and safe reads
 passed. The exact machine identity and private account data are not required in
-this product document. The first live Phase 4D GitLab pipeline remains pending.
+this product document. Phase 4D is now **LIVE CI ACCEPTED / GO** in
+[Pipeline #11](evidence/v0.1.3/phase4d-live-ci-acceptance.md). Clock-skew handling
+is documented in [Operations](OPERATIONS.md#clock-skew-and-audit-correlation).

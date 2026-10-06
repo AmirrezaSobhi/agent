@@ -1,5 +1,10 @@
 # ویکی مهندسی MT5 Agent
 
+> وضعیت v0.1.3: **Phase 4D = LIVE CI ACCEPTED / GO**، Pipeline #11.
+> [شواهد پذیرش](../evidence/v0.1.3/phase4d-live-ci-acceptance.md) و
+> [آمادگی انتشار](../evidence/v0.1.3/release-readiness.md) مرجع نسخه‌دار هستند؛
+> انتشار Wiki، promotion و tag/release هنوز نیازمند مجوز جداگانه‌اند.
+
 > وضعیت: منبع نسخه‌دار برای انتقال به GitLab Wiki. این صفحات قابلیتِ پیاده‌سازی‌شده را با «پیاده‌سازی‌شده» و طرح‌ها را با «برنامه‌ریزی‌شده/مسدود» جدا می‌کنند.
 
 ## معرفی و هدف محصول
@@ -27,4 +32,11 @@ MT5 Agent: validate, execute, retrieve, persist, report, recover
 
 ## وضعیت فعلی v0.1.3
 
-**پیاده‌سازی‌شده:** lifecycle محلی MT5، HTTP/JSON `POST /command`، ترتیب Validation → Authentication → Authorization → Dispatch، diagnostics و logging محدود، capability discovery و CI چندمرحله‌ای. **پیاده‌سازی‌نشده:** Kafka، Gateway/mTLS، SQLite spooler، اجرای معامله، اولویت‌بندی، Windows Service و دستورهای راه‌دور production. مرجع دقیق: [README](../../README.md)، [معماری هدف](../TARGET_ARCHITECTURE.md) و [نقشه‌راه](../ROADMAP.md).
+**پذیرفته‌شده در CI زنده:** Agent در Session 0، Worker پایدار و MT5 در
+Session 1، IPC محلی authenticated، safe readهای symbols/version/account،
+HTTP/JSON، diagnostics، degraded health و بسته‌بندی مستقل Agent.
+اطلاعات account در شواهد ثبت نمی‌شود و هیچ معامله‌ای انجام نشده است.
+Kafka/mTLS، durable command runtime و trading مسیر production پذیرفته‌شده
+نیستند؛ installer/service و provisioning عمومی هنوز نیازمند کار هستند.
+مرجع دقیق: [README](../../README.md)، [معماری](../ARCHITECTURE.md) و
+[نقشه‌راه](../ROADMAP.md).

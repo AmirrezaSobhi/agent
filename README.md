@@ -21,9 +21,12 @@ flowchart LR
 ```
 
 The split-session Worker path and unattended lab cold-boot bootstrap are
-**LAB VALIDATED**. The v0.1.3 Agent/Worker packaging boundary and Phase 4D CI
-topology are **IMPLEMENTED** and **LOCALLY VALIDATED**. The first live GitLab
-pipeline for Phase 4D is **PENDING**. This is not an official v0.1.3 release.
+**LAB VALIDATED**. Phase 4D is **LIVE CI ACCEPTED / GO** for v0.1.3 at commit
+`c4b945122ad7e7174dbbb433cb91b42cb66f1c72`: Pipeline #11 passed all eight gates,
+including isolated packaging and Worker-backed runtime integration. See the
+[versioned acceptance evidence](docs/evidence/v0.1.3/phase4d-live-ci-acceptance.md).
+Branch promotion, tagging, and release publication remain separately authorized;
+this is an accepted candidate, not a published release.
 See [Architecture](docs/ARCHITECTURE.md) and [Action Plan](docs/ACTION_PLAN.md).
 
 ## Development and dependencies
@@ -40,9 +43,10 @@ same candidate against the persistent Worker. The release invariant is:
 
 > **BUILD ONCE → TEST SAME ARTIFACT → RELEASE SAME ARTIFACT**
 
-Phase 4D pipeline changes are implemented and locally validated; live GitLab
-acceptance has not yet occurred. See [CI/CD](docs/CI.md) and
-[Release Process](docs/RELEASE_PROCESS.md).
+Pipeline #11 verified the same candidate through build, control smoke, runtime,
+and packaging without a post-smoke rebuild. See [CI/CD](docs/CI.md),
+[Release Process](docs/RELEASE_PROCESS.md), and the
+[draft v0.1.3 release notes](docs/releases/v0.1.3-release-notes.md).
 
 ## Documentation
 

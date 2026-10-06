@@ -1,13 +1,21 @@
 # معماری و قابلیت‌ها
 
+> وضعیت v0.1.3: **Phase 4D = LIVE CI ACCEPTED / GO**، Pipeline #11.
+> [شواهد پذیرش](../evidence/v0.1.3/phase4d-live-ci-acceptance.md) و
+> [آمادگی انتشار](../evidence/v0.1.3/release-readiness.md) مرجع نسخه‌دار هستند؛
+> انتشار Wiki، promotion و tag/release هنوز نیازمند مجوز جداگانه‌اند.
+
 ## معماری فعلی — پیاده‌سازی‌شده
 
 ```text
 HTTPTransportAdapter → ApplicationBoundary → CommandDispatcher
                                       ├→ capability provider/registry
-                                      └→ MT5 lifecycle + ApplicationHost
+                                      └→ MT5Port → RuntimeWorkerMT5Adapter
+                                                  → Named Pipe → Worker / Session 1 → MT5
 ```
 
+Agent در Session 0 است؛ Worker و terminal در session تعاملی مشترک اجرا
+می‌شوند. سه safe read و health از مسیر application پذیرفته شده‌اند.
 قراردادهای فعلی local هستند. registry در حافظه است و پیش‌فرض آن خالی است. این واقعیت، ادعای وجود Kafka، persistence، TLS یا order execution نیست.
 
 ## معماری هدف — برنامه‌ریزی‌شده

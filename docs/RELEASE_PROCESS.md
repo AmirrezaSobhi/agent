@@ -35,9 +35,10 @@ requirement. Only the real-MT5 gate consumes the persistent Worker and terminal.
    agreement.
 2. Pass Linux portable source/unit validation using `requirements-dev.txt`.
 3. Pass Windows-compatible tests and build the release-style Agent in an
-   isolated environment with MetaTrader5 absent.
-4. Inspect the PyInstaller archive: MetaTrader5, NumPy, Worker implementation,
-   legacy direct adapter, and local terminal inspection must be absent.
+   isolated environment with MetaTrader5 and NumPy absent.
+4. Recursively inspect the PyInstaller archive, including embedded PYZ:
+   MetaTrader5, NumPy, Worker implementation, legacy direct adapter, and local
+   terminal inspection must be absent.
 5. Pass invalid-configuration and degraded control-plane checks on the
    no-MT5 Runner.
 6. Pass real runtime preflight and production application-path health plus
@@ -56,8 +57,37 @@ accounts, tasks, Autologon, pipe ACLs, or machine security settings.
 
 ## Current status
 
-Phase 4D pipeline changes are **IMPLEMENTED** and **LOCALLY VALIDATED**. The
-first live GitLab pipeline using the three Runner roles is **PENDING**. Do not
-claim a pipeline ID, job result, release SHA, or v0.1.3 release until retained
-GitLab evidence exists. The locally built Phase 4C executable is not an official
-release artifact.
+Phase 4D is **LIVE CI ACCEPTED / GO** for the
+[Pipeline #11 candidate](evidence/v0.1.3/phase4d-live-ci-acceptance.md), version
+0.1.3 at `c4b945122ad7e7174dbbb433cb91b42cb66f1c72`.
+[Draft release notes](releases/v0.1.3-release-notes.md) are prepared; v0.1.3 is
+not tagged or published. The earlier local Phase 4C executable is not the
+accepted release candidate.
+
+## Controlled promotion and publication plan
+
+The [release-readiness audit](evidence/v0.1.3/release-readiness.md) records branch
+heads/divergence, CI/ref behavior, clock risk, and artifact retention.
+
+1. Review the documentation follow-up and require its complete develop pipeline
+   to pass. Keep the Pipeline #11 evidence tied to its original source commit.
+2. Obtain explicit promotion authorization, then merge `develop → staging`
+   preserving branch history; do not force-push or reset the historical merges.
+3. Require all eight gates on the resulting staging ref and review that new
+   candidate's provenance, diff, and non-trading runtime evidence.
+4. Resolve the clock risk, or obtain explicit release-owner risk acceptance;
+   verify package retention and draft release notes. Obtain separate authorization
+   to merge `staging → main` and require all eight main gates.
+5. After separate approval, create `v0.1.3` on the reviewed main commit. The tag
+   workflow runs a fresh, separately provenanced candidate through all eight
+   gates; require the tag/source version match. Do not claim the tag artifact is
+   the Pipeline #11 artifact or rebuild a smoke-tested candidate.
+6. With separate publication authorization, manually create the GitLab Release
+   from that tag pipeline's exact `package:windows` output and receipts. Verify
+   SHA-256 and publish the draft notes with the final tag provenance. CI currently
+   neither creates tags nor publishes Releases. Confirm the downstream mirror
+   separately; GitLab remains canonical.
+
+The historical Pipeline #11 binary may only be published unchanged under a
+separately approved plan that explicitly identifies its source commit and
+pipeline; its receipts cannot be relabeled to a documentation/merge/tag commit.

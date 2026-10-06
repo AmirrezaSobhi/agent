@@ -32,3 +32,18 @@ command/capability model: a READ permission cannot authorize execution.
 
 **PENDING PRODUCTION VALIDATION:** durable secret storage, enrollment transport, certificate
 issuance, mTLS, and production credential rotation/recovery. No trust anchor is remotely mutable.
+
+## Accepted CI scope and dependency-source policy
+
+[Pipeline #11](evidence/v0.1.3/phase4d-live-ci-acceptance.md) accepted local
+Worker authorization/protocol/session checks and the read-only runtime path;
+it is not a general security audit or commercial security acceptance.
+Linux and Windows build/test installs use the explicitly approved existing
+Liara package mirror over HTTPS. Requirements pins and Worker isolation remain
+in place; changing that trust policy needs separate approval. Transitive build
+dependencies are not fully locked with hashes. See [CI](CI.md#dependency-boundary).
+
+The observed clock skew is an audit/freshness risk wherever host wall time
+is trusted; see [Operations](OPERATIONS.md#clock-skew-and-audit-correlation).
+Keep account payloads, credentials, pipe/Worker secret material, machine SIDs,
+and private runtime profiles out of repository evidence and Wiki summaries.

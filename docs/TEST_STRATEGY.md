@@ -13,10 +13,13 @@ acceptance:
 - Windows MT5: production Agent candidate through HTTP/application →
   `MT5Port` → authenticated Worker IPC → interactive MT5 runtime; reads only.
 
-Phase 4D CI configuration is implemented and locally validated, but this
-strategy does not claim a live GitLab pipeline has passed. The live pipeline
-must retain build/control-plane/runtime evidence and prove identical candidate
-SHA across gates.
+Phase 4D is **LIVE CI ACCEPTED / GO** in
+[Pipeline #11](evidence/v0.1.3/phase4d-live-ci-acceptance.md): Linux **209 passed,
+34 skipped** and Windows **248 passed, 2 skipped**. Windows skips are the
+non-mandatory dedicated ACL experiment; Linux skips cover native Windows and
+PowerShell gates, with the launcher module excluded at collection. Build,
+control/runtime smoke, and package artifacts independently matched SHA-256.
+Future candidates must retain their own evidence and pass all live gates.
 
 ## Contract tests
 
@@ -93,8 +96,9 @@ Further product work adds schema/contract compatibility, durable persistence
 and crash recovery, idempotency, priority/fairness, transfer integrity and
 bounded-memory, remote transport, security/redaction, generalized
 Windows-hosting, failure injection, and release-acceptance layers. The current
-safe Real-MT5 read gate is implemented in CI configuration and awaits its first
-live pipeline acceptance. No test may submit a financially consequential real
+safe Real-MT5 read gate passed in Pipeline #11 through the production
+application path, including health before/after reads and persistent-runtime
+survival after candidate cleanup. No test may submit a financially consequential real
 trade without explicit authorization and a safe environment. The detailed
 status matrix is in [ROADMAP.md](ROADMAP.md).
 

@@ -1,8 +1,12 @@
 # Documentation Index
 
 Repository documentation is the canonical, version-controlled product source
-of truth. The GitLab Wiki, if enabled later, should be a navigation and
-knowledge portal that links here rather than maintaining conflicting copies.
+of truth. The enabled GitLab Wiki currently has no pages; its proposed
+navigation portal links here rather than maintaining conflicting copies.
+
+**Phase 4D: LIVE CI ACCEPTED / GO.** Start with the
+[v0.1.3 acceptance record](evidence/v0.1.3/phase4d-live-ci-acceptance.md) and
+[release-readiness audit](evidence/v0.1.3/release-readiness.md).
 
 ## Architecture
 
@@ -34,6 +38,9 @@ knowledge portal that links here rather than maintaining conflicting copies.
 ## Release and roadmap
 
 - [Release process](RELEASE_PROCESS.md)
+- [v0.1.3 live CI acceptance](evidence/v0.1.3/phase4d-live-ci-acceptance.md)
+- [v0.1.3 release-readiness audit](evidence/v0.1.3/release-readiness.md)
+- [Draft v0.1.3 release notes](releases/v0.1.3-release-notes.md)
 - [Release checklist](../deployment/RELEASE_CHECKLIST.md)
 - [Action Plan](ACTION_PLAN.md)
 - [Product roadmap](ROADMAP.md)

@@ -1,9 +1,10 @@
 # Architecture
 
 **Baseline:** v0.1.3 development candidate. The split-session Runtime Worker is
-implemented and lab validated. Phase 4D CI is implemented and locally validated;
-live GitLab pipeline acceptance is pending. These labels describe different
-evidence levels; see [CI](CI.md) and [Action Plan](ACTION_PLAN.md).
+implemented and lab validated. Phase 4D is **LIVE CI ACCEPTED / GO** in
+[Pipeline #11](evidence/v0.1.3/phase4d-live-ci-acceptance.md), including the
+Session 0 Agent / Session 1 Worker and terminal. Live CI acceptance is distinct
+from commercial production readiness; see [CI](CI.md) and [Action Plan](ACTION_PLAN.md).
 
 ## Runtime boundary
 
@@ -78,7 +79,8 @@ not a signed installer or a general customer VPS support commitment.
 
 The control-plane Agent has no production MetaTrader5 or NumPy runtime
 dependency. The PyInstaller Agent candidate excludes MetaTrader5, NumPy, the
-interactive Worker implementation, and the legacy direct `MT5Adapter`. The
+interactive Worker implementation, the legacy direct `MT5Adapter`, and
+`terminal_inspection`. Recursive archive inspection passed in Pipeline #11. The
 Worker uses its separate pinned dependency set. A direct adapter remains only
 for explicit development/legacy and compatibility test use. See
 [configuration](CONFIGURATION.md), [CI](CI.md), and [release process](RELEASE_PROCESS.md).
@@ -96,5 +98,5 @@ active in the Agent request path.
 The current process can run as a Session 0 control process, but a commercial
 Windows Service installer, service recovery policy, signed upgrade flow, and
 generalized customer provisioning are not yet accepted. Do not describe the
-product as production ready until those gates and the first live Phase 4D
-pipeline pass. See [known issues](KNOWN_ISSUES.md) and [Action Plan](ACTION_PLAN.md).
+product as commercially production ready until those remaining gates pass;
+Phase 4D live CI acceptance alone does not productize installation or support. See [known issues](KNOWN_ISSUES.md) and [Action Plan](ACTION_PLAN.md).

@@ -126,8 +126,8 @@ truncate an arbitrary global ID.
 
 The pipeline #16 checksum/test summary below is historical and is not evidence
 for the current v0.1.3 candidate. The split-session topology has since been
-validated in the lab. Phase 4D CI is implemented and locally validated, but its
-first live GitLab pipeline is pending. Remaining product work includes service
+validated in the lab and [Phase 4D live CI](evidence/v0.1.3/phase4d-live-ci-acceptance.md)
+is **ACCEPTED / GO** in Pipeline #11. Remaining product work includes service
 installation/recovery, exact future schemas/limits, broader read inventory, and
 operational retention values—not changing the accepted local runtime boundary.
 

@@ -3,7 +3,10 @@
 Start an unchecked copy for each candidate. This is a template, not a record of
 a completed release. Historical release facts remain in
 [CHANGELOG.md](../CHANGELOG.md). Promotion, tag creation, and publication each
-require their own authorization.
+require their own authorization. The completed v0.1.3 live CI record is
+[versioned evidence](../docs/evidence/v0.1.3/phase4d-live-ci-acceptance.md);
+[release readiness](../docs/evidence/v0.1.3/release-readiness.md) records remaining
+promotion/publication conditions. Keep this reusable template unchecked.
 
 ## Candidate and source
 
@@ -23,7 +26,7 @@ require their own authorization.
   isolated checkout/workspace.
 - [ ] Windows tests and build pass on `windows-self-hosted-no-mt5`.
 - [ ] Agent build environment proves MetaTrader5 and NumPy are absent.
-- [ ] PyInstaller archive excludes MetaTrader5, NumPy, Worker implementation,
+- [ ] Recursive PyInstaller archive inspection, including PYZ, excludes MetaTrader5, NumPy, Worker implementation,
   legacy direct adapter, and local terminal inspection.
 - [ ] Build evidence records commit, pipeline, version, filename, size, Python,
   dependency checks, forbidden-module inspection, and SHA-256.
@@ -50,7 +53,13 @@ Never rebuild or substitute the candidate after a smoke gate.
 
 ## Promotion and release authorization
 
-- [ ] Review CI evidence and operational/security gaps.
+- [ ] Review CI evidence and operational/security gaps, including the MT5-host
+  clock-skew remediation or explicit release-owner risk acceptance.
+- [ ] Retain the exact candidate and receipts before GitLab artifact expiry.
+- [ ] Review draft release notes and identify which ref pipeline's candidate
+  will be published; never relabel Pipeline #11 provenance.
+- [ ] Require post-merge staging/main and final tag pipelines explicitly;
+  the GitLab project does not currently enforce a successful-pipeline merge gate.
 - [ ] Obtain separate authorization to promote `develop` → `staging` → `main`.
 - [ ] Obtain separate authorization before creating a tag or release.
 - [ ] Preserve existing release tags/assets and historical evidence unchanged.

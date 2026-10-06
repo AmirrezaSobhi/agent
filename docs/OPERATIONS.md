@@ -92,3 +92,32 @@ ownership is unclear.
 
 MT5 Agent provisioning must not manage BitLocker, TPM, Secure Boot, or recovery
 keys; those remain machine-owner/VPS-provider responsibilities.
+
+## Clock skew and audit correlation
+
+Phase 4D acceptance observed approximately **10h30m** MT5-host UTC skew relative
+to Linux UTC. [Pipeline #11 evidence](evidence/v0.1.3/phase4d-live-ci-acceptance.md)
+retains commit, pipeline, and artifact hash as provenance; wall-clock ordering
+across hosts is unreliable. The Worker and terminal survived candidate cleanup.
+
+Skew can distort command-age/deadline interpretation, duplicate/replay windows,
+log ordering, telemetry freshness, certificate validity checks, and incident
+correlation wherever host wall time is used. These are risk surfaces, not claims
+that every future subsystem is active. Use correlation IDs and observed
+process/session identity alongside timestamps; record host/UTC offset when
+collecting evidence. Do not change timestamps in historical acceptance records.
+
+Controlled `develop → staging` is not blocked by this observation alone because
+the required non-trading/hash/session gates passed. Before final publication,
+require either clock remediation plus revalidation or explicit release-owner
+acceptance of the remaining risk. Commercial operations need a defined clock
+monitoring and tolerance policy.
+
+Future remediation requires a separately approved maintenance plan: read-only
+compare guest/host UTC, timezone presentation, hypervisor time synchronization,
+Windows Time Service source/status, and network reachability; choose one managed
+time authority and assess large clock-step effects on the persistent runtime.
+Then authorize the minimal correction, verify measured UTC offset and stability,
+and rerun health/safe reads and relevant deadline/replay/observability tests.
+Do not modify host time, NTP, timezone, Windows Time Service, Worker/task, or MT5
+configuration under an ordinary CI/documentation task.

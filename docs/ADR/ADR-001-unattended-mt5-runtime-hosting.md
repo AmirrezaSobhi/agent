@@ -131,6 +131,7 @@ version, and account information. No trading operation is included.
 
 This addendum does not claim a customer-ready installer, generally deployed
 Windows Service, or commercial production readiness. Phase 4D's three-Runner
-pipeline is implemented and locally validated; first live GitLab acceptance is
-still pending. See [MT5 Runtime Architecture](../MT5_RUNTIME_ARCHITECTURE.md),
+pipeline is now **LIVE CI ACCEPTED / GO** in
+[Pipeline #11](../evidence/v0.1.3/phase4d-live-ci-acceptance.md). Historical
+experiment sections above remain contemporaneous records. See [MT5 Runtime Architecture](../MT5_RUNTIME_ARCHITECTURE.md),
 [Provisioning](../MT5_RUNTIME_PROVISIONING.md), and [Action Plan](../ACTION_PLAN.md).

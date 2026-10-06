@@ -1,6 +1,7 @@
 # MT5 Runtime Architecture
 
-**Status:** IMPLEMENTED; LAB VALIDATED. This describes the runtime boundary,
+**Status:** IMPLEMENTED; LAB VALIDATED; LIVE CI ACCEPTED in
+[Pipeline #11](evidence/v0.1.3/phase4d-live-ci-acceptance.md). This describes the runtime boundary,
 not a general-purpose installer. Operational setup is in
 [MT5 Runtime Provisioning](MT5_RUNTIME_PROVISIONING.md).
 
@@ -75,8 +76,8 @@ remains alive and degraded and waits for authorized session recovery. RDP
 disconnect/lock is not treated as logoff.
 
 General customer provisioning, an installer-managed Windows Service,
-service recovery, code signing, upgrade/rollback, and first live Phase 4D CI
-acceptance remain open. The control-plane process can execute in Session 0;
+service recovery, code signing, and upgrade/rollback remain open. Phase 4D live
+CI acceptance passed with the Agent in Session 0 and Worker/terminal in Session 1. The control-plane process can execute in Session 0;
 this does not imply an accepted commercial service installer.
 
 ## Capability boundary

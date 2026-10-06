@@ -22,6 +22,15 @@ secrets, or full account-information payloads in reports.
 | CI candidate hash mismatch | Artifact provenance | Compare build evidence, source commit, pipeline ID, artifact filename and SHA-256 at each gate. Fail closed; do not rebuild or substitute a binary after smoke. |
 | Account read succeeds but output appears in logs | Privacy boundary | Stop sharing the evidence, remove/redact it according to incident policy, and inspect logging/evidence code. CI should record only success and limited field count. |
 
+## Clock skew
+
+If host timestamps disagree, preserve the raw observations with host/UTC context;
+correlate commit, pipeline, hash, request IDs and process/session identity rather
+than sorting all logs by wall time. The accepted MT5 host showed about 10h30m
+skew. Use the separately authorized
+[operations remediation plan](OPERATIONS.md#clock-skew-and-audit-correlation);
+do not repair time or restart the runtime as a diagnostic shortcut.
+
 ## Escalation evidence
 
 Capture timestamps, source commit/artifact hash, Agent state, Worker principal/

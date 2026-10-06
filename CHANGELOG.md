@@ -6,7 +6,7 @@ verification statements below describe those records, not fresh validation of
 old binaries. Release assets and publication dates have not been independently
 revalidated here, so no publication dates are inferred from commit timestamps.
 
-## [Unreleased] — v0.1.3 development
+## [Unreleased] — v0.1.3 accepted release candidate
 
 ### Changed
 
@@ -16,8 +16,14 @@ revalidated here, so no publication dates are inferred from commit timestamps.
 - The Agent/control-plane dependency set excludes MetaTrader5 and NumPy; Worker
   and explicit legacy MT5 development dependencies are separate.
 - CI is organized into Linux source/unit, Windows no-MT5 build/control-plane,
-  and Windows real-MT5 runtime roles. Phase 4D is implemented and locally
-  validated; first live GitLab pipeline acceptance is pending.
+  and Windows real-MT5 runtime roles. Phase 4D is **LIVE CI ACCEPTED / GO**:
+  Pipeline #11 passed all eight gates at commit
+  `c4b945122ad7e7174dbbb433cb91b42cb66f1c72`; see the
+  [versioned evidence](docs/evidence/v0.1.3/phase4d-live-ci-acceptance.md).
+- Live CI corrections cover Windows pipe test synchronization/SID comparison,
+  approved Linux/Windows dependency-mirror access, recursive archive exclusion,
+  candidate child cleanup, Scheduled Task SID/logon validation, and strict-mode
+  redacted account field counting.
 - Documentation now distinguishes implemented, lab-validated, CI-accepted,
   production-ready, and planned work. No v0.1.3 release is claimed.
 
@@ -44,6 +50,9 @@ revalidated here, so no publication dates are inferred from commit timestamps.
   unattended cold-boot lab validation using automatic interactive logon.
 - Worker-aware diagnostics, Agent/Worker dependency isolation, and Phase 4D
   candidate artifact/evidence checks.
+- [Draft v0.1.3 release notes](docs/releases/v0.1.3-release-notes.md) and a
+  versioned acceptance record. Publication remains pending; no release date is
+  inferred from acceptance or commit timestamps.
 
 ## [0.1.2] — Diagnostics, lifecycle logging, and dual-runner CI foundation
 

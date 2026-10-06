@@ -30,7 +30,7 @@ Validation/review, Done. Milestones are capability gates—not calendar promises
 | Deliver Kafka and HTTPS control adapters | F, `feature`, `transport`, `security` | Durable core; mTLS/ack/outage/backpressure/redaction tests. |
 | Deliver observability and support controls | F, `feature`, `observability` | Durable state; liveness/readiness, safe heartbeat/log rotation/support runbook. |
 | Decide and implement typed execution capability slice | G, `architecture`, `security`, `mt5` | Explicit product authorization; sandbox-only non-duplicate/retcode/correlation evidence. |
-| Production unattended hardening and release gate | H, `feature`, `service` | Lab boot/runtime accepted; Phase 4D live CI, service/install, upgrade, recovery, and commercial release acceptance remain. |
+| Production unattended hardening and release gate | H, `feature`, `service` | Lab boot/runtime and Phase 4D live CI accepted (Pipeline #11); service/install, upgrade, recovery, clock risk, and commercial release acceptance remain. |
 
 Every issue description must include purpose, context, scope, non-goals,
 dependencies, acceptance criteria, tests, security/operational/documentation

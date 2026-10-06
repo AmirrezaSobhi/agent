@@ -7,16 +7,18 @@ state and the next evidence required.
 ## Current Baseline
 
 - Split Session 0 Agent / interactive Worker / MT5 architecture:
-  **IMPLEMENTED; LAB VALIDATED**.
+  **IMPLEMENTED; LAB VALIDATED; LIVE CI ACCEPTED**.
 - Dedicated standard runtime user, interactive task, Autologon cold-boot
   bootstrap, authenticated local pipe, persistent MT5 connection:
   **LAB VALIDATED**.
 - Three safe MT5 reads through the production application path:
-  **IMPLEMENTED; LAB VALIDATED**.
+  **IMPLEMENTED; LAB VALIDATED; LIVE CI ACCEPTED**.
 - Agent/Worker dependency and PyInstaller boundary:
-  **IMPLEMENTED; LOCALLY VALIDATED**.
+  **IMPLEMENTED; LIVE CI ACCEPTED**.
 - Phase 4D three-Runner pipeline topology and artifact provenance gates:
-  **IMPLEMENTED; LOCAL VALIDATION PASSED; LIVE CI ACCEPTANCE PENDING**.
+  **LIVE CI ACCEPTED / GO**, Pipeline #11 at
+  `c4b945122ad7e7174dbbb433cb91b42cb66f1c72`; see
+  [acceptance evidence](evidence/v0.1.3/phase4d-live-ci-acceptance.md).
 - No v0.1.3 release is claimed. No trading operation is production-ready.
 
 ## Completed
@@ -30,31 +32,33 @@ state and the next evidence required.
 - [x] Separate Agent and Worker dependency sets and exclude Worker/MT5 packages
   from the Agent artifact.
 - [x] Implement Phase 4D CI configuration and local tests/evidence validation.
-- [ ] Live-accept Phase 4D through GitLab using all three Runner roles.
+- [x] Live-accept Phase 4D through GitLab using all three Runner roles (Pipeline #11).
 
 ## Immediate Next Actions
 
-1. Review the complete explicit Phase 4 integration staging set, including this
-   documentation baseline, and resolve any uncertain/unrelated files.
-2. After human authorization, stage and create the integration commit on
-   `develop`; preserve unrelated worktree files and EOL-only changes carefully.
-3. Push only after separate authorization/policy permits it.
-4. Run the first live Phase 4D GitLab pipeline and retain pipeline/job IDs,
-   artifact provenance, and redacted runtime evidence.
+1. Review the [release-readiness audit](evidence/v0.1.3/release-readiness.md)
+   and documentation-only follow-up pipeline; keep Pipeline #11 provenance intact.
+2. Obtain separate authorization for `develop → staging`; merge historical
+   branch divergence without resetting or rewriting branches, then require all
+   eight staging gates before considering `staging → main`.
+3. Plan an approved maintenance window to investigate the MT5-host clock skew;
+   remediation or explicit owner risk acceptance is required before publication.
+4. Preserve the accepted package before its GitLab artifact expiry, and obtain
+   separate main/tag/publication authorization. No release is automatic.
 
 ## Release v0.1.3 Gate
 
-- [ ] Linux source/unit suite passes on `linux-source-unit`.
-- [ ] Windows tests and isolated Agent build pass on
+- [x] Linux source/unit suite passes on `linux-source-unit`.
+- [x] Windows tests and isolated Agent build pass on
   `windows-self-hosted-no-mt5` with MetaTrader5 absent.
-- [ ] Candidate archive excludes MetaTrader5, NumPy, Worker implementation,
+- [x] Candidate archive excludes MetaTrader5, NumPy, Worker implementation,
   legacy direct adapter, and local terminal inspection.
-- [ ] Invalid-configuration and degraded control-plane checks pass.
-- [ ] Exact candidate SHA/commit/pipeline provenance is retained.
-- [ ] `windows-self-hosted-mt5` consumes that candidate without rebuilding.
-- [ ] Worker identity/session, authenticated IPC, connected MT5, terminal
+- [x] Invalid-configuration and degraded control-plane checks pass.
+- [x] Exact candidate SHA/commit/pipeline provenance is retained.
+- [x] `windows-self-hosted-mt5` consumes that candidate without rebuilding.
+- [x] Worker identity/session, authenticated IPC, connected MT5, terminal
   identity/session, and three safe reads pass.
-- [ ] Final package evidence matches the original candidate hash.
+- [x] Final package evidence matches the original candidate hash.
 - [ ] Human release review, promotion authorization, and tag/release approval
   are completed separately.
 
@@ -87,8 +91,10 @@ state and the next evidence required.
 
 ## Known Technical Debt
 
-- First live Phase 4D GitLab pipeline has not yet accepted scheduling, artifact
-  transfer, and runtime-gate behavior.
+- Approximately 10h30m MT5-host clock skew affects cross-host audit correlation;
+  see [Operations](OPERATIONS.md#clock-skew-and-audit-correlation).
+- Promotion/ref pipelines create separately provenanced candidates. Pipeline #11
+  acceptance does not automatically accept another commit or binary.
 - The Agent executable is not yet delivered by a supported signed installer or
   managed Windows Service lifecycle.
 - Autologon is a lab-validated bootstrap with a privileged-host threat tradeoff;
@@ -98,9 +104,10 @@ state and the next evidence required.
 
 ## Definition of Done
 
-v0.1.3 release eligibility requires the live three-Runner pipeline to validate
-one candidate from source tests through the real Worker-backed reads, with the
-same SHA-256 at build, runtime, and package gates. Commercial production
-readiness additionally requires supported installation, service lifecycle,
+The live three-Runner CI eligibility gate is satisfied for the Pipeline #11
+candidate: the same SHA-256 passed source/build, real Worker-backed reads, and
+packaging. Final publication still requires the controlled promotion/tag,
+artifact-retention, clock-risk, and human-approval conditions in the release
+audit. Commercial production readiness additionally requires supported installation, service lifecycle,
 security, recovery, and operations acceptance. Passing unit tests or a lab boot
 alone does not satisfy either bar.

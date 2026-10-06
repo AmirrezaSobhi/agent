@@ -1,8 +1,11 @@
 # GitLab CI and local validation
 
-**Phase 4D status:** IMPLEMENTED; LOCAL VALIDATION PASSED; LIVE CI ACCEPTANCE
-PENDING. No first live GitLab pipeline, pipeline/job ID, or release receipt is
-claimed here. Update this status only from retained pipeline evidence.
+**Phase 4D status: LIVE CI ACCEPTED / GO.** [Pipeline #11](http://gitlab.local/root/agent/-/pipelines/11)
+passed Jobs #78–#85 at `c4b945122ad7e7174dbbb433cb91b42cb66f1c72`.
+The [versioned acceptance record](evidence/v0.1.3/phase4d-live-ci-acceptance.md)
+contains candidate provenance, all eight job links, test totals, exclusions,
+control/runtime evidence, and remaining operational risks. This accepts that
+candidate; it does not authorize promotion or publication.
 
 GitLab (`origin`) is the source of truth. CI validates candidate artifacts; it
 does not merge, tag, or publish a release. Existing release tags remain
@@ -30,6 +33,13 @@ interactive Worker is provisioned separately using `requirements-mt5-worker.txt`
 legacy in-process adapter dependency set is `requirements-legacy-mt5.txt` and
 must not be installed into the production Agent build environment.
 
+Linux and Windows CI dependency installs explicitly use the previously existing,
+user-approved `https://package-mirror.liara.ir/repository/pypi/simple` index after
+live DNS failures reaching `files.pythonhosted.org`. Top-level requirements pins
+remain unchanged; transitive dependencies are not a fully hashed lockfile.
+Worker provisioning remains separate. Changing the index trust policy requires
+separate approval; do not silently fall back to another source.
+
 The Linux job installs requirements into its job-local target directory and
 checks that MetaTrader5 and NumPy are absent. It runs the portable suite while
 excluding `tests/test_windows_worker_launcher.py`, which imports Windows-only
@@ -52,7 +62,8 @@ Windows validation┘                               │
 ```
 
 The build job checks the isolated build environment for MetaTrader5 and NumPy,
-builds `MT5Agent-v<version>.exe` once, and inspects the PyInstaller archive for
+builds `MT5Agent-v<version>.exe` once, and recursively inspects the PyInstaller
+archive, including embedded PYZ modules, for
 those packages plus the Worker implementation, legacy direct adapter, and
 `agent.infrastructure.terminal_inspection`. Its
 `reports/build.json` records the source commit, pipeline ID, version, filename,
@@ -117,7 +128,27 @@ environment.
 Before using a new CI revision, validate the YAML with GitLab CI Lint and then
 run the pipeline on a commit containing that revision. Local YAML parsing and
 PowerShell/evidence tests cannot prove Runner scheduling, artifact transfer,
-or the cold machine's live Runtime Worker state. The first live pipeline is
-required to accept the topology. The pipeline must fail closed on provenance
+or the cold machine's live Runtime Worker state. Pipeline #11 accepted this
+topology; each new candidate still requires all live gates. The pipeline must
+fail closed on provenance
 mismatch or missing Worker/runtime evidence; it must not repair
 Autologon, accounts, tasks, pipe ACLs, or the Windows host.
+
+## Ref pipelines and retention
+
+Pushes to `develop`, `staging`, and `main`, and stable `vMAJOR.MINOR.PATCH` tags,
+are eligible under the workflow rules. A matching tag must equal the source
+`agent.__version__`; mismatches fail metadata validation. An open merge request
+can suppress its source branch push pipeline, so verify the actual post-merge
+ref pipeline rather than assuming one exists. The current project uses merge
+commits and does not enforce successful pipelines as a merge requirement;
+human promotion review must require them explicitly.
+
+Every eligible ref pipeline runs its own build and validation. It is a new
+candidate with its own commit/pipeline/hash; it must not replace or be described
+as the Pipeline #11 binary. Within each pipeline no post-smoke rebuild is allowed.
+There is no `release:` job or tag/Release API invocation in CI.
+Build/smoke artifacts expire after 14 days; final packages after 30 days. The
+accepted Job #85 package currently expires on **2026-11-05**. Retain the exact
+package and redacted receipts before expiry through a separately authorized
+GitLab artifact-retention or controlled release action; do not rebuild to recover it.
