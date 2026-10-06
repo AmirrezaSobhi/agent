@@ -27,6 +27,8 @@ class HealthStatus:
     ok: bool
     state: LifecycleState
     message: str
+    runtime_state: str = "UNKNOWN"
+    runtime: dict[str, object] | None = None
 
 
 @dataclass(frozen=True)

@@ -76,7 +76,8 @@ class ApplicationHost:
             )
             return Status(False, start_status.message, "agent_start_failed")
 
-        self._record(OperationalEventType.APPLICATION_STARTED, "success")
+        self._record(OperationalEventType.APPLICATION_STARTED, "success",
+                     {"agent_start_code": start_status.code})
         primary_failure: Status | None = None
         try:
             self._record(OperationalEventType.HOSTING_STARTED, "started")
