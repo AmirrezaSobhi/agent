@@ -67,3 +67,7 @@ config.json
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# Local development and runtime artifacts
+/work/
+*.AppImage
