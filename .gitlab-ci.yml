@@ -39,7 +39,7 @@ default:
       & ./deployment/ci.ps1 -Task metadata
       & $env:PYTHON_EXECUTABLE --version
       if ($LASTEXITCODE -ne 0) { throw 'Python is unavailable' }
-      & $env:PYTHON_EXECUTABLE -m pip install --prefer-binary -r requirements-dev.txt
+      & $env:PYTHON_EXECUTABLE -m pip install --index-url https://package-mirror.liara.ir/repository/pypi/simple --prefer-binary -r requirements-dev.txt
       if ($LASTEXITCODE -ne 0) { throw 'Dependency installation failed' }
       & $env:PYTHON_EXECUTABLE -m pip check
       if ($LASTEXITCODE -ne 0) { throw 'Dependency consistency check failed' }
@@ -107,7 +107,7 @@ build:windows:
       & $env:PYTHON_EXECUTABLE -m venv .ci-agent-build-venv
       if ($LASTEXITCODE -ne 0) { throw 'Could not create isolated Agent build environment' }
       $buildPython = Join-Path (Join-Path $PWD '.ci-agent-build-venv') 'Scripts\python.exe'
-      & $buildPython -m pip install --prefer-binary -r requirements-dev.txt
+      & $buildPython -m pip install --index-url https://package-mirror.liara.ir/repository/pypi/simple --prefer-binary -r requirements-dev.txt
       if ($LASTEXITCODE -ne 0) { throw 'Agent build dependencies failed to install' }
       & $buildPython -m pip check
       if ($LASTEXITCODE -ne 0) { throw 'Agent build dependencies are inconsistent' }

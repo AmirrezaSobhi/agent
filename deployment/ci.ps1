@@ -328,7 +328,7 @@ try {
             Invoke-Python -Arguments @('-m', 'PyInstaller', 'deployment/Agent.spec', '--clean', '--noconfirm')
             $archiveViewer = Join-Path (Split-Path -Parent $PythonExecutable) 'pyi-archive_viewer.exe'
             if (-not (Test-Path -LiteralPath $archiveViewer -PathType Leaf)) { throw 'PyInstaller archive viewer is missing from the isolated build environment' }
-            $archiveOutput = (& $archiveViewer -l $exePath 2>&1 | Out-String)
+            $archiveOutput = (& $archiveViewer -r $exePath 2>&1 | Out-String)
             if ($LASTEXITCODE -ne 0) { throw 'Could not inspect the Agent PyInstaller archive' }
             $forbiddenPatterns = @(
                 '(?i)(?<![A-Za-z0-9_])MetaTrader5(?![A-Za-z0-9_])',

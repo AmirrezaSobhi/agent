@@ -52,6 +52,32 @@ def test_pyinstaller_archive_listing_rejects_each_prohibited_module(entry):
     assert [match.group(0) for pattern in patterns for match in pattern.finditer(listing)]
 
 
+def test_archive_gate_inspects_modules_inside_embedded_pyz(tmp_path):
+    from PyInstaller.archive.writers import CArchiveWriter, ZlibArchiveWriter
+    import sys
+
+    # Prohibited pure-Python modules are stored inside PYZ, not the outer TOC.
+    names = ["MetaTrader5", "numpy", "agent.adapters.mt5_adapter",
+             "agent.infrastructure.interactive_mt5_worker",
+             "agent.infrastructure.terminal_inspection"]
+    source = tmp_path / "inert.py"
+    source.write_text("pass\n")
+    pyz = tmp_path / "PYZ.pyz"
+    ZlibArchiveWriter(str(pyz), [(name, str(source), "PYMODULE") for name in names],
+                      {name: compile("pass", str(source), "exec") for name in names})
+    archive = tmp_path / "inert.pkg"
+    CArchiveWriter(str(archive), [("PYZ.pyz", str(pyz), False, "z")], "python.dll")
+    script = (ROOT / "deployment/ci.ps1").read_text(encoding="utf-8")
+    options = re.search(r"& \$archiveViewer\s+([^$]+)\$exePath", script).group(1).split()
+    result = subprocess.run(
+        [sys.executable, "-m", "PyInstaller.utils.cliutils.archive_viewer", *options, str(archive)],
+        text=True, capture_output=True, timeout=30,
+    )
+    assert result.returncode == 0, result.stderr
+    for pattern in _archive_forbidden_patterns():
+        assert pattern.search(result.stdout), "Embedded prohibited module escaped archive inspection"
+
+
 @pytest.fixture
 def checkout(tmp_path):
     (tmp_path / "deployment").mkdir()
