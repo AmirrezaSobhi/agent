@@ -22,7 +22,7 @@ def test_pipe_server_acl_contains_only_the_configured_control_principal():
  dacl=attributes.SECURITY_DESCRIPTOR.GetSecurityDescriptorDacl()
  assert dacl.GetAceCount()==1
  ace=dacl.GetAce(0)
- assert win32security.EqualSid(ace[2],sid)
+ assert win32security.ConvertSidToStringSid(ace[2])==win32security.ConvertSidToStringSid(sid)
 
 
 def test_local_named_pipe_authenticates_client_and_checks_its_session():
@@ -51,7 +51,7 @@ def test_local_named_pipe_authenticates_client_and_checks_its_session():
  assert peers[0].session_id==current_session.value
 
 
-def test_client_disconnect_after_request_does_not_stop_worker():
+def test_client_disconnect_after_request_does_not_stop_worker(monkeypatch):
  win32api=pytest.importorskip('win32api')
  import win32con
  import win32file
@@ -67,10 +67,18 @@ def test_client_disconnect_after_request_does_not_stop_worker():
  name=rf'\\.\pipe\mt5-agent-disconnect-{os.getpid()}'
  pipe=WindowsNamedPipe(name,allowed_principals=(principal,))
  requests=[]
+ ready=threading.Event()
+ create_server=pipe.create_server
+ def create_ready_server(**kwargs):
+  server=create_server(**kwargs)
+  ready.set()
+  return server
+ monkeypatch.setattr(pipe,'create_server',create_ready_server)
  def dispatch(request,peer):
   requests.append(request)
   return {'ok':True,'stop_worker':len(requests)==2}
  thread=threading.Thread(target=lambda:pipe.serve_forever(dispatch),daemon=True); thread.start()
+ assert ready.wait(timeout=3), 'Named-pipe server did not create its first instance'
  handle=win32file.CreateFile(name,win32con.GENERIC_READ|win32con.GENERIC_WRITE,0,None,win32con.OPEN_EXISTING,0,None)
  try:
   win32pipe.SetNamedPipeHandleState(handle,win32pipe.PIPE_READMODE_MESSAGE|win32pipe.PIPE_NOWAIT,None,None)
