@@ -255,7 +255,7 @@ $taskUser = switch ('{principal_form}') {{
     'short' {{ $short }}
     'qualified' {{ $principal }}
     'sid' {{ $sid }}
-    'wrong_sid' {{ 'S-1-5-18' }}
+    'wrong_sid' {{ if ($sid -eq 'S-1-5-18') {{ 'S-1-5-19' }} else {{ 'S-1-5-18' }} }}
 }}
 function Get-Process {{ [pscustomobject]@{{SessionId=0}} }}
 function Get-ScheduledTask {{ [pscustomobject]@{{
