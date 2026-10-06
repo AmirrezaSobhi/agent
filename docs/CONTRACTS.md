@@ -47,6 +47,12 @@ Responses continue to use `CommandResult` with versioned payload schemas.
 
 Existing Command, Security, Transport, Observability, Configuration, and MT5Port contracts remain unchanged.
 
+The Windows production composition injects `RuntimeWorkerMT5Adapter` through
+the existing `MT5Port`; application handlers do not depend on named-pipe
+objects or raw Worker protocol dictionaries. The protocol has its own version
+and operation allowlist. Account information is returned only to the authorized
+application caller and must not be copied to logs or persistent CI evidence.
+
 ## Planned contract evolution (not implemented)
 
 `CommandEnvelope`, response/error, transfer and capability schemas for remote

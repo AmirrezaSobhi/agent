@@ -19,7 +19,9 @@ def build_dispatcher(
 
     def health_handler(command: Command):
         health = agent.health()
-        return {"ok": health.ok, "state": health.state.value, "message": health.message}
+        return {"ok": health.ok, "state": health.state.value, "message": health.message,
+                "agent_state": "AGENT_RUNNING" if health.state.value == "running" else health.state.value.upper(),
+                "runtime_state": health.runtime_state, "runtime": dict(health.runtime or {})}
 
     dispatcher.register(GET_STATUS, status_handler, capability_class=CapabilityClass.READ)
     dispatcher.register(GET_HEALTH, health_handler, capability_class=CapabilityClass.READ)

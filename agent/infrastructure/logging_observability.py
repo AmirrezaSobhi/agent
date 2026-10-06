@@ -73,6 +73,10 @@ class LoggingOperationalObservability:
 
     def record(self, event: OperationalEvent) -> None:
         message = self._MESSAGES.get(event.event_type)
+        if event.event_type is OperationalEventType.APPLICATION_STARTED:
+            code = event.metadata.get("agent_start_code") if event.metadata else None
+            if code == "started_degraded":
+                message = "Agent started; MT5 runtime is unavailable"
         if message:
             level = logging.ERROR if event.event_type.value.endswith("failed") else logging.INFO
             safe_log(self._logger, level, message)

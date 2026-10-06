@@ -1,7 +1,12 @@
 # ADR-001: Unattended MT5 Runtime Hosting on Windows
 
-**Status:** provisional; interactive-session viability demonstrated, unattended
-launch mechanism not yet demonstrated.
+**Status:** Accepted for the split-session lab architecture; commercial
+installation/service lifecycle remains pending. The implementation history and
+experiment sections below are contemporaneous records from 2026-09-24 and are
+preserved as historical evidence. Their statements that the Worker, IPC, or
+unattended launch were unimplemented have been superseded by the acceptance
+addendum at the end of this ADR. Do not use those old status statements as the
+current repository baseline.
 
 ## Runtime foundation (implemented, pending Windows lifecycle validation)
 
@@ -106,3 +111,26 @@ PID, creation/session identity and launch metadata; they must never broadly kill
 framing (for example Named Pipes protected by explicit ACLs), with service and
 Worker identities, replay/versioning and least-privilege rules specified before
 implementation.
+
+## Accepted implementation addendum (v0.1.3 development)
+
+The chosen architecture is a Session 0 control plane with a persistent
+interactive Worker under a dedicated standard local runtime user. The Worker
+owns the MetaTrader5 Python connection and terminal session; the Agent uses an
+authenticated local Named Pipe. The Worker task uses an interactive token after
+the runtime user's logon. Deterministic unattended cold boot uses the locally
+configured Sysinternals Autologon bootstrap; credentials are not stored in the
+repository. Direct Session 0 MT5 operation is not the production path.
+
+Accepted lab evidence demonstrated cold boot without RDP/console login,
+automatic interactive-session creation and Worker task startup, Session 0
+pipe authentication without `SeImpersonatePrivilege`, MT5 initialization,
+connected health, terminal/Worker account and session match, and repeated
+read-only operations. The current safe reads are symbols total, terminal
+version, and account information. No trading operation is included.
+
+This addendum does not claim a customer-ready installer, generally deployed
+Windows Service, or commercial production readiness. Phase 4D's three-Runner
+pipeline is implemented and locally validated; first live GitLab acceptance is
+still pending. See [MT5 Runtime Architecture](../MT5_RUNTIME_ARCHITECTURE.md),
+[Provisioning](../MT5_RUNTIME_PROVISIONING.md), and [Action Plan](../ACTION_PLAN.md).

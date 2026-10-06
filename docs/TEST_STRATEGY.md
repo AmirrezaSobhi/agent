@@ -1,5 +1,23 @@
 # Test Strategy — v0.1.3 development
 
+## Current acceptance layers
+
+The current suite separates portable source behavior from Windows runtime
+acceptance:
+
+- Linux: contracts, application logic, Worker protocol/adapter test doubles,
+  dependency isolation, and portable unit tests. The Windows launcher module
+  is excluded during collection because it imports Windows-only modules.
+- Windows no-MT5: Windows-compatible tests, clean Agent build, archive
+  inspection, invalid-configuration smoke, and degraded control-plane smoke.
+- Windows MT5: production Agent candidate through HTTP/application →
+  `MT5Port` → authenticated Worker IPC → interactive MT5 runtime; reads only.
+
+Phase 4D CI configuration is implemented and locally validated, but this
+strategy does not claim a live GitLab pipeline has passed. The live pipeline
+must retain build/control-plane/runtime evidence and prove identical candidate
+SHA across gates.
+
 ## Contract tests
 
 Verify:
@@ -69,14 +87,16 @@ no-MT5 confirmation, and packaging rejection of missing or mismatched evidence.
 These fixture tests never launch MT5 and do not substitute for executable smoke
 validation. They require Git and PowerShell 7; otherwise pytest reports skips.
 
-## Target testing gates — planned
+## Future testing gates — planned
 
-The production design adds schema/contract compatibility, persistence and crash
-recovery, idempotency, priority/fairness, transfer integrity and bounded-memory,
-transport, security/redaction, controlled Real-MT5, Windows-hosting, failure
-injection and release-acceptance layers. No test may submit a financially
-consequential real trade without explicit authorization and a safe environment.
-The detailed gate matrix is in [ROADMAP.md](ROADMAP.md).
+Further product work adds schema/contract compatibility, durable persistence
+and crash recovery, idempotency, priority/fairness, transfer integrity and
+bounded-memory, remote transport, security/redaction, generalized
+Windows-hosting, failure injection, and release-acceptance layers. The current
+safe Real-MT5 read gate is implemented in CI configuration and awaits its first
+live pipeline acceptance. No test may submit a financially consequential real
+trade without explicit authorization and a safe environment. The detailed
+status matrix is in [ROADMAP.md](ROADMAP.md).
 
 Mandatory safety scenarios before any execution capability include duplicate
 delivery, identical command retry, expired trade, cancellation before/after the

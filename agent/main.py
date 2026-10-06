@@ -23,8 +23,20 @@ def run(argv=None) -> int:
         return 0
     if args.diagnose:
         from agent.application.diagnostics import diagnose
-        from agent.infrastructure.terminal_inspection import inspect_terminal
-        result = diagnose(EnvironmentConfigurationProvider(), inspect_terminal)
+        def inspect_runtime(config):
+            from agent.composition import compose_agent
+
+            adapter = compose_agent(config).agent.mt5
+            inspect = getattr(adapter, "inspect_runtime", None)
+            if not callable(inspect):
+                return {
+                    "worker_available": False,
+                    "runtime_state": "RUNTIME_IPC_UNSUPPORTED",
+                    "last_error_code": "RUNTIME_IPC_UNSUPPORTED",
+                }
+            return inspect()
+
+        result = diagnose(EnvironmentConfigurationProvider(), inspect_runtime)
         if args.json:
             print(json.dumps(result, ensure_ascii=True))
         else:
@@ -33,10 +45,10 @@ def run(argv=None) -> int:
             print(f"HTTP: {result['configuration']['http_host']}:{result['configuration']['http_port']}")
             if "error" in result["configuration"]:
                 print(result["configuration"]["error"])
-            print(f"MT5 dependency available: {result['terminal']['dependency_available']}")
-            print(f"Terminal process running: {result['terminal']['process_running']}")
-            print("Terminal paths: " + (", ".join(result['terminal']['paths']) or "not discovered"))
-            print("Inspection errors: " + (", ".join(result['terminal']['errors']) or "none"))
+            print(f"Worker available: {result['runtime'].get('worker_available', False)}")
+            print(f"Runtime state: {result['runtime'].get('runtime_state', 'UNKNOWN')}")
+            if result['runtime'].get('last_error_code'):
+                print(f"Runtime error: {result['runtime']['last_error_code']}")
             print(f"Ready: {result['ready']}")
             print(result["limitations"])
         return 0 if result["ready"] else 1

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
+import os
 
 from agent.adapters.http_transport import HTTPTransportAdapter
-from agent.adapters.mt5_adapter import MT5Adapter
 from agent.application.app import build_dispatcher
 from agent.application.boundary import ApplicationBoundary
 from agent.application.dispatcher import CommandDispatcher
@@ -37,7 +37,8 @@ def compose_agent(
     operational_observability: OperationalObservabilityPort | None = None,
 ) -> AgentComposition:
     """Single composition root for concrete application dependencies."""
-    agent = Agent(mt5 or MT5Adapter())
+    selected_mt5 = mt5 if mt5 is not None else _default_mt5_adapter()
+    agent = Agent(selected_mt5)
 
     capability_registry = InMemoryCapabilityRegistry(
         (),
@@ -63,3 +64,38 @@ def compose_agent(
                                    else LoggingOperationalObservability()),
     )
     return AgentComposition(config, agent, dispatcher, application, transport, concrete_hosting, host)
+
+
+def _default_mt5_adapter() -> MT5Port:
+    """Select the split-session adapter for Windows production control planes."""
+    if os.name == "nt":
+        from agent.adapters.runtime_worker_mt5_adapter import PIPE_NAME, RuntimeWorkerMT5Adapter
+
+        try:
+            import winreg
+
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\MT5Agent\Runtime") as key:
+                principal = str(winreg.QueryValueEx(key, "RuntimePrincipal")[0]).strip()
+                try:
+                    pipe_name = str(winreg.QueryValueEx(key, "PipeName")[0]).strip()
+                except FileNotFoundError:
+                    pipe_name = PIPE_NAME
+            if not principal:
+                raise ValueError("RuntimePrincipal is empty")
+            return RuntimeWorkerMT5Adapter(
+                pipe_name=pipe_name,
+                expected_worker_principal=principal,
+                require_session_zero=True,
+            )
+        except Exception:
+            # Missing machine configuration is a degraded runtime, not a reason
+            # to terminate the Session 0 Agent before it can report health.
+            return RuntimeWorkerMT5Adapter(
+                configuration_error="RUNTIME_CONFIGURATION_UNAVAILABLE",
+                require_session_zero=True,
+            )
+    # Direct in-process integration remains available for explicit local
+    # development and non-Windows compatibility; it is never the Windows default.
+    from agent.adapters.mt5_adapter import MT5Adapter
+
+    return MT5Adapter()

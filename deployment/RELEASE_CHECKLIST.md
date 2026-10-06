@@ -1,45 +1,65 @@
-# Release checklist
+# MT5 Agent Release Checklist
 
-## Work Item #15 update trust policy
-
-An update candidate must have a trusted signer identity and exact SHA-256 integrity
-match before staging. It becomes last-known-good only after a health gate. This repository
-does not download, execute, or roll back an updater; package signing, rollout and end-to-end
-rollback remain **PENDING PRODUCTION VALIDATION**.
-
-Start a fresh unchecked checklist for every candidate. This template is not a
-record of a completed release. Historical release facts are in ../CHANGELOG.md.
+Start an unchecked copy for each candidate. This is a template, not a record of
+a completed release. Historical release facts remain in
+[CHANGELOG.md](../CHANGELOG.md). Promotion, tag creation, and publication each
+require their own authorization.
 
 ## Candidate and source
 
-- [ ] Record the candidate commit, intended version, and approved scope.
-- [ ] Confirm GitLab is the source of truth and GitHub is downstream only.
-- [ ] Confirm the candidate retains the approved development ancestry.
-- [ ] Review CHANGELOG.md and resolve or explicitly accept known issues.
-- [ ] Reconcile package, runtime identity, and executable versions before release.
-- [ ] Confirm no secrets, local environments, caches, or build outputs are tracked.
+- [ ] Record source commit, candidate version, intended scope, and reviewer.
+- [ ] Confirm GitLab is canonical and GitHub is a downstream mirror.
+- [ ] Review the complete diff, including explicit staging scope and docs.
+- [ ] Confirm version metadata, candidate filename, and tag policy agree.
+- [ ] Review current known issues and evidence status; do not infer live CI from
+  local tests or lab validation.
+- [ ] Confirm no credentials, local environments, generated evidence, caches,
+  or build output are included in source.
 
-## Validation
+## Source and build gates
 
-- [ ] GitLab CI Lint accepts .gitlab-ci.yml for the installed GitLab version.
-- [ ] Verify registered local Windows runner tags and no-MT5 isolation.
-- [ ] Validate active source syntax, imports, and package discovery.
-- [ ] Run pytest from repository root; collection is confined to tests/.
-- [ ] Generate the icon with python deployment/make_icon.py.
-- [ ] Build with python -m PyInstaller deployment/Agent.spec --clean --noconfirm.
-- [ ] Verify dist/MT5Agent-v0.1.2.exe exists and matches the canonical source version.
-- [ ] Verify invalid startup configuration exits with code 2.
-- [ ] On an isolated VM without an accessible MT5 terminal, verify exit code 1.
-- [ ] Record manual Windows/MT5 graceful-shutdown acceptance for the candidate.
-- [ ] Complete all GitLab stages, including the blocking manual smoke job.
-- [ ] Verify the packaged executable is byte-identical to the smoke-tested file.
-- [ ] Record its SHA-256 and verify the downloaded final CI artifact.
+- [ ] GitLab CI Lint accepts `.gitlab-ci.yml` for the installed GitLab version.
+- [ ] Linux source/unit job passes on `linux-source-unit` using the Runner's
+  isolated checkout/workspace.
+- [ ] Windows tests and build pass on `windows-self-hosted-no-mt5`.
+- [ ] Agent build environment proves MetaTrader5 and NumPy are absent.
+- [ ] PyInstaller archive excludes MetaTrader5, NumPy, Worker implementation,
+  legacy direct adapter, and local terminal inspection.
+- [ ] Build evidence records commit, pipeline, version, filename, size, Python,
+  dependency checks, forbidden-module inspection, and SHA-256.
+- [ ] Invalid-configuration and degraded control-plane checks pass without a
+  local MT5 installation.
 
-## Authorized promotion and release
+## Real runtime and artifact custody
 
-- [ ] Obtain approval for promotion from develop to staging, then to main.
-- [ ] Obtain separate approval before creating a new tag or release.
-- [ ] Preserve every existing tag and published release unchanged.
-- [ ] Publish the exact verified binary and checksum, without rebuilding it.
-- [ ] Verify downstream mirroring; do not commit or merge directly on GitHub.
-- [ ] Confirm GitHub remains mirror/archive only with no Actions workflow.
+- [ ] `windows-self-hosted-mt5` validates Worker task/configuration, expected
+  principal, nonzero session, authenticated local pipe, and protocol.
+- [ ] Candidate Agent runs through its production application/HTTP path from
+  Session 0; it does not import or initialize MetaTrader5 directly.
+- [ ] Health, `mt5.get_symbols_total`, `mt5.get_terminal_version`, and
+  `mt5.get_account_information` pass through the Worker. No trading occurs.
+- [ ] Runtime evidence redacts account values and contains no credentials.
+- [ ] Worker/terminal identity and session match; runtime remains connected.
+- [ ] Candidate SHA-256 matches build evidence before and after runtime smoke.
+- [ ] Final package gate validates matching commit, pipeline, version, filename,
+  and SHA-256 without rebuilding.
+- [ ] Retain build, control-plane, runtime, package receipts and job IDs.
+
+Required invariant: **BUILD ONCE → TEST SAME ARTIFACT → RELEASE SAME ARTIFACT**.
+Never rebuild or substitute the candidate after a smoke gate.
+
+## Promotion and release authorization
+
+- [ ] Review CI evidence and operational/security gaps.
+- [ ] Obtain separate authorization to promote `develop` → `staging` → `main`.
+- [ ] Obtain separate authorization before creating a tag or release.
+- [ ] Preserve existing release tags/assets and historical evidence unchanged.
+- [ ] Publish only the exact validated candidate and checksum; do not rebuild.
+- [ ] Confirm downstream mirroring without direct GitHub release mutation.
+
+## Scope exclusions
+
+The release gate is read-only. It must not place, modify, cancel, or close
+trades. It must not change Windows accounts, Runner registration, Scheduled
+Tasks, Autologon, pipe ACLs, BitLocker, TPM, Secure Boot, or recovery keys. The
+historical ACL experiment is not an ordinary release prerequisite.

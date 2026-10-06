@@ -8,19 +8,33 @@
 - **KI-002:** `agent.__version__` is the authority for package metadata,
   default runtime identity and executable naming. CI rejects mismatching tags.
 
-## Remaining historical issues
+## Current status
+
+The previous Session 0 limitation has been resolved for the accepted split
+runtime architecture. Phase 3F cold-boot acceptance demonstrated automatic
+`MT5RuntimeUser` interactive logon without RDP/console interaction, automatic
+Worker task startup, authenticated Session 0 IPC, MT5 initialization,
+connected health, same-session terminal ownership, safe reads, and persistent
+runtime health. This is lab evidence, not a general installer/support
+acceptance.
+
+Phase 4D CI topology is implemented and locally validated; its first live
+GitLab pipeline is still pending. The repository also lacks generally
+productized Windows Service installation/recovery, signed installer/upgrades,
+and customer provisioning. See [Action Plan](ACTION_PLAN.md).
+
+## Historical maintenance issues
 
 Historical paths below refer to baseline
 `1a133e6c6ea1b02a039f45610182037d347390ba` and remain accessible with `git show`.
 
-## KI-008: Session 0 blocks a Real-MT5 runtime claim
+## KI-008: Direct Session 0 MT5 is unsupported; split runtime is lab validated
 
-Pipeline #16 recorded that the MT5 runner service executes in Windows Session 0.
-The MetaTrader5 Python package uses terminal IPC, and no safe real-runtime test
-has demonstrated that this GUI-dependent path works from Session 0. The current
-probe is deliberately inspection-only; it does not start, stop, or kill any
-user-owned `terminal64.exe`. A production Windows-hosting decision is required
-before claiming unattended MT5 integration. See [TARGET_ARCHITECTURE.md](TARGET_ARCHITECTURE.md).
+The original Session 0 concern remains valid for direct in-process MT5 access,
+which is not the production architecture. It is resolved by the interactive
+Worker boundary and was validated in the lab, including a cold boot without
+human login. Do not regress to direct Session 0 MT5. Broader customer deployment
+and first live Phase 4D CI acceptance remain open gates.
 
 ## KI-003: historical Worker is syntactically incomplete
 

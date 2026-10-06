@@ -10,16 +10,16 @@ revalidated here, so no publication dates are inferred from commit timestamps.
 
 ### Changed
 
-- CI now automatically fails safe and runs the terminal-unavailable smoke only after
-  the Agent's packaged inspection proves the dedicated runner has no discoverable MT5.
-- Added a separate, inspection-only MT5-runner smoke for the reference installation
-  and data environment; it never starts or terminates MT5.
-- Added retained MT5-runner session and process-ownership probe evidence before any
-  future controlled terminal or Agent runtime attempt.
-- Documented the product boundary, target architecture, dependency-aware roadmap,
-  GitLab planning package and Persian Wiki source. These are planning artifacts;
-  they do not add Kafka, SQLite, trading, mTLS, service hosting, or remote-command
-  execution.
+- Production Windows composition now uses `RuntimeWorkerMT5Adapter` and
+  authenticated local named-pipe IPC; the interactive Worker owns the
+  persistent MetaTrader5 API runtime.
+- The Agent/control-plane dependency set excludes MetaTrader5 and NumPy; Worker
+  and explicit legacy MT5 development dependencies are separate.
+- CI is organized into Linux source/unit, Windows no-MT5 build/control-plane,
+  and Windows real-MT5 runtime roles. Phase 4D is implemented and locally
+  validated; first live GitLab pipeline acceptance is pending.
+- Documentation now distinguishes implemented, lab-validated, CI-accepted,
+  production-ready, and planned work. No v0.1.3 release is claimed.
 
 ### Added
 
@@ -34,6 +34,16 @@ revalidated here, so no publication dates are inferred from commit timestamps.
 - Durable outbox with send-attempt versus acknowledgement semantics and resync snapshots.
 - First pure-READ MT5 slice: terminal information, terminal version, and account
   information through explicit, typed allowlisted adapter calls only.
+- Persistent interactive Runtime Worker with bounded, serialized read-only MT5
+  operations, health/reconnect lifecycle, authenticated local IPC, and explicit
+  separation from the Session 0 Agent.
+- Safe `symbols_total`, terminal-version, and account-information reads through
+  the production Agent/Worker boundary. No trading operation is added.
+- Dedicated standard-user provisioning scripts, protected Worker code/data
+  separation, interactive task registration, machine-local runtime policy, and
+  unattended cold-boot lab validation using automatic interactive logon.
+- Worker-aware diagnostics, Agent/Worker dependency isolation, and Phase 4D
+  candidate artifact/evidence checks.
 
 ## [0.1.2] — Diagnostics, lifecycle logging, and dual-runner CI foundation
 

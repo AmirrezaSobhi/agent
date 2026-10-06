@@ -1,74 +1,100 @@
-# Current Architecture — v0.1.3 development
+# Architecture
 
-## Status boundary
+**Baseline:** v0.1.3 development candidate. The split-session Runtime Worker is
+implemented and lab validated. Phase 4D CI is implemented and locally validated;
+live GitLab pipeline acceptance is pending. These labels describe different
+evidence levels; see [CI](CI.md) and [Action Plan](ACTION_PLAN.md).
 
-This document describes the implemented package only. The approved product
-direction and proposed production boundaries are separately documented in
-[TARGET_ARCHITECTURE.md](TARGET_ARCHITECTURE.md); they are not implemented
-features. The Agent is an MT5 access/execution worker, never an AI, strategy,
-risk, capital-management, or autonomous trading-decision component.
+## Runtime boundary
 
-## Agent Capability Discovery & Runtime Introspection Foundation
+The supported Windows production path keeps the Agent/control plane separate
+from MT5's interactive user session:
 
-```text
-External System
-      ↓
-Command Boundary
-      ↓
-Capability Commands
-      ↓
-CapabilityProviderPort
-      ↓
-InMemoryCapabilityRegistry
-      ↓
-Agent Runtime
+```mermaid
+flowchart TD
+  subgraph S0[Windows Session 0]
+    A[MT5 Agent / control plane]
+    C[RuntimeWorkerMT5Adapter]
+    A --> C
+  end
+  P[Authenticated local Named Pipe]
+  subgraph SI[Interactive Windows session, SessionId != 0]
+    W[Persistent Runtime Worker<br/>MT5RuntimeUser]
+    M[MetaTrader 5 / terminal64.exe]
+    W --> M
+  end
+  C --> P --> W
 ```
 
-## Ownership
+On Windows, `agent.composition._default_mt5_adapter()` selects
+`RuntimeWorkerMT5Adapter`. It reads machine-local runtime configuration and
+requires the control process to be in Session 0. The Session 0 Agent does not
+import MetaTrader5 or call its API. `MT5Port` keeps application code independent
+of the IPC implementation. The Worker is the sole owner of the persistent
+MetaTrader5 Python API connection and performs allowlisted operations in its
+interactive session.
 
-The Composition Root creates concrete capability dependencies and injects them into the application boundary. Capability registration is runtime-local and immutable after startup.
+The Worker uses protocol version 1, bounded JSON messages, request IDs, response
+correlation, an explicit operation allowlist, and replay-window checks. Windows
+pipe ACL authorization is restricted to the SID resolved from configured
+`ControlPrincipal`; remote pipe clients are rejected and the Worker also checks
+the client SessionId is 0. The server does not impersonate the caller. This is
+account-level authorization: every process running as the configured control
+principal can access the endpoint.
 
-`CapabilityProviderPort` exposes capability discovery without coupling Core/Application layers to transport, persistence, HTTP, or MT5 infrastructure.
+The primary safe MT5 reads are `mt5.get_symbols_total`,
+`mt5.get_terminal_version`, and `mt5.get_account_information`. The current
+`mt5.get_terminal_information` command returns a sanitized runtime-health
+projection; it is not a separate arbitrary Worker API call. No trading command
+is enabled or represented as production-ready.
 
-## Capability Lifecycle
+## Lifecycle and readiness
 
-```text
-Defined
-   ↓
-Validated
-   ↓
-Registered
-   ↓
-Available
-   ↓
-Discovered
-```
+The Agent stays alive when the interactive runtime or pipe is unavailable.
+Startup attempts the Worker connection and may remain `AGENT_RUNNING` with
+health degraded. The adapter uses bounded timeouts and retry backoff. A healthy
+Agent process alone does not mean MT5 is ready: readiness requires an available,
+authenticated Worker and live `MT5_CONNECTED` health. The Worker initializes
+MT5 on request, keeps the API connection between normal requests, serializes
+operations, and owns bounded recovery. Detaching or stopping the Agent client
+does not stop the persistent Worker or terminal.
 
-## Isolation invariants
+## Boot and session model
 
-- Core and Contracts do not import HTTP implementation, persistence, external APIs, or MetaTrader5 infrastructure.
-- Capability registry remains in-memory.
-- No second command transport is introduced.
-- Existing ApplicationBoundary and Dispatcher flow remain unchanged.
+The lab-validated bootstrap is a standard local `MT5RuntimeUser` automatic
+interactive logon, followed by an `AtLogOn` Scheduled Task using an interactive
+token. The persistent Worker and terminal run in that nonzero session. The
+Session 0 Agent discovers readiness through IPC rather than relying on a fixed
+startup delay. RDP disconnect is not logoff; explicit logoff destroys the
+interactive runtime, after which the Agent remains alive and reports degraded
+health. See [runtime provisioning](MT5_RUNTIME_PROVISIONING.md).
 
-## Security and observability
+**Lab validated:** cold reboot without RDP/console login created the runtime
+session, started the Worker, authenticated Session 0 IPC, initialized MT5,
+confirmed connectivity, and completed safe reads. This proves the lab topology,
+not a signed installer or a general customer VPS support commitment.
 
-Security ordering remains Validation → Authentication → Authorization → Dispatch.
+## Dependency and artifact boundary
 
-Capability discovery uses the existing command path and does not modify operational observability boundaries.
+The control-plane Agent has no production MetaTrader5 or NumPy runtime
+dependency. The PyInstaller Agent candidate excludes MetaTrader5, NumPy, the
+interactive Worker implementation, and the legacy direct `MT5Adapter`. The
+Worker uses its separate pinned dependency set. A direct adapter remains only
+for explicit development/legacy and compatibility test use. See
+[configuration](CONFIGURATION.md), [CI](CI.md), and [release process](RELEASE_PROCESS.md).
 
-## Diagnostics and production observability (v0.1.2)
+## Product scope and status
 
-CLI parsing stays at the entry point. Diagnostics reuse the configuration
-provider and delegate Windows inspection to infrastructure, without composing a
-host. The vendor API exposes auto-discovery through initialization, which may
-launch a terminal; therefore self-check uses an explicitly bounded inventory
-instead of calling initialize. See the
-[official initialize contract](https://www.mql5.com/en/docs/python_metatrader5/mt5initialize_py).
-Normal runtime selection is unchanged.
+Implemented application capabilities include health/status and the safe MT5
+reads listed above. There is no production trading, order placement, position
+management, Kafka-backed command ingestion, or customer installer/service
+provisioning in this baseline. SQLite, remote configuration, transport, and
+security modules documented elsewhere are foundations unless explicitly wired
+into the production composition; their presence alone does not mean they are
+active in the Agent request path.
 
-Production composition injects LoggingOperationalObservability via the existing
-port. NullOperationalObservability remains available for isolated hosts/tests.
-The adapter only emits allowlisted lifecycle messages, ignoring arbitrary event
-metadata. Concrete MT5 and HTTP infrastructure log initialization/listening and
-shutdown details through best-effort standard logging; Core remains isolated.
+The current process can run as a Session 0 control process, but a commercial
+Windows Service installer, service recovery policy, signed upgrade flow, and
+generalized customer provisioning are not yet accepted. Do not describe the
+product as production ready until those gates and the first live Phase 4D
+pipeline pass. See [known issues](KNOWN_ISSUES.md) and [Action Plan](ACTION_PLAN.md).

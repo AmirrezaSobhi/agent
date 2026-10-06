@@ -1,6 +1,7 @@
 import importlib
 import logging
 
+from agent.contracts.mt5 import MT5ReadError
 from agent.infrastructure.logging_observability import safe_log
 from agent.infrastructure.terminal_inspection import inspect_terminal
 
@@ -72,6 +73,4 @@ class MT5Adapter:
     def terminal_information(self): return self._read("terminal_info")
     def terminal_version(self): return self._read("version")
     def account_information(self): return self._read("account_info")
-
-class MT5ReadError(RuntimeError):
-    def __init__(self, code, details): super().__init__(code); self.code=code; self.details=details
+    def symbols_total(self): return self._read("symbols_total")

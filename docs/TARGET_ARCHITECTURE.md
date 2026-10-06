@@ -1,7 +1,10 @@
 # Target Architecture and Decisions
 
-**Status:** proposed architecture for review; only the current HTTP/lifecycle
-foundation is implemented. **Principle:** the Server thinks; the Agent executes,
+**Status:** This document describes the future server/transport/product architecture.
+Its opening boundary is not the current production runtime. The local
+Session 0 Agent → authenticated Worker → interactive MT5 boundary is already
+implemented and lab validated; see [MT5 Runtime Architecture](MT5_RUNTIME_ARCHITECTURE.md)
+and [ADR-001](ADR/ADR-001-unattended-mt5-runtime-hosting.md). **Principle:** the Server thinks; the Agent executes,
 retrieves, protects, persists, reports and recovers. The Agent never contains AI,
 trading strategy, risk or capital-management decisions.
 
@@ -30,7 +33,7 @@ orchestration.
 
 | Area | Decision | Rationale / guardrail |
 | --- | --- | --- |
-| Service and Session 0 | Separate the durable Agent service/control process from a session-bound MT5 execution broker. A controlled Session 1 experiment proved direct interactive API viability; supported unattended launch remains unproven. Prefer a per-user scheduled-task/interactive broker with authenticated local IPC, supervised by an automatic service. | Do not use desktop-interaction service hacks or kill terminals. A service directly calling MT5 IPC remains **blocked**. See ADR-001. |
+| Service and Session 0 | The accepted local runtime now separates a Session 0 Agent/control process from a persistent MT5 Worker in the dedicated user's interactive session, using authenticated local IPC and an interactive Scheduled Task. Cold-boot lab behavior is validated. Commercial Windows Service installation, recovery, and customer provisioning remain future work. | Do not use desktop-interaction service hacks or kill terminals. A service directly calling MT5 IPC is not the supported path. See ADR-001 and MT5_RUNTIME_ARCHITECTURE.md. |
 | Capability model | Named, allowlisted, versioned operations with typed JSON parameters; no remote Python/code execution. | Enables API coverage without code injection. Read capabilities precede trade capabilities. |
 | Command envelope | Do not freeze V1 yet. Require `schema_version`, immutable `command_id`, target `agent_id`, operation, parameters, priority, created/expiry times, correlation ID, idempotency key, reply routing and signed/auth context. | Validate bounds/type/schema before authorization and durable acceptance. |
 | Idempotency | Persist a command state machine keyed by `command_id` plus scoped idempotency key before MT5 side effects. A duplicate returns stored/in-progress result, never automatically repeats execution. | At-least-once delivery is transport behavior, not permission to repeat a trade. |
@@ -121,12 +124,12 @@ truncate an arbitrary global ID.
 
 ## Evidence and open decisions
 
-The current pipeline #16 is reported as 9/9 passed with 133 local/unit tests and
-the stated v0.1.3 artifact checksum. This document does not independently prove
-artifact download or a live real-MT5 execution. The remaining implementation
-questions are the tested Windows topology, exact schemas/limits, supported
-initial command inventory and operational retention values—not the safety
-invariants above.
+The pipeline #16 checksum/test summary below is historical and is not evidence
+for the current v0.1.3 candidate. The split-session topology has since been
+validated in the lab. Phase 4D CI is implemented and locally validated, but its
+first live GitLab pipeline is pending. Remaining product work includes service
+installation/recovery, exact future schemas/limits, broader read inventory, and
+operational retention values—not changing the accepted local runtime boundary.
 
 Sources: [MQL5 Python API](https://www.mql5.com/en/docs/python_metatrader5),
 [copy_rates_range semantics](https://www.mql5.com/en/docs/python_metatrader5/mt5copyratesrange_py).

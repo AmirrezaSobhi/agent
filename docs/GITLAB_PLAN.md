@@ -1,8 +1,10 @@
 # GitLab Planning Package
 
-**Status:** planning baseline. The GitLab issues, labels, milestones, board lists
-and Wiki pages are applied through authenticated GitLab access; this file remains
-the version-controlled traceability source.
+**Status:** historical planning/traceability baseline. The issue taxonomy and
+GitLab planning changes recorded below are not a current Phase 4D acceptance
+receipt. Repository Markdown remains canonical. The Wiki strategy for the
+accepted runtime/docs baseline is in [GITLAB_WIKI_PLAN.md](GITLAB_WIKI_PLAN.md).
+Phase status and next actions are in [ACTION_PLAN.md](ACTION_PLAN.md).
 
 ## Proposed labels and workflow
 
@@ -19,7 +21,7 @@ Validation/review, Done. Milestones are capability gates—not calendar promises
 
 | Title | Phase / labels | Dependency and acceptance summary |
 | --- | --- | --- |
-| Approve unattended MT5 hosting topology | A, `architecture`, `blocked`, `service`, `mt5` | Controlled Session 0 vs session-broker experiment; document safe topology and rollback. |
+| Approve unattended MT5 hosting topology | A, `architecture`, `service`, `mt5` | Superseded by the accepted split-session lab architecture in ADR-001; commercial installer/service validation remains open. |
 | Define versioned command, response and error contracts | A, `architecture`, `security` | Threat model and capability taxonomy; schemas, compatibility policy and negative tests. |
 | Define identity, enrollment and credential lifecycle | A, `security` | Installation vs Agent vs entitlement separation; provision/rotate/revoke/reinstall acceptance. |
 | Implement durable command/outbox/idempotency state | C, `feature`, `persistence` | Approved contracts; crash/restart, disk-full, retention and duplicate-execution tests. |
@@ -28,7 +30,7 @@ Validation/review, Done. Milestones are capability gates—not calendar promises
 | Deliver Kafka and HTTPS control adapters | F, `feature`, `transport`, `security` | Durable core; mTLS/ack/outage/backpressure/redaction tests. |
 | Deliver observability and support controls | F, `feature`, `observability` | Durable state; liveness/readiness, safe heartbeat/log rotation/support runbook. |
 | Decide and implement typed execution capability slice | G, `architecture`, `security`, `mt5` | Explicit product authorization; sandbox-only non-duplicate/retcode/correlation evidence. |
-| Production unattended hardening and release gate | H, `feature`, `service`, `blocked` | All dependencies; boot/recovery/quiesce/upgrade/release acceptance. |
+| Production unattended hardening and release gate | H, `feature`, `service` | Lab boot/runtime accepted; Phase 4D live CI, service/install, upgrade, recovery, and commercial release acceptance remain. |
 
 Every issue description must include purpose, context, scope, non-goals,
 dependencies, acceptance criteria, tests, security/operational/documentation

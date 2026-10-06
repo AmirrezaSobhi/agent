@@ -1,5 +1,11 @@
 # Durable SQLite Foundation — v0.1.3
 
+This is an implemented infrastructure foundation, not the persistence backend
+of the current production HTTP/Worker runtime. The current composition does not
+wire durable command processing into the Agent request path. Do not infer
+production command replay, trading, or recovery behavior from this module's
+presence.
+
 **Implemented:** `SQLiteDurableCommandState` is an infrastructure adapter behind
 `DurableCommandStatePort`. It owns one local SQLite connection, enables WAL,
 foreign keys and a bounded 5-second busy timeout, and applies schema version 1

@@ -12,6 +12,16 @@ v0.0.8 adds process-lifecycle outcomes outside the client request model:
 
 Raw hosting exceptions are logged internally and are not converted into HTTP client responses.
 
+## Runtime Worker errors
+
+On the Windows production path, IPC, authentication, protocol, timeout, Worker,
+and MT5 errors are translated at the adapter boundary into bounded
+`MT5ReadError`/health codes. The Agent remains alive in degraded mode when the
+Worker is temporarily unavailable. Malformed or mismatched protocol responses
+fail closed. Raw account-information values and credentials are not copied into
+error details. A failed read does not authorize a retry of any trading action;
+the current Worker command allowlist contains no trading operation.
+
 Failure precedence is deterministic: when hosting fails and Agent cleanup also fails, the hosting failure remains primary and cleanup failure is logged. Cleanup is attempted whenever Agent startup succeeded.
 
 ## Target error model — planned
