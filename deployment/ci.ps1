@@ -208,7 +208,14 @@ function Stop-CandidateAgent {
     if ($null -eq $Process) { return }
     $current = Get-Process -Id $Process.Id -ErrorAction SilentlyContinue
     if ($current) {
-        # This PID is the temporary candidate started by this job; never target a name or process tree.
+        # PyInstaller one-file uses a bootloader parent and an application child.
+        # Only stop direct children whose executable is this exact candidate;
+        # never target the persistent Worker, terminal, a name, or a process tree.
+        $children = @(Get-CimInstance -ClassName Win32_Process -Filter "ParentProcessId = $($Process.Id)" -ErrorAction Stop |
+            Where-Object { $_.ExecutablePath -ieq $exePath })
+        foreach ($child in $children) {
+            Stop-Process -Id $child.ProcessId -Force -ErrorAction SilentlyContinue
+        }
         Stop-Process -Id $Process.Id -Force -ErrorAction SilentlyContinue
         $null = $current.WaitForExit(10000)
     }
@@ -273,8 +280,16 @@ function Assert-WorkerTaskAndPreflight {
         throw 'CI caller does not match configured ControlPrincipal SID'
     }
     $task = Get-ScheduledTask -TaskName 'MT5 Agent Interactive Runtime Worker - MT5RuntimeUser' -ErrorAction Stop
+    $taskPrincipal = [string]$task.Principal.UserId
+    $taskSid = if ($taskPrincipal -match '^S-1-') {
+        ([System.Security.Principal.SecurityIdentifier]$taskPrincipal).Value
+    } else {
+        ([System.Security.Principal.NTAccount]$taskPrincipal).Translate([System.Security.Principal.SecurityIdentifier]).Value
+    }
+    # ScheduledTasks CIM calls this enum Interactive; task XML calls it
+    # InteractiveToken. Both represent TASK_LOGON_INTERACTIVE_TOKEN (3).
     if ($task.State.ToString() -ne 'Running' -or -not $task.Settings.Enabled -or
-        $task.Principal.UserId -ine $expectedRuntime -or $task.Principal.LogonType.ToString() -ne 'InteractiveToken') {
+        $taskSid -ine $expectedRuntimeSid -or [int]$task.Principal.LogonType -ne 3) {
         throw 'Dedicated interactive Worker task is not running under the configured principal and logon type'
     }
     $runtime = $Inspection.runtime

@@ -226,3 +226,53 @@ def test_package_requires_both_runtime_gates(checkout, name):
     result = run_task(checkout, "package")
     assert result.returncode != 0
     assert not (path / "sha256.txt").exists()
+
+
+@requires_ci_tools
+@pytest.mark.skipif(os.name != "nt", reason="Windows principal SID translation")
+@pytest.mark.parametrize("principal_form, logon_type, enabled, state, valid", [
+    ("short", 3, True, "Running", True),
+    ("qualified", 3, True, "Running", True),
+    ("sid", 3, True, "Running", True),
+    ("wrong_sid", 3, True, "Running", False),
+    ("short", 4, True, "Running", False),
+    ("short", 1, True, "Running", False),
+    ("short", 3, False, "Running", False),
+    ("short", 3, True, "Ready", False),
+])
+def test_worker_task_preflight_matches_sid_and_exact_interactive_logon(
+    checkout, principal_form, logon_type, enabled, state, valid
+):
+    path, env = checkout
+    script = path / "task-preflight.ps1"
+    script.write_text(f"""
+. '{path / 'deployment/ci.ps1'}' -Task metadata
+$identity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+$principal = $identity.Name
+$sid = $identity.User.Value
+$short = ($principal -split '\\\\')[-1]
+$taskUser = switch ('{principal_form}') {{
+    'short' {{ $short }}
+    'qualified' {{ $principal }}
+    'sid' {{ $sid }}
+    'wrong_sid' {{ 'S-1-5-18' }}
+}}
+function Get-Process {{ [pscustomobject]@{{SessionId=0}} }}
+function Get-ScheduledTask {{ [pscustomobject]@{{
+    State='{state}'; Settings=[pscustomobject]@{{Enabled=${str(enabled).lower()}}}
+    Principal=[pscustomobject]@{{UserId=$taskUser;LogonType={logon_type}}}
+}} }}
+$config = [pscustomobject]@{{RuntimePrincipal=$principal;ControlPrincipal=$principal}}
+$inspection = [pscustomobject]@{{runtime=[pscustomobject]@{{
+    worker_available=$true;protocol_version='1';control_session_id=0
+    runtime_state='MT5_NOT_INITIALIZED'
+    worker_identity=[pscustomobject]@{{account=$principal;sid=$sid;session_id=1;pid=10;protocol_version='1'}}
+}}}}
+try {{ $null=Assert-WorkerTaskAndPreflight -RuntimeConfiguration $config -Inspection $inspection }}
+catch {{ Write-Output 'PRECONDITION_REJECTED'; exit 1 }}
+Write-Output 'PRECONDITION_ACCEPTED'
+""", encoding="utf-8")
+    result = subprocess.run([PWSH, "-NoProfile", "-File", str(script)],
+                            env=env, text=True, capture_output=True, timeout=30)
+    assert (result.returncode == 0) == valid, result.stdout + result.stderr
+    assert ("PRECONDITION_ACCEPTED" if valid else "PRECONDITION_REJECTED") in result.stdout
