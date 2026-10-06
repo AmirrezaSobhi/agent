@@ -276,3 +276,18 @@ Write-Output 'PRECONDITION_ACCEPTED'
                             env=env, text=True, capture_output=True, timeout=30)
     assert (result.returncode == 0) == valid, result.stdout + result.stderr
     assert ("PRECONDITION_ACCEPTED" if valid else "PRECONDITION_REJECTED") in result.stdout
+
+
+@requires_ci_tools
+@pytest.mark.parametrize("payload, expected", [("{}", 0), ('{"field_one":null,"field_two":null}', 2)])
+def test_runtime_account_field_count_handles_json_objects_under_strict_mode(tmp_path, payload, expected):
+    script_source = (ROOT / "deployment/ci.ps1").read_text(encoding="utf-8")
+    expression = re.search(r"\$accountFieldCount = (.*PSObject.Properties.*)", script_source).group(1)
+    script = tmp_path / "field-count.ps1"
+    script.write_text("Set-StrictMode -Version Latest\n" +
+                      f"$account = [pscustomobject]@{{data=[pscustomobject]@{{result=('{payload}' | ConvertFrom-Json)}}}}\n" +
+                      f"$accountFieldCount = {expression}\nWrite-Output $accountFieldCount\n", encoding="utf-8")
+    result = subprocess.run([PWSH, "-NoProfile", "-File", str(script)],
+                            text=True, capture_output=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == str(expected)

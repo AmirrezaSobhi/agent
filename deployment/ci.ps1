@@ -480,7 +480,7 @@ try {
                 if ($account.data.result -is [System.Collections.IDictionary]) {
                     $accountFieldCount = $account.data.result.Count
                 } else {
-                    $accountFieldCount = $account.data.result.PSObject.Properties.Count
+                    $accountFieldCount = @($account.data.result.PSObject.Properties).Count
                 }
                 $finalResponse = Invoke-AgentCommand -Port $port -CommandType 'agent.get_health' -TimeoutSeconds 30
                 Assert-CommandSuccess -Response $finalResponse -CommandType 'agent.get_health'
