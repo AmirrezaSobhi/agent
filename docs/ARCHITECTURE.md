@@ -1,10 +1,15 @@
 # Architecture
 
-**Baseline:** v0.1.3 development candidate. The split-session Runtime Worker is
-implemented and lab validated. Phase 4D is **LIVE CI ACCEPTED / GO** in
-[Pipeline #11](evidence/v0.1.3/phase4d-live-ci-acceptance.md), including the
-Session 0 Agent / Session 1 Worker and terminal. Live CI acceptance is distinct
-from commercial production readiness; see [CI](CI.md) and [Action Plan](ACTION_PLAN.md).
+**Baseline:** released v0.1.3. The split-session Runtime Worker is implemented
+and lab validated. Release Pipeline #16 accepted the tagged artifact; Pipeline
+#17 later validated the `develop` revision. Pipeline #11 remains historical
+Phase 4D candidate evidence in the
+[original acceptance record](evidence/v0.1.3/phase4d-live-ci-acceptance.md).
+The initial runtime smoke failure in Pipeline #17 has an unknown cause and
+does not establish general Worker startup reliability; see
+[post-release validation](evidence/v0.1.3/post-release-validation.md). CI
+acceptance is distinct from commercial production readiness; see [CI](CI.md)
+and [Action Plan](ACTION_PLAN.md).
 
 ## Runtime boundary
 
@@ -80,7 +85,8 @@ not a signed installer or a general customer VPS support commitment.
 The control-plane Agent has no production MetaTrader5 or NumPy runtime
 dependency. The PyInstaller Agent candidate excludes MetaTrader5, NumPy, the
 interactive Worker implementation, the legacy direct `MT5Adapter`, and
-`terminal_inspection`. Recursive archive inspection passed in Pipeline #11. The
+`terminal_inspection`. Recursive archive inspection passed in Pipeline #16;
+the earlier candidate was also inspected in Pipeline #11. The
 Worker uses its separate pinned dependency set. A direct adapter remains only
 for explicit development/legacy and compatibility test use. See
 [configuration](CONFIGURATION.md), [CI](CI.md), and [release process](RELEASE_PROCESS.md).

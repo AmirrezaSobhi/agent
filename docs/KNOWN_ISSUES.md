@@ -18,11 +18,16 @@ connected health, same-session terminal ownership, safe reads, and persistent
 runtime health. This is lab evidence, not a general installer/support
 acceptance.
 
-Phase 4D is **LIVE CI ACCEPTED / GO** in
-[Pipeline #11](evidence/v0.1.3/phase4d-live-ci-acceptance.md). The accepted
-candidate's live CI gates are complete. The repository still lacks generally
-productized Windows Service installation/recovery, signed installer/upgrades,
-and customer provisioning. See [Action Plan](ACTION_PLAN.md).
+v0.1.3 is released from tag `v0.1.3` at commit
+`970c04712853295fd065094b11a2bd541b5a9db8`; Release Pipeline #16 passed all
+eight gates. Pipeline #11 remains historical candidate evidence. Pipeline #17
+is separate post-release validation on `develop`; its first MT5 runtime smoke
+failed, while a later execution succeeded. The initial failure cause is
+unknown and Worker startup reliability remains under investigation. The
+repository still lacks generally productized Windows Service
+installation/recovery, signed installer/upgrades, and customer provisioning.
+See [Action Plan](ACTION_PLAN.md) and
+[post-release validation](evidence/v0.1.3/post-release-validation.md).
 
 ## Historical maintenance issues
 
@@ -77,20 +82,35 @@ The migration preserved six active test files; v0.1.1 adds targeted regressions.
 Some import the old `contracts.models.AgentConfig`; they need API adaptation
 and coverage review in a separate task, not blind collection in this migration.
 
-## KI-009: MT5-host clock skew
+## KI-009: Time synchronization monitoring and persistence follow-up
 
-Acceptance observed approximately **10h30m** disagreement between MT5-host and
-Linux UTC. Do not use cross-host log timestamps alone to order events or infer
-freshness, deadlines, or replay safety. Commit/pipeline/hash and correlated
-identity evidence remain the acceptance anchors. Controlled staging can proceed
-with the risk recorded; final publication requires approved remediation and
-revalidation or explicit release-owner risk acceptance. See the
+Pipeline #11 acceptance observed approximately **10h30m** disagreement between
+MT5-host and Linux UTC. The v0.1.3 release record states that Pipeline #16
+established W32Time synchronization, independently verified UTC accuracy, and
+correlated tag-pipeline timestamps with GitLab. Do not use cross-host log times
+alone to infer ordering, freshness, deadlines, or replay safety. Autonomous
+time polling and synchronization persistence through reboot/network transition
+remain operational follow-up; see the
 [operations plan](OPERATIONS.md#clock-skew-and-audit-correlation).
 
 ## KI-010: Candidate retention and ref provenance
 
 Job #85's package is scheduled to expire on **2026-11-05**. Preserve it and its
-redacted receipts through an approved retention/publication action before
-expiry. Another pipeline builds a separately provenanced candidate; it cannot
-recover or replace the accepted hash by rebuilding. See
-[Release Process](RELEASE_PROCESS.md#controlled-promotion-and-publication-plan).
+redacted receipts if the historical Pipeline #11 candidate is still needed.
+This is distinct from the released v0.1.3 binary: Pipeline #16 Job #125's
+artifact is in the Generic Package Registry as `mt5-agent` version `0.1.3`,
+with its SHA-256 recorded in the release notes. A rebuild cannot recover or
+replace either candidate's original provenance. See
+[Release Process](RELEASE_PROCESS.md#historical-promotion-and-publication-record).
+
+## KI-011: MT5 Worker startup reliability is not resolved
+
+In post-release Pipeline #17, MT5 runtime smoke Job #132 failed with
+`script_failure`; the expected runtime report was absent. Later Job #134 passed
+and recorded `MT5_CONNECTED`, Agent Session 0, Worker and terminal Session 1,
+and three successful safe reads. The root cause of Job #132 is unknown. A
+Windows reboot and manual retry were reported operationally but are not
+independently proven by the GitLab API. Do not attribute this incident to
+startup timing without evidence, and do not mark Worker startup reliability as
+resolved because of the successful later execution. See
+[post-release validation](evidence/v0.1.3/post-release-validation.md).

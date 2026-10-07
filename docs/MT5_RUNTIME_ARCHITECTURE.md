@@ -1,9 +1,13 @@
 # MT5 Runtime Architecture
 
-**Status:** IMPLEMENTED; LAB VALIDATED; LIVE CI ACCEPTED in
-[Pipeline #11](evidence/v0.1.3/phase4d-live-ci-acceptance.md). This describes the runtime boundary,
-not a general-purpose installer. Operational setup is in
-[MT5 Runtime Provisioning](MT5_RUNTIME_PROVISIONING.md).
+**Status:** IMPLEMENTED; LAB VALIDATED; included in released v0.1.3 and
+validated by release Pipeline #16. Pipeline #11 is historical candidate
+evidence; Pipeline #17 is separate post-release validation. The initial MT5
+smoke failure in Pipeline #17 has an unknown cause, so startup reliability is
+not marked resolved. This describes the runtime boundary, not a general-purpose
+installer. Operational setup is in
+[MT5 Runtime Provisioning](MT5_RUNTIME_PROVISIONING.md) and the
+[post-release validation record](evidence/v0.1.3/post-release-validation.md).
 
 ## Process and session ownership
 
@@ -76,9 +80,11 @@ remains alive and degraded and waits for authorized session recovery. RDP
 disconnect/lock is not treated as logoff.
 
 General customer provisioning, an installer-managed Windows Service,
-service recovery, code signing, and upgrade/rollback remain open. Phase 4D live
-CI acceptance passed with the Agent in Session 0 and Worker/terminal in Session 1. The control-plane process can execute in Session 0;
-this does not imply an accepted commercial service installer.
+service recovery, code signing, and upgrade/rollback remain open. Pipeline #16
+release evidence and Pipeline #17 post-release evidence recorded the Agent in
+Session 0 and Worker/terminal in Session 1. The control-plane process can
+execute in Session 0; this does not imply an accepted commercial service
+installer or prove that Worker startup reliability is resolved.
 
 ## Capability boundary
 

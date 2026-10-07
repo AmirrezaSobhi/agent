@@ -1,11 +1,15 @@
 # GitLab CI and local validation
 
-**Phase 4D status: LIVE CI ACCEPTED / GO.** [Pipeline #11](http://gitlab.local/root/agent/-/pipelines/11)
-passed Jobs #78–#85 at `c4b945122ad7e7174dbbb433cb91b42cb66f1c72`.
-The [versioned acceptance record](evidence/v0.1.3/phase4d-live-ci-acceptance.md)
-contains candidate provenance, all eight job links, test totals, exclusions,
-control/runtime evidence, and remaining operational risks. This accepts that
-candidate; it does not authorize promotion or publication.
+**v0.1.3 release status: RELEASED.** Tag [Pipeline #16](http://gitlab.local/root/agent/-/pipelines/16)
+passed all eight release gates at commit
+`970c04712853295fd065094b11a2bd541b5a9db8`; package Job #125 produced the
+published artifact. [Pipeline #17](http://gitlab.local/root/agent/-/pipelines/17)
+then passed on `develop` at `2e01ff78c447d5242e0d582944c43f0d952b3446`.
+Pipeline #11 remains historical Phase 4D candidate acceptance in the
+[versioned record](evidence/v0.1.3/phase4d-live-ci-acceptance.md), not the
+provenance of the released binary. The separate
+[post-release record](evidence/v0.1.3/post-release-validation.md) documents
+Pipeline #17 and its initial MT5 smoke failure followed by a successful run.
 
 GitLab (`origin`) is the source of truth. CI validates candidate artifacts; it
 does not merge, tag, or publish a release. Existing release tags remain
@@ -146,9 +150,13 @@ human promotion review must require them explicitly.
 
 Every eligible ref pipeline runs its own build and validation. It is a new
 candidate with its own commit/pipeline/hash; it must not replace or be described
-as the Pipeline #11 binary. Within each pipeline no post-smoke rebuild is allowed.
+as the Pipeline #11 or #16 binary. Within each pipeline no post-smoke rebuild is allowed.
 There is no `release:` job or tag/Release API invocation in CI.
 Build/smoke artifacts expire after 14 days; final packages after 30 days. The
-accepted Job #85 package currently expires on **2026-11-05**. Retain the exact
-package and redacted receipts before expiry through a separately authorized
-GitLab artifact-retention or controlled release action; do not rebuild to recover it.
+historical Pipeline #11 Job #85 package artifact was scheduled to expire on
+**2026-11-05**; it is not the published release binary. The v0.1.3 release
+binary from Job #125 is also stored in the Generic Package Registry as
+`mt5-agent` version `0.1.3`, independently of CI artifact expiry. The Registry
+package and its SHA-256 are recorded in
+[release notes](releases/v0.1.3-release-notes.md). Do not rebuild to recover or
+replace a released artifact.

@@ -3,10 +3,18 @@
 This record consolidates the release documents present at
 `1a133e6c6ea1b02a039f45610182037d347390ba` and the existing Git tags. Historical
 verification statements below describe those records, not fresh validation of
-old binaries. Release assets and publication dates have not been independently
-revalidated here, so no publication dates are inferred from commit timestamps.
+old binaries. The v0.1.3 release facts below were checked against the
+authenticated GitLab Release, tag, pipeline, and Package Registry APIs on
+2026-10-08. No publication dates are inferred from commit timestamps.
 
-## [Unreleased] — v0.1.3 accepted release candidate
+## [0.1.3] — Split-session MT5 runtime and released Windows Agent
+
+Released 2026-10-06 from tag `v0.1.3`, commit
+`970c04712853295fd065094b11a2bd541b5a9db8`. Release Pipeline #16 passed all
+eight gates. The official artifact is `MT5Agent-v0.1.3.exe`, 8,124,497 bytes,
+SHA-256 `175ff421e06d0c7394721dcf2aaa9509b953bc3d9c3d8d7f6fab7afb01e4ab28`.
+See the [release record](docs/releases/v0.1.3-release-notes.md) and
+[post-release validation](docs/evidence/v0.1.3/post-release-validation.md).
 
 ### Changed
 
@@ -16,16 +24,17 @@ revalidated here, so no publication dates are inferred from commit timestamps.
 - The Agent/control-plane dependency set excludes MetaTrader5 and NumPy; Worker
   and explicit legacy MT5 development dependencies are separate.
 - CI is organized into Linux source/unit, Windows no-MT5 build/control-plane,
-  and Windows real-MT5 runtime roles. Phase 4D is **LIVE CI ACCEPTED / GO**:
-  Pipeline #11 passed all eight gates at commit
-  `c4b945122ad7e7174dbbb433cb91b42cb66f1c72`; see the
-  [versioned evidence](docs/evidence/v0.1.3/phase4d-live-ci-acceptance.md).
+  and Windows real-MT5 runtime roles. Pipeline #11 is preserved as historical
+  Phase 4D candidate acceptance; it is not the provenance of the released
+  binary. The release was accepted by tag Pipeline #16.
 - Live CI corrections cover Windows pipe test synchronization/SID comparison,
   approved Linux/Windows dependency-mirror access, recursive archive exclusion,
   candidate child cleanup, Scheduled Task SID/logon validation, and strict-mode
   redacted account field counting.
-- Documentation now distinguishes implemented, lab-validated, CI-accepted,
-  production-ready, and planned work. No v0.1.3 release is claimed.
+- Documentation distinguishes implemented, lab-validated, CI-accepted,
+  production-ready, and planned work. Pipeline #17 is post-release validation,
+  not the release pipeline; its initial MT5 smoke failure and later success are
+  recorded separately, with the initial cause unknown.
 
 ### Added
 
@@ -50,9 +59,18 @@ revalidated here, so no publication dates are inferred from commit timestamps.
   unattended cold-boot lab validation using automatic interactive logon.
 - Worker-aware diagnostics, Agent/Worker dependency isolation, and Phase 4D
   candidate artifact/evidence checks.
-- [Draft v0.1.3 release notes](docs/releases/v0.1.3-release-notes.md) and a
-  versioned acceptance record. Publication remains pending; no release date is
-  inferred from acceptance or commit timestamps.
+- Versioned release and acceptance records, including the historical Phase 4D
+  candidate evidence and post-release validation. Pipeline #11 provenance is
+  retained separately from the published Pipeline #16 artifact.
+
+### Release artifact
+
+- Tag pipeline: #16; package job: #125.
+- Package Registry: Generic package `mt5-agent`, version `0.1.3`.
+- Artifact: `MT5Agent-v0.1.3.exe`, 8,124,497 bytes.
+- SHA-256: `175ff421e06d0c7394721dcf2aaa9509b953bc3d9c3d8d7f6fab7afb01e4ab28`.
+- Post-release validation: Pipeline #17 on `develop` at
+  `2e01ff78c447d5242e0d582944c43f0d952b3446`.
 
 ## [0.1.2] — Diagnostics, lifecycle logging, and dual-runner CI foundation
 
