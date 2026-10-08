@@ -105,4 +105,27 @@ The current process can run as a Session 0 control process, but a commercial
 Windows Service installer, service recovery policy, signed upgrade flow, and
 generalized customer provisioning are not yet accepted. Do not describe the
 product as commercially production ready until those remaining gates pass;
-Phase 4D live CI acceptance alone does not productize installation or support. See [known issues](KNOWN_ISSUES.md) and [Action Plan](ACTION_PLAN.md).
+Phase 4D live CI acceptance alone does not productize installation or support.
+See [known issues](KNOWN_ISSUES.md) and [Action Plan](ACTION_PLAN.md).
+
+## Future Desktop UI planning boundary
+
+The Windows Desktop UI is a **planning proposal**, not an implemented
+component. The product direction is KivyMD subject to compatibility and
+packaging feasibility. The UI must remain an independent management and
+observation client; Agent Core and the MT5 Runtime Worker must continue when
+the UI or tray closes or crashes.
+
+The current `/command` HTTP transport is not approved as the UI control
+interface: the default composition does not configure authentication or
+authorization. The authenticated Named Pipe serves the existing Session 0
+Agent-to-interactive-Worker boundary and must not be directly exposed to the
+UI. A future local control interface requires its own explicit identity,
+authorization, input-validation, secret-redaction, session, and process
+isolation design. Windows startup/tray ownership also remains unresolved; the
+lab Worker bootstrap does not establish a customer Agent/UI startup mechanism.
+
+The detailed conceptual UI/Core/Worker flow, product decisions, security and
+session questions, and proposed acceptance criteria are in the
+[v0.1.4 Desktop UI plan](planning/v0.1.4-desktop-ui.md). They do not change the
+implemented runtime architecture above or authorize implementation.

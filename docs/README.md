@@ -48,6 +48,7 @@ validation on `develop`. Start with the [release notes](releases/v0.1.3-release-
 - [Release checklist](../deployment/RELEASE_CHECKLIST.md)
 - [Action Plan](ACTION_PLAN.md)
 - [Product roadmap](ROADMAP.md)
+- [v0.1.4 Desktop UI planning](planning/v0.1.4-desktop-ui.md)
 - [Known issues](KNOWN_ISSUES.md)
 - [Changelog](../CHANGELOG.md)
 

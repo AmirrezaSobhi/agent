@@ -10,7 +10,7 @@ release promise. See [Action Plan](ACTION_PLAN.md) for current planning topics.
 | Agent/Worker packaging split | RELEASED | The release artifact excludes MetaTrader5, NumPy, the Worker implementation, the legacy direct adapter, and local terminal inspection. |
 | Historical Phase 4D candidate | HISTORICAL ACCEPTANCE | Pipeline #11 remains tied to its own source commit and binary hash; it is not the v0.1.3 release artifact. |
 | Post-release validation | COMPLETE; reliability follow-up open | Pipeline #17 passed all eight final jobs on `develop`. MT5 Runtime Smoke Job #132 failed; Job #134 later succeeded. The initial failure cause is unknown, so Worker startup reliability is not marked resolved. |
-| v0.1.4 | PLANNING PHASE | Evaluate Worker reliability and hybrid threading, and define evidence and acceptance criteria. Scope and release dates are not approved. |
+| v0.1.4 | PLANNING PHASE | Client-side Windows Desktop UI direction and proposed acceptance gates are recorded in the [Desktop UI plan](planning/v0.1.4-desktop-ui.md). Also evaluate Worker reliability, hybrid threading, time synchronization, and productization. Implementation scope and release dates are not approved. |
 | Windows product provisioning | PLANNED / PENDING PRODUCTION VALIDATION | Signed installer, service registration/recovery, customer runtime policy, upgrades, and rollback. Lab scripts are not a supported customer installer. |
 | Runtime resilience | PARTIAL | Bounded Worker recovery and degraded Agent behavior exist; broader startup, crash, logoff, reboot, network-transition, and service-recovery acceptance remains. |
 | Time synchronization operations | FOLLOW-UP | Pipeline #16 records synchronization and UTC checks for release acceptance. Autonomous polling and persistence across reboot/network transitions still need evaluation. |
@@ -21,7 +21,10 @@ release promise. See [Action Plan](ACTION_PLAN.md) for current planning topics.
 
 ## v0.1.4 planning questions
 
-Planning should evaluate, without promising delivery:
+The detailed Desktop UI proposal, confirmed boundaries, 10 planning gates,
+acceptance criteria, and Windows session/credential questions are maintained in
+the [v0.1.4 Desktop UI plan](planning/v0.1.4-desktop-ui.md). Planning should
+also evaluate, without promising delivery:
 
 - What evidence is needed to understand and improve Worker startup reliability?
 - Where, if anywhere, could hybrid threading help while preserving safe MT5

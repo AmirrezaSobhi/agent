@@ -34,20 +34,24 @@ the [release record](releases/v0.1.3-release-notes.md).
 
 ## Next planning phase: v0.1.4
 
-v0.1.4 is a planning phase only. Its release scope, acceptance criteria, and
-dates are not approved here. Evaluate these topics before proposing scope:
+v0.1.4 remains a planning phase; scope, implementation tasks, and dates are not
+approved. The detailed client-side Windows Desktop UI decisions, architecture
+boundaries, open questions, and measurable proposed gates are in the
+[Desktop UI planning document](planning/v0.1.4-desktop-ui.md). KivyMD is the
+preferred framework candidate, subject to compatibility and packaging
+feasibility. This plan does not authorize UI implementation.
+
+Other v0.1.4 evaluation topics remain:
 
 1. Worker startup reliability: collect repeatable evidence across startup,
-   recovery, reboot, and network-transition scenarios; determine whether
-   failures are timing-related or have another cause. Do not treat Job #132's
-   unknown cause as proven.
-2. Hybrid threading: evaluate whether and where a hybrid threading model could
-   improve runtime responsiveness or reliability. Preserve serialized MT5
-   operations unless separate evidence and design approval justify a change.
+   recovery, reboot, and network-transition scenarios. Job #132's cause remains
+   unknown; do not assume a timing defect.
+2. Hybrid threading: evaluate whether it can improve responsiveness or
+   reliability while preserving serialized MT5 operations unless evidence and
+   design approval justify a change.
 3. Time synchronization: evaluate autonomous polling and persistence through
-   reboot and network transitions. Pipeline #16 records successful time
-   synchronization checks for release acceptance but does not prove these
-   future controls.
+   reboot/network transitions. Pipeline #16's release checks do not prove
+   these future controls.
 4. Productization: assess signed installation, managed service/recovery,
    customer provisioning, upgrades, rollback, and operational support.
 
