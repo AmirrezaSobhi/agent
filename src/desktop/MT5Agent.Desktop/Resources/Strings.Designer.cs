@@ -122,5 +122,6 @@ namespace MT5Agent.Desktop.Resources
         public static string StatusErrorCode { get { return Get("StatusErrorCode"); } }
         public static string Stale { get { return Get("Stale"); } }
         public static string Unknown { get { return Get("Unknown"); } }
+        public static string Error { get { return Get("Error"); } }
     }
 }

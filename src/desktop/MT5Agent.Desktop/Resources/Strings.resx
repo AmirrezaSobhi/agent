@@ -111,4 +111,5 @@
   <data name="StatusErrorCode" xml:space="preserve"><value>Status unavailable ({0}). No current state is assumed.</value></data>
   <data name="Stale" xml:space="preserve"><value>Stale</value></data>
   <data name="Unknown" xml:space="preserve"><value>Unknown</value></data>
+  <data name="Error" xml:space="preserve"><value>Error</value></data>
 </root>
