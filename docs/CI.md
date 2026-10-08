@@ -12,11 +12,15 @@ provenance of the released binary. The separate
 Pipeline #17 and its initial MT5 smoke failure followed by a successful run.
 
 GitLab (`origin`) is the source of truth. Existing release tags remain
-immutable. CI does not merge or create tags. A final tag-pipeline job now
-prepares one-way GitHub Release synchronization only after a GitLab Release and
-its Package Registry assets are published; it fails closed without a protected
-tag and `GITHUB_RELEASE_TOKEN`. The current project lacks those prerequisites,
-so synchronization is not yet operational. See the
+immutable. CI does not create tags. A protected stable-version tag push starts
+the release pipeline; after every validation and package gate, the Linux
+publisher verifies the tag, protected-main ancestry, versioned authorization,
+same-pipeline receipts, and exact executable. It uploads and reads back the
+official assets before creating the GitLab Release. `release:github-sync` needs
+that successful publication job, so it cannot publish from a tag alone. The
+publisher uses `CI_JOB_TOKEN`; actual write permission for this project has
+not been established by performing a real write, which is intentionally
+reserved for the first authorized tag pipeline. See the
 [release synchronization runbook](GITHUB_RELEASE_SYNC.md).
 
 ## Runner responsibilities
@@ -67,7 +71,20 @@ Windows validation┘                               │
                                                Windows real-MT5 integration
                                                            ↓
                                                no-rebuild package evidence
+                                                           ↓
+                                        protected-main + authorization checks
+                                                           ↓
+                                          GitLab package and Release publish
+                                                           ↓
+                                          verified GitHub Release synchronization
 ```
+
+The graph above is implemented in `.gitlab-ci.yml`. `release:gitlab-publish`
+requires `package:windows` with artifacts and runs only for a protected stable
+tag push. The package job has a transitive `needs` chain through Linux and
+Windows tests, the one-time Windows build, both control-plane smoke jobs, and
+the real-MT5 integration gate. `release:github-sync` depends on successful
+GitLab publication and does not wait for a manually created Release.
 
 The build job checks the isolated build environment for MetaTrader5 and NumPy,
 builds `MT5Agent-v<version>.exe` once, and recursively inspects the PyInstaller
