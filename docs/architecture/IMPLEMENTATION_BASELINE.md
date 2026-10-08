@@ -77,6 +77,31 @@ Agent, or the interactive Worker. The approved commercial UI matrix is Windows
 the WPF UI for an already provisioned Agent; it does not claim or implement a
 commercial installer or Windows Service provisioning.
 
+## Phase 1 implementation update — 2026-10-08
+
+The point-in-time audit above describes its audited commit and remains intact.
+On the implementation branch from architecture commit
+`648662473370abc34c4aa5f90cb52b30ecaf924c`, a new two-project solution now
+exists under `src/desktop/`. It implements the WPF shell, MVVM primitives,
+navigation, light/dark resources, per-user theme preference, English
+localization, unavailable-only status presentation and a console test runner.
+It does not connect to Python or execute Agent/Worker operations.
+
+The Windows 10 no-MT5 Runner rebuilt the Release solution and reported 19/19
+automated tests passing. This was a direct MSBuild invocation using the
+installed framework runtime assemblies because that Runner has no .NET
+Framework 4.8 Developer/Targeting Pack. The compile succeeded, but clean
+reference-pack build evidence is still required. No interactive UI display
+verification was done: the SSH process was in Session 0. On Linux, the Python
+regression suite reported 255 passed and 34 skipped; existing Python files
+were not modified. Detailed commands and caveats are in
+[`src/desktop/README.md`](../../src/desktop/README.md).
+
+`.gitlab-ci.yml` remains unchanged. Existing Windows runner tags have no WPF
+build/test job; they lack the Developer Pack/Visual Studio Build Tools and an
+interactive UI Automation lane. CI integration is therefore pending runner
+prerequisites and a separate validated pipeline change.
+
 ## Assumptions requiring validation
 
 1. v0.1.3 split-session Runtime Worker behavior remains compatible with a

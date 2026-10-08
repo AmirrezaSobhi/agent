@@ -62,3 +62,16 @@ Each gate records commit, artifact SHA-256, OS edition/build/architecture,
 tool version, raw report paths, failures/retries, and reviewer. A missing runner
 or measurement is an unmet gate, not a pass. Release approval must review the
 Windows 10 lifecycle risk separately from technical launch compatibility.
+
+## Phase 1 measurements
+
+The Windows no-MT5 Runner compiled the WPF solution and ran its custom test
+executable: 19 passed, 0 failed. Its inbox MSBuild/compiler and installed
+framework assemblies were used because the .NET Framework 4.8 Developer Pack
+is absent; this is not clean-targeting-pack evidence. The Dispatcher test
+confirmed a DispatcherTimer tick while the synthetic 350 ms operation remained
+pending, but no P95 launch/click measurement was collected. No visual, DPI,
+accessibility, memory, CPU, soak, package or Server/Windows 11 test has passed.
+Python regression on Linux was 255 passed and 34 skipped; see the implementation
+evidence for runtime version and scope. All remaining quality gates remain
+unverified unless separately evidenced.

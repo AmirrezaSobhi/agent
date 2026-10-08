@@ -1,9 +1,8 @@
 # v0.1.4 WPF Implementation Plan
 
-**Status:** Ready for planning review; this document does not begin
-implementation. Each phase is a small implementation mission with explicit
-entry/exit criteria. Python Core remains Python; no feature work is authorized
-by this plan itself.
+**Status:** Phase 1 foundation implemented; Phases 2–6 remain planned. This
+document tracks the implementation sequence and does not authorize work beyond
+the separately approved mission. Python Core remains Python.
 
 ## Approved release boundary — Option A
 
@@ -20,6 +19,13 @@ do not introduce a custom elevated helper in this release absent a separately
 approved need. See [ADR-ARCH-016](adr/ADR-ARCH-016-release-boundary-option-a.md).
 
 ## Phase 1 — WPF Foundation
+
+**Implementation state:** Implemented with known verification limits. The
+two-project shell, MVVM/navigation, themes, per-user theme preference, English
+resources, unavailable-only Dashboard, and 19-test executable are present.
+Windows build and test evidence plus targeting-pack and interactive-UI gaps are
+recorded in [`src/desktop/README.md`](../../src/desktop/README.md). CI was not
+changed.
 
 - **Dependencies:** approved WPF ADR; Windows build runner with Visual Studio
   Build Tools/.NET Framework 4.8 Developer Pack; no Python code changes needed.

@@ -2,7 +2,9 @@
 
 **Decision:** C#, WPF, XAML, .NET Framework 4.8, MVVM. Product Owner-approved
 and binding for v0.1.4. Python Agent and Python Runtime Worker remain unchanged
-operational components. This is a proposed implementation structure, not code.
+operational components. The initial two-project foundation is implemented at
+[`src/desktop`](../../src/desktop/README.md); secure IPC and live status remain
+planned.
 
 ## Recommended solution shape
 
@@ -27,7 +29,8 @@ src/desktop/
 
 Start with **two projects**: the WPF executable and a .NET Framework 4.8 test
 project. Keep protocol DTOs, the `IManagementClient` abstraction, serializer,
-and IPC implementation inside the Desktop project under `Services/Management`.
+and future IPC implementation inside the Desktop project under
+`Services/Management`.
 Tests substitute `IManagementClient` with a fake and run protocol tests against
 language-neutral JSON fixtures. A third `Desktop.Contracts` project is not
 justified until a second C# consumer or independently versioned shared C# API

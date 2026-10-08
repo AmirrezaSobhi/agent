@@ -2,9 +2,11 @@
 
 **Status:** C# WPF/XAML on .NET Framework 4.8 with MVVM is approved by the
 Product Owner. **Option A** is approved: this is a client for an already
-installed/provisioned Agent and Runtime. The current repository has no WPF UI
-or tray package. The earlier Kivy planning note is retained as superseded
-history at [planning/v0.1.4-desktop-ui.md](../planning/v0.1.4-desktop-ui.md).
+installed/provisioned Agent and Runtime. The WPF Phase 1 shell and test
+executable now exist under [`src/desktop`](../../src/desktop/README.md); tray,
+secure IPC and live Agent/Runtime status are not implemented. The earlier Kivy
+planning note is retained as superseded history at
+[planning/v0.1.4-desktop-ui.md](../planning/v0.1.4-desktop-ui.md).
 
 ## Responsibility and modules
 
@@ -94,5 +96,6 @@ and Windows matrix evidence. Full account execution is unsupported.
 ## Related implementation references
 
 [WPF Solution and Design System](WPF_SOLUTION.md) ·
+[Phase 1 build/test instructions](../../src/desktop/README.md) ·
 [IPC Contract](IPC_CONTRACT.md) · [Quality Gates](QUALITY_GATES.md) ·
 [Acceptance](ACCEPTANCE_V0.1.4.md)
