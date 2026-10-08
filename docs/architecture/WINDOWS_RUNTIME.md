@@ -223,3 +223,15 @@ runtime pipe DACL before protocol dispatch. Windows 11, Server
 2022 and Server 2025 remain `DEFERRED — PRODUCT OWNER VALIDATION`; their absence
 is not a Phase 5 blocker. The temporary service and generated service-host
 artifacts were stopped, deregistered and removed. No trade was run.
+
+## Desktop distribution interaction — Phase 6
+
+The WPF ZIP assumes the Python Agent/Windows Service and interactive Worker are
+already provisioned. Extraction, upgrade, rollback and removal operate only on
+the versioned Desktop directory and shortcut. They must not stop/restart the
+Agent or Worker, alter SCM configuration, modify the runtime principal, or
+write machine configuration. User settings remain under the current user's
+`%LOCALAPPDATA%` profile. Windows 10 package results and provenance are tracked
+in [Distribution](DISTRIBUTION.md); absence of a product installer or Windows
+Service provisioning is intentional Option A scope, not an implemented
+installation capability.

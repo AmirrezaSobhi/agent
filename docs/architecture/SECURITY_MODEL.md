@@ -164,3 +164,16 @@ component that selects the WTS session and starts the helper. The positive
 identity test and both end-to-end ACL experiments passed without weakening
 DACL assertions. This is a test-harness fix, not a product Service security
 certification.
+
+## Desktop package security — Phase 6
+
+The package is user-scope and unsigned. It must not include credentials,
+private keys, user profiles, Agent configuration, logs, test assemblies, debug
+symbols, or Python Agent/Worker binaries. Its embedded manifest and
+`SHA256SUMS.txt` bind all distributed payload files to the pipeline-produced
+archive; CI verifies archive provenance and the executable hash against the
+single build output used by tests. Hashes establish integrity relative to the
+recorded artifact, not publisher identity; Authenticode signing with an
+approved production certificate remains required before commercial
+publication. No signing key or certificate content is included or exported.
+See [Distribution](DISTRIBUTION.md).

@@ -61,3 +61,13 @@ was performed or requested. No commercial package, installer, signing, or
 release artifact was produced. Windows 10 compatibility is not fully closed
 until installed-Service/runtime lifecycle and remaining P0 security gates are
 resolved; this does not turn the three deferred OS rows into Phase 5 blockers.
+
+## Phase 6 package validation status
+
+Codex test scope remains Windows 10 x64 only. Record the Phase 6 clean package
+run, interactive launch and exact archive SHA in
+[Distribution](DISTRIBUTION.md) after the final pipeline artifact is available.
+Windows 11 x64, Windows Server 2022 Desktop Experience and Windows Server 2025
+Desktop Experience remain exactly `DEFERRED — PRODUCT OWNER VALIDATION`; no
+compatibility pass is inferred from the Windows 10 result. Their deferral does
+not block Phase 6 implementation completion.

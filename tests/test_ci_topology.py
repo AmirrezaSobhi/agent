@@ -46,6 +46,23 @@ def test_release_edges_preserve_one_artifact_and_drop_acl_experiment_dependency(
     assert "probe:mt5-runtime" not in source
 
 
+def test_desktop_package_is_built_once_and_verified_as_the_tested_artifact():
+    source = (ROOT / ".gitlab-ci.yml").read_text(encoding="utf-8")
+    assert "  - desktop_build\n  - test" in source
+    build = _job_block(source, "desktop:build-package")
+    tests = _job_block(source, "test:wpf-management")
+    verify = _job_block(source, "desktop:package-verify")
+    assert build.count("/t:Rebuild") == 1
+    assert "New-DesktopPackage.ps1" in build
+    assert "job: desktop:build-package\n      artifacts: true" in tests
+    assert "MT5Agent.Desktop.sln" not in tests
+    assert "/t:Rebuild" not in tests
+    assert "job: desktop:build-package\n      artifacts: true" in verify
+    assert "Test-DesktopPackage.ps1" in verify
+    assert "ExpectedCommit $env:CI_COMMIT_SHA" in verify
+    assert "ExpectedPipelineId $env:CI_PIPELINE_ID" in verify
+
+
 def test_workflow_branch_and_tag_rules_remain_intact():
     source = (ROOT / ".gitlab-ci.yml").read_text(encoding="utf-8")
     assert "CI_COMMIT_TAG =~ /^v" in source

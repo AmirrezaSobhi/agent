@@ -115,3 +115,15 @@ Phase 4 Windows 10 Session 1 evidence under
 Phase 5 visual, DPI, accessibility, notification, or lifecycle gates as
 revalidated. No Phase 5 visual defect was confirmed because the application
 was not launched in an interactive desktop during this phase.
+
+## Distribution boundary — Phase 6
+
+The v0.1.4 Desktop distribution is a versioned ZIP of the WPF client for an
+already provisioned Agent. It contains neither Python runtime components nor
+machine/credential configuration and does not modify them. Extract into a
+versioned user-writable path; per-user preferences stay under
+`%LOCALAPPDATA%\MT5Agent\Desktop` and survive side-by-side replacement.
+Removal is limited to that Desktop version directory and its shortcut. See
+[Distribution](DISTRIBUTION.md) for the package manifest, exact artifact
+provenance and evidence status. A code-signed commercial installer and
+automatic updater are not delivered in v0.1.4.

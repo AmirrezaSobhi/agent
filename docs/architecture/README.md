@@ -34,6 +34,8 @@ does not supersede historical release evidence. Status labels are normative:
 7. [Implementation plan](IMPLEMENTATION_PLAN.md), [roadmap](ROADMAP.md),
    [risks](RISK_REGISTER.md), [v0.1.4 acceptance](ACCEPTANCE_V0.1.4.md),
    [Windows compatibility matrix](WINDOWS_COMPATIBILITY.md), and [glossary](GLOSSARY.md).
+   Phase 6 package and release evidence: [Distribution](DISTRIBUTION.md) and
+   [Release Checklist](RELEASE_CHECKLIST.md).
 8. [Architecture ADRs](adr/README.md) (17 records; one superseded historical ADR).
 
 ## Existing source records

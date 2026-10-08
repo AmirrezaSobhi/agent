@@ -318,3 +318,26 @@ was fixed by enabling wrapping and adding the WPF regression test. The ACL test
 harness defect (interactive helper calling privileged `WTSQueryUserToken`) was
 fixed to verify the helper's own session and token identity before reading its
 logon SID. No application security privilege was added.
+
+## Phase 6 — Windows Desktop package baseline
+
+**Status at Phase 6 branch start:** Accepted Phase 5 commit
+`12826f42989cda7cee3e3847632cbf39bf1a21dc` on
+`feat/v0.1.4-phase5-hardening`; Phase 6 branch
+`feat/v0.1.4-phase6-packaging` was created directly from that commit. The Phase
+5 baseline pipeline #49 passed 9/9 on the accepted commit. This is not Phase 6
+package evidence.
+
+**Test runner inventory:** `WINDOW10-TEST`, Windows 10 Pro x64 build 19045,
+.NET Framework release key 533325, official .NET Framework v4.8 reference
+assemblies present, active console Session 1, GitHub Actions Runner service
+running. The host scan found no MT5 or Python Agent processes and no Agent
+Service. No candidate authorized production code-signing certificate with
+private key was identified (count only; certificate material was not read or
+exported). The Windows 10 runner is shared infrastructure; tests must remain
+bounded and must not alter existing sessions or Service configuration.
+
+Phase 6 adds a ZIP-only WPF distribution workflow; it does not package or
+modify the Agent/Worker. See [Distribution](DISTRIBUTION.md) for the exact
+package boundary and the final pipeline/artifact evidence. Windows 11 and
+Windows Server 2022/2025 remain `DEFERRED — PRODUCT OWNER VALIDATION`.

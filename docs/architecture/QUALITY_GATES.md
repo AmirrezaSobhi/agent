@@ -193,3 +193,24 @@ were not run on the shared console host. No Windows 11 or Server test was
 attempted. No real trade was executed. Pipeline [#46](http://gitlab.local/root/agent/-/pipelines/46)
 passed all 9 jobs on commit `f841c55021af0535f39632b02d9efcd7e0ca37a0`; the
 follow-up documentation commit receives a separate pipeline check.
+
+## Phase 6 package-specific gates
+
+The package gates below apply in addition to the quality targets above. Their
+final values must cite the same CI artifact tested on Windows 10. A successful
+build alone is not a clean-package pass.
+
+| Gate | Metric / threshold | Test and evidence | Result |
+|---|---|---|---|
+| One-build artifact provenance | Exactly one WPF Release x64 rebuild per pipeline; C# tests and package verifier consume that output; packaged EXE SHA-256 equals build-output SHA-256 | GitLab `desktop:build-package`, `test:wpf-management`, and `desktop:package-verify`; CI report with commit/pipeline/build job IDs | PENDING final pipeline |
+| Package integrity | Every declared payload file and manifest has a SHA-256; no duplicate, traversal, absolute or undeclared files; archive hash unchanged before/after validation | `Test-DesktopPackage.ps1` report; extracted manifest and checksum file | PENDING final pipeline |
+| Clean Windows 10 deployment | Exact CI ZIP launches from a user-writable path without repository, Visual Studio, unpublished DLL or custom environment dependency; startup and shutdown controlled | Interactive Windows 10 run, screenshots, process/session evidence | PENDING exact CI ZIP |
+| Settings/data safety | Preferences outside application folder survive replacement/rollback; no plaintext secrets; package removal leaves preferences and Agent state intact | Before/after file hashes/state inventory; settings tests; package content scan | PENDING Windows run |
+| Upgrade recovery | New version extracted side-by-side; previous known-good folder remains available; interrupted replacement does not mutate the previous folder | Bounded file-operation simulation plus operator runbook review | PENDING Windows run |
+| Runtime dependency | .NET Framework 4.8 or later installed; no developer targeting pack required on end-user host | Manifest/prerequisite review and Windows 10 launch | PENDING Windows run |
+| Code signing | Authorized production Authenticode signature verifies for the distributed executable | Signer identity and `Get-AuthenticodeSignature` verification without exposing key material | BLOCKED: no authorized signer identified |
+| OS coverage | Windows 10 x64 package evidence; other approved OS rows explicitly deferred | [Compatibility Matrix](WINDOWS_COMPATIBILITY.md) | Windows 10 PENDING; Windows 11/Server `DEFERRED — PRODUCT OWNER VALIDATION` |
+
+Thresholds for startup, idle CPU/RAM and IPC remain those documented in the
+Phase 5 measurement protocol; compare only equivalent WPF artifacts and test
+conditions. Do not use a CI Session 0 startup smoke as interactive UI evidence.

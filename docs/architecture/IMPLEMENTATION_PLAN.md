@@ -234,3 +234,33 @@ Closure Pipeline [#48](http://gitlab.local/root/agent/-/pipelines/48) passed all
 9 jobs on `bb7013f30c43ddf940212f9332341c0fb51ba55d`; this validates the closure
 commit, not a commercial deployment package or product-Service provisioning.
 Do not claim commercial readiness.
+
+## Phase 6 — Windows Desktop packaging and release evidence
+
+**Scope:** Build a versioned user-scope ZIP for an already provisioned Agent.
+The Desktop package must never install/reconfigure the Python Agent, Service,
+Runtime Worker, MT5, accounts, or credentials. This package is not a commercial
+installer and the CI pipeline does not publish a release.
+
+- **Dependencies:** net48 x64 Windows runner with official v4.8 targeting
+  assemblies; accepted WPF solution; existing Windows Python/IPC and Agent
+  build/smoke/package quality gates.
+- **Likely files:** `.gitlab-ci.yml`; `deployment/desktop/`; architecture
+  distribution/release docs; no Python runtime or release-publication changes.
+- **Deliverables:** one WPF Release x64 build; ZIP plus provenance manifest and
+  SHA-256; downstream verification of that exact artifact; clean Windows 10
+  extraction/launch/settings/IPC/removal evidence; manual install/upgrade/
+  rollback instructions.
+- **Acceptance:** C# tests consume compiled build outputs without rebuilding;
+  downstream verifier checks archive hash, manifest, checksums and EXE identity;
+  no undeclared or unsafe archive entries; Windows 10 interactive package run;
+  existing Agent/Python gates remain intact.
+- **Risks:** no production signing identity was identified; shared Windows
+  runner may not have an installed Agent Service; UIA may not expose NotifyIcon
+  Exit; no Windows 11/Server testing is requested in this phase.
+- **Out of scope:** MSI/EXE installer, account/service provisioning,
+  Autologon, automatic updates, central management, billing and trading.
+
+See [Distribution](DISTRIBUTION.md) and [Release Checklist](RELEASE_CHECKLIST.md)
+for the implementation status and evidence. Windows 11, Windows Server 2022,
+and Windows Server 2025 tests remain `DEFERRED — PRODUCT OWNER VALIDATION`.

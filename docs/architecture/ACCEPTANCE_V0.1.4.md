@@ -152,3 +152,28 @@ explicitly assessed and is not reported as an Exit pass. The three deferred OS
 tests do not prevent Phase 5 completion.
 Commercial release remains a separate decision and is not automatically
 authorized by this phase.
+
+## Phase 6 package acceptance addendum
+
+The Phase 6 release artifact is a user-scope ZIP containing the WPF application
+only. It must not provision or replace the Python Agent/Worker. The mandatory
+CI chain is one clean WPF build, tests against the compiled outputs, and a
+package-verification job that consumes the same ZIP without rebuilding.
+
+| ID | Phase 6 criterion | Evidence | Status before final package run |
+|---|---|---|---|
+| A21 | Versioned Desktop ZIP contains only approved WPF files, documentation, manifest and checksums | Package manifest/content scan and CI artifact | PENDING |
+| A22 | SHA-256 and commit/pipeline/build-job provenance match the tested artifact | `desktop-build.json`, manifest, downstream verifier report | PENDING |
+| A23 | Exact CI ZIP extracts and launches on Windows 10 without developer tooling/source checkout | Interactive clean-package test and screenshots | PENDING |
+| A24 | User settings survive side-by-side upgrade and rollback and live outside installation folder | Before/after checks and preferences regression tests | PENDING |
+| A25 | Package removal leaves preferences, Agent/Worker, machine config and Service state unchanged | Before/after inventory and removal evidence | PENDING |
+| A26 | Package integrity checks reject unsafe paths, duplicates, missing or undeclared files and changed hashes | Positive and negative verifier tests | PENDING |
+| A27 | No secrets, test credentials, private keys, PDBs, test binaries, Python Agent or Worker are packaged | Automated file/content scan and reviewed manifest | PENDING |
+| A28 | Production Authenticode signing is verified before commercial publication | Authorized certificate validation | BLOCKED for commercial release; internal Phase 6 artifact remains unsigned |
+
+Windows 11, Server 2022 Desktop Experience and Server 2025 Desktop Experience
+remain `DEFERRED — PRODUCT OWNER VALIDATION`; they are not Phase 6 Codex test
+requirements and are not a Phase 6 implementation blocker. A commercial release
+still requires separate Product Owner authorization and closure of applicable
+signing/lifecycle gates. See [Distribution](DISTRIBUTION.md) and the
+[Release Checklist](RELEASE_CHECKLIST.md).
