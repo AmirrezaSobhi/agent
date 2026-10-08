@@ -51,9 +51,9 @@ evidence bundle](../evidence/v0.1.4/phase5/windows10-19045/).
 
 | ID | Risk | Impact | Mitigation / evidence gate | State |
 |---|---|---|---|---|
-| AR-24 | Desktop package contains undeclared binaries or differs from tested build | Supply-chain confusion or execution of untested bits | Build once; manifest/checksum; downstream same-artifact verification; content allowlist | PENDING final pipeline |
+| AR-24 | Desktop package contains undeclared binaries or differs from tested build | Supply-chain confusion or execution of untested bits | Build once; manifest/checksum; downstream same-artifact verification; content allowlist | PASS for package hash/manifest/provenance verification in pipeline #53; independent secret-canary scan remains pending |
 | AR-25 | ZIP is unsigned or signer identity is unavailable | Users cannot authenticate publisher; tampering warning | Require authorized production certificate and verified Authenticode signature before public distribution | BLOCKED for commercial release; package build may complete unsigned |
-| AR-26 | Desktop upgrade/removal mutates user or Agent data | Lost preferences, Service/runtime interruption | Side-by-side version folders; keep prior build; preserve LocalAppData and machine/runtime state; before/after tests | PENDING Windows 10 package validation |
+| AR-26 | Desktop upgrade/removal mutates user or Agent data | Lost preferences, Service/runtime interruption | Side-by-side version folders; keep prior build; preserve LocalAppData and machine/runtime state; before/after tests | PENDING: runbook and automated preference tests only; no package replacement/removal walkthrough |
 | AR-27 | User assumes Windows 10 testing proves all approved OS families | Unsupported behavior or lifecycle assumptions | Explicit per-OS result; Windows 11 and Server rows remain `DEFERRED — PRODUCT OWNER VALIDATION` | Active disclosure; not Phase 6 blocker |
 
 Phase 6 must not claim commercial readiness from successful package validation.

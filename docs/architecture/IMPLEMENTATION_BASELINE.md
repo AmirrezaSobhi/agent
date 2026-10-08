@@ -338,6 +338,15 @@ exported). The Windows 10 runner is shared infrastructure; tests must remain
 bounded and must not alter existing sessions or Service configuration.
 
 Phase 6 adds a ZIP-only WPF distribution workflow; it does not package or
-modify the Agent/Worker. See [Distribution](DISTRIBUTION.md) for the exact
-package boundary and the final pipeline/artifact evidence. Windows 11 and
+modify the Agent/Worker. Pipeline #53 passed all 11 jobs on commit
+`246b1f109e56c32ba7174d23a1bb5708805750e4`. Its Windows 10 build job #438
+produced a 55,230-byte package with SHA-256
+`01db0addfc3e85993fcb429ec124d5ce14fd48dabd5271d52fc0f00f51e40cff`; package
+verification job #446 extracted that same artifact, validated its manifest,
+hashes and provenance, and passed a 3-second non-interactive launch smoke.
+Job #441 passed 41 C# tests, 23 Windows Management IPC tests, and a
+deterministic cross-process status smoke. This is not interactive validation
+of the package, does not test an installed product Agent Service, and does not
+prove package replacement/removal behavior. See [Distribution](DISTRIBUTION.md)
+and [Release Checklist](RELEASE_CHECKLIST.md) for open gates. Windows 11 and
 Windows Server 2022/2025 remain `DEFERRED — PRODUCT OWNER VALIDATION`.

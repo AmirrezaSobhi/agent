@@ -202,15 +202,18 @@ build alone is not a clean-package pass.
 
 | Gate | Metric / threshold | Test and evidence | Result |
 |---|---|---|---|
-| One-build artifact provenance | Exactly one WPF Release x64 rebuild per pipeline; C# tests and package verifier consume that output; packaged EXE SHA-256 equals build-output SHA-256 | GitLab `desktop:build-package`, `test:wpf-management`, and `desktop:package-verify`; CI report with commit/pipeline/build job IDs | PENDING final pipeline |
-| Package integrity | Every declared payload file and manifest has a SHA-256; no duplicate, traversal, absolute or undeclared files; archive hash unchanged before/after validation | `Test-DesktopPackage.ps1` report; extracted manifest and checksum file | PENDING final pipeline |
-| Clean Windows 10 deployment | Exact CI ZIP launches from a user-writable path without repository, Visual Studio, unpublished DLL or custom environment dependency; startup and shutdown controlled | Interactive Windows 10 run, screenshots, process/session evidence | PENDING exact CI ZIP |
-| Settings/data safety | Preferences outside application folder survive replacement/rollback; no plaintext secrets; package removal leaves preferences and Agent state intact | Before/after file hashes/state inventory; settings tests; package content scan | PENDING Windows run |
-| Upgrade recovery | New version extracted side-by-side; previous known-good folder remains available; interrupted replacement does not mutate the previous folder | Bounded file-operation simulation plus operator runbook review | PENDING Windows run |
-| Runtime dependency | .NET Framework 4.8 or later installed; no developer targeting pack required on end-user host | Manifest/prerequisite review and Windows 10 launch | PENDING Windows run |
+| One-build artifact provenance | Exactly one WPF Release x64 rebuild per pipeline; C# tests and package verifier consume that output; packaged EXE SHA-256 equals build-output SHA-256 | Pipeline #53: build job #438, test job #441, verifier job #446; commit and hashes in [Distribution](DISTRIBUTION.md) | PASS for pipeline #53; 11/11 jobs succeeded |
+| Package integrity | Every declared payload file and manifest has a SHA-256; no duplicate, traversal, absolute or undeclared files; archive hash unchanged before/after validation | `Test-DesktopPackage.ps1` executed by job #446 on exact ZIP; same artifact hash before/after | PASS for this package's positive verification; tampered-archive negative fixture remains untested |
+| Clean Windows 10 deployment | Exact CI ZIP extracts without repository/Visual Studio; package EXE remains alive for bounded startup smoke; interactive pages/startup/shutdown validated separately | Job #446 extracted exact artifact and observed process alive after 3 seconds in the Windows 10 CI session | PARTIAL: archive extraction and non-interactive launch PASS; interactive launch/screenshots remain pending |
+| Settings/data safety | Preferences outside application folder survive replacement/rollback; no plaintext secrets; package removal leaves preferences and Agent state intact | Job #441 tests preference persistence and safe defaults; user data path is outside app directory; no package replacement/removal inventory | PARTIAL: automated preferences pass; replacement/removal and independent secret-canary scan pending |
+| Upgrade recovery | New version extracted side-by-side; previous known-good folder remains available; interrupted replacement does not mutate the previous folder | Manual runbook review only; no Windows package replacement simulation | PENDING Windows run |
+| Runtime dependency | .NET Framework 4.8 or later installed; no developer targeting pack required on end-user host | Build runner release key 533325, official reference assembly 4.8.3761.0; package manifest/prerequisite; CI launch smoke | PARTIAL: CI host launch passed; clean end-user host dependency test pending |
 | Code signing | Authorized production Authenticode signature verifies for the distributed executable | Signer identity and `Get-AuthenticodeSignature` verification without exposing key material | BLOCKED: no authorized signer identified |
-| OS coverage | Windows 10 x64 package evidence; other approved OS rows explicitly deferred | [Compatibility Matrix](WINDOWS_COMPATIBILITY.md) | Windows 10 PENDING; Windows 11/Server `DEFERRED — PRODUCT OWNER VALIDATION` |
+| OS coverage | Windows 10 x64 package evidence; other approved OS rows explicitly deferred | [Compatibility Matrix](WINDOWS_COMPATIBILITY.md); pipeline #53 on Windows 10 Pro build 19045 | PARTIAL: build/extract/process smoke pass; interactive package validation pending. Windows 11/Server `DEFERRED — PRODUCT OWNER VALIDATION` |
 
 Thresholds for startup, idle CPU/RAM and IPC remain those documented in the
 Phase 5 measurement protocol; compare only equivalent WPF artifacts and test
 conditions. Do not use a CI Session 0 startup smoke as interactive UI evidence.
+Pipeline #53's three-second launch sample is not a startup percentile or
+performance measurement; no Phase 6 CPU, memory, IPC latency, repeated launch,
+or shutdown benchmark was collected.

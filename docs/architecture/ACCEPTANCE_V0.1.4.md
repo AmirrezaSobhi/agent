@@ -160,15 +160,15 @@ only. It must not provision or replace the Python Agent/Worker. The mandatory
 CI chain is one clean WPF build, tests against the compiled outputs, and a
 package-verification job that consumes the same ZIP without rebuilding.
 
-| ID | Phase 6 criterion | Evidence | Status before final package run |
+| ID | Phase 6 criterion | Evidence | Result |
 |---|---|---|---|
-| A21 | Versioned Desktop ZIP contains only approved WPF files, documentation, manifest and checksums | Package manifest/content scan and CI artifact | PENDING |
-| A22 | SHA-256 and commit/pipeline/build-job provenance match the tested artifact | `desktop-build.json`, manifest, downstream verifier report | PENDING |
-| A23 | Exact CI ZIP extracts and launches on Windows 10 without developer tooling/source checkout | Interactive clean-package test and screenshots | PENDING |
-| A24 | User settings survive side-by-side upgrade and rollback and live outside installation folder | Before/after checks and preferences regression tests | PENDING |
-| A25 | Package removal leaves preferences, Agent/Worker, machine config and Service state unchanged | Before/after inventory and removal evidence | PENDING |
-| A26 | Package integrity checks reject unsafe paths, duplicates, missing or undeclared files and changed hashes | Positive and negative verifier tests | PENDING |
-| A27 | No secrets, test credentials, private keys, PDBs, test binaries, Python Agent or Worker are packaged | Automated file/content scan and reviewed manifest | PENDING |
+| A21 | Versioned Desktop ZIP contains only approved WPF files, documentation, manifest and checksums | Pipeline #53 build job #438 and downstream verifier #446 | PASS for declared package contents; no separate secret-canary scanner run |
+| A22 | SHA-256 and commit/pipeline/build-job provenance match the tested artifact | Build report/manifest; source commit `246b1f109e56c32ba7174d23a1bb5708805750e4`; pipeline 53; build job 438; ZIP SHA-256 `01db0addfc3e85993fcb429ec124d5ce14fd48dabd5271d52fc0f00f51e40cff` | PASS |
+| A23 | Exact CI ZIP extracts and launches on Windows 10 without developer tooling/source checkout | Job #446 extracted and verified the build artifact, then kept the packaged EXE alive for a 3-second non-interactive smoke | PASS for extraction/process smoke; interactive UI remains PENDING |
+| A24 | User settings survive side-by-side upgrade and rollback and live outside installation folder | Job #441 preference tests; no package replacement/rollback walkthrough | PARTIAL; automated persistence passes, package upgrade/rollback PENDING |
+| A25 | Package removal leaves preferences, Agent/Worker, machine config and Service state unchanged | No interactive clean-host removal inventory; ZIP-only package by design | PENDING |
+| A26 | Package integrity checks reject unsafe paths, duplicates, missing or undeclared files and changed hashes | Job #446 positive validation of the exact ZIP; no tampered-archive negative fixture in this pipeline | PARTIAL; positive integrity verified, adversarial negative fixture PENDING |
+| A27 | No secrets, test credentials, private keys, PDBs, test binaries, Python Agent or Worker are packaged | Job #446 verified exact manifest-declared payload; builder allowlists Desktop runtime files and adds docs/manifest/checksums; no separate secret scanner | PARTIAL; package boundary verified, independent canary scan PENDING |
 | A28 | Production Authenticode signing is verified before commercial publication | Authorized certificate validation | BLOCKED for commercial release; internal Phase 6 artifact remains unsigned |
 
 Windows 11, Server 2022 Desktop Experience and Server 2025 Desktop Experience

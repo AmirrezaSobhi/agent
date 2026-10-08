@@ -264,3 +264,11 @@ installer and the CI pipeline does not publish a release.
 See [Distribution](DISTRIBUTION.md) and [Release Checklist](RELEASE_CHECKLIST.md)
 for the implementation status and evidence. Windows 11, Windows Server 2022,
 and Windows Server 2025 tests remain `DEFERRED — PRODUCT OWNER VALIDATION`.
+
+**Phase 6 CI status:** Pipeline #53 passed all 11 jobs on commit
+`246b1f109e56c32ba7174d23a1bb5708805750e4`. The immutable Desktop ZIP from
+build job #438 was consumed by package verification job #446, which passed
+extraction, integrity/provenance checks and a bounded non-interactive launch
+smoke. Interactive package walkthrough, installed-Service connection, and
+manual upgrade/removal evidence remain pending; commercial release remains a
+separate authorization and is not implied by this pipeline.
