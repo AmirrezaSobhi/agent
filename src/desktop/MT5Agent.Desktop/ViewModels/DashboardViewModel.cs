@@ -60,7 +60,7 @@ namespace MT5Agent.Desktop.ViewModels
                 _hasObservedStatus = true;
                 Cards[0].Set(DisplayServiceState(result.ServiceState), Strings.ServiceUnavailableDetail);
                 Cards[1].Set(DisplayAgentState(result.AgentState), Strings.AgentResponsiveDetail);
-                Cards[2].Set(DisplayState(result.WorkerState), SafeDetail(result.ErrorCode, result.RuntimeState));
+                Cards[2].Set(DisplayWorkerState(result.WorkerState), SafeDetail(result.ErrorCode, result.RuntimeState));
                 Cards[3].Set(DisplayMt5State(result.Mt5State),
                     String.IsNullOrWhiteSpace(result.ErrorCode) || String.Equals(result.ErrorCode, "OK", StringComparison.Ordinal)
                         ? Strings.Mt5StatusDetail : String.Format(Strings.StatusErrorCode, DisplayState(result.ErrorCode)));
@@ -133,6 +133,20 @@ namespace MT5Agent.Desktop.ViewModels
             if (String.Equals(value, "INITIALIZING", StringComparison.Ordinal)) return Strings.Starting;
             if (String.Equals(value, "ERROR", StringComparison.Ordinal)) return Strings.Error;
             return Strings.Unknown;
+        }
+
+        private static string DisplayWorkerState(string value)
+        {
+            if (String.Equals(value, "WORKER_READY", StringComparison.Ordinal) ||
+                String.Equals(value, "READY", StringComparison.Ordinal)) return Strings.Ready;
+            if (String.Equals(value, "WORKER_STARTING", StringComparison.Ordinal)) return Strings.Starting;
+            if (String.Equals(value, "WORKER_STOPPING", StringComparison.Ordinal)) return Strings.Stopping;
+            if (String.Equals(value, "WORKER_STOPPED", StringComparison.Ordinal) ||
+                String.Equals(value, "WORKER_MISSING", StringComparison.Ordinal) ||
+                String.Equals(value, "DISCONNECTED", StringComparison.Ordinal)) return Strings.Disconnected;
+            if (String.Equals(value, "WORKER_FAILED", StringComparison.Ordinal) ||
+                String.Equals(value, "MT5_RUNTIME_UNHEALTHY", StringComparison.Ordinal)) return Strings.Error;
+            return DisplayState(value);
         }
 
         private static string DisplayCentralState(string value)

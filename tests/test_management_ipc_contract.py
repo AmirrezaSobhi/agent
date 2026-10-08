@@ -119,6 +119,18 @@ def test_management_status_does_not_fabricate_worker_or_mt5_when_health_is_missi
     assert status["mt5_state"] == "INITIALIZING"
 
 
+def test_management_status_preserves_the_worker_contract_state_after_a_live_health_response():
+    class Health:
+        state = type("State", (), {"value": "running"})()
+        runtime_state = "MT5_CONNECTED"
+        runtime = {"worker_available": True, "worker_state": "WORKER_READY", "mt5_connected": True}
+
+    status = build_status(type("Agent", (), {"health": lambda self: Health()})())
+    assert status["worker_available"] is True
+    assert status["worker_state"] == "WORKER_READY"
+    assert status["mt5_state"] == "CONNECTED"
+
+
 def test_management_allowlist_is_explicit_and_validated():
     config = EnvironmentConfigurationProvider({"MT5_AGENT_MANAGEMENT_ALLOWED_SIDS": " S-1-5-21-1-2-3-4, S-1-5-21-1-2-3-5 "}).load()
     assert config.management.allowed_user_sids == ("S-1-5-21-1-2-3-4", "S-1-5-21-1-2-3-5")

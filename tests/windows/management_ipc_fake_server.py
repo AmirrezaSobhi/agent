@@ -39,7 +39,7 @@ class TestRuntimeAdapter:
     runtime_state = "MT5_CONNECTED"
     health_details = {
         "worker_available": True,
-        "worker_state": "READY",
+        "worker_state": "WORKER_READY",
         "runtime_state": "MT5_CONNECTED",
         "mt5_connected": True,
     }

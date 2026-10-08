@@ -112,7 +112,7 @@ def build_status(agent) -> dict[str, object]:
     runtime_state = health.runtime_state if isinstance(health.runtime_state, str) else "UNKNOWN"
     worker_available = runtime.get("worker_available")
     if worker_available is True:
-        worker_state = runtime.get("worker_state") if isinstance(runtime.get("worker_state"), str) else "READY"
+        worker_state = runtime.get("worker_state") if isinstance(runtime.get("worker_state"), str) else "WORKER_READY"
     elif worker_available is False:
         worker_state = "DISCONNECTED"
     else:

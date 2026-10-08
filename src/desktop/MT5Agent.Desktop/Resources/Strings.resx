@@ -89,6 +89,7 @@
   <data name="Stopping" xml:space="preserve"><value>Stopping</value></data>
   <data name="AccessDenied" xml:space="preserve"><value>Access denied</value></data>
   <data name="Responsive" xml:space="preserve"><value>Responsive</value></data>
+  <data name="Ready" xml:space="preserve"><value>Ready</value></data>
   <data name="AgentResponsiveDetail" xml:space="preserve"><value>Observed from Agent health.</value></data>
   <data name="Mt5StatusDetail" xml:space="preserve"><value>Reported by the Agent's Runtime health probe.</value></data>
   <data name="ManagementConnectedDetail" xml:space="preserve"><value>Authenticated status response from {0}.</value></data>

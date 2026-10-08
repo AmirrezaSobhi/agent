@@ -100,6 +100,7 @@ namespace MT5Agent.Desktop.Resources
         public static string Stopping { get { return Get("Stopping"); } }
         public static string AccessDenied { get { return Get("AccessDenied"); } }
         public static string Responsive { get { return Get("Responsive"); } }
+        public static string Ready { get { return Get("Ready"); } }
         public static string AgentResponsiveDetail { get { return Get("AgentResponsiveDetail"); } }
         public static string Mt5StatusDetail { get { return Get("Mt5StatusDetail"); } }
         public static string ManagementConnectedDetail { get { return Get("ManagementConnectedDetail"); } }

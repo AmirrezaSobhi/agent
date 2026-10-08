@@ -462,7 +462,7 @@ namespace MT5Agent.Desktop.Tests
                 status = new NamedPipeManagementClient().GetStatusAsync(CancellationToken.None).GetAwaiter().GetResult();
                 if (!status.IsObserved || status.AgentState != "AGENT_RUNNING")
                     throw new InvalidOperationException("AGENT_STATUS_NOT_RUNNING");
-                if (status.WorkerState != "READY" || !status.Mt5Connected)
+                if (status.WorkerState != "WORKER_READY" || !status.Mt5Connected)
                     throw new InvalidOperationException("WORKER_OR_MT5_STATUS_NOT_READY");
                 var evidence = "IPC_SMOKE_PASS session=" + System.Diagnostics.Process.GetCurrentProcess().SessionId +
                     " protocol=1 agent=" + status.AgentState + " worker=" + status.WorkerState +
@@ -491,7 +491,7 @@ namespace MT5Agent.Desktop.Tests
             {
                 Handler = token => Task.FromResult(new ManagementStatus
                 {
-                    IsObserved = true, AgentState = "AGENT_RUNNING", WorkerState = "READY",
+                    IsObserved = true, AgentState = "AGENT_RUNNING", WorkerState = "WORKER_READY",
                     RuntimeState = "MT5_CONNECTED", Mt5State = "CONNECTED", Mt5Connected = true,
                     ServiceState = "UNKNOWN", ManagementState = "CONNECTED", SourceIdentity = "MT5Agent.AgentCore",
                     CentralState = "NOT_CONFIGURED", TradingCapability = "UNSUPPORTED",
@@ -503,7 +503,7 @@ namespace MT5Agent.Desktop.Tests
             var vm = new DashboardViewModel(client, errors);
             vm.RefreshAsync(CancellationToken.None).GetAwaiter().GetResult();
             Assert(vm.Cards[0].Value == Strings.Unknown && vm.Cards[1].Value == Strings.Responsive &&
-                vm.Cards[2].Value == "READY" && vm.Cards[3].Value == Strings.Connected,
+                vm.Cards[2].Value == Strings.Ready && vm.Cards[3].Value == Strings.Connected,
                 "Dashboard did not display actual typed status fields without inferring Service state.");
             Assert(vm.Cards[4].Value == Strings.Connected && vm.Cards[5].Value == Strings.NotConfigured &&
                 vm.Cards[6].Value == "UNSUPPORTED",
@@ -519,7 +519,7 @@ namespace MT5Agent.Desktop.Tests
                 Handler = token => Task.FromResult(new ManagementStatus
                 {
                     IsObserved = true, IsStale = true, ServiceState = "UNKNOWN", AgentState = "RESPONSIVE",
-                    WorkerState = "READY", Mt5State = "CONNECTED", ManagementState = "CONNECTED",
+                    WorkerState = "WORKER_READY", Mt5State = "CONNECTED", ManagementState = "CONNECTED",
                     CentralState = "NOT_CONFIGURED", TradingCapability = "UNSUPPORTED",
                     TradingAuthorized = "UNKNOWN", TradingReadiness = "UNAVAILABLE",
                     SourceIdentity = "MT5Agent.AgentCore", ObservedAtUtc = DateTime.UtcNow.AddMinutes(-1)
@@ -600,7 +600,7 @@ namespace MT5Agent.Desktop.Tests
                     {
                         { "observed_at_utc", observed.ToString("o") }, { "service_state", "UNKNOWN" },
                         { "source_identity", "MT5Agent.AgentCore" }, { "freshness", "FRESH" },
-                        { "agent_state", agentState }, { "worker_available", true }, { "worker_state", "READY" },
+                        { "agent_state", agentState }, { "worker_available", true }, { "worker_state", "WORKER_READY" },
                         { "agent_lifecycle_state", "RUNNING" }, { "runtime_state", "MT5_CONNECTED" },
                         { "mt5_state", "CONNECTED" }, { "mt5_connected", true },
                         { "central_state", "NOT_CONFIGURED" }, { "trading_capability", "UNSUPPORTED" },
