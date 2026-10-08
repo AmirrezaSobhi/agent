@@ -221,14 +221,17 @@ desktop:package-verify:
     - |
       $ErrorActionPreference = 'Stop'
       New-Item -ItemType Directory -Force -Path 'reports/desktop-package-validation' | Out-Null
-      & ./deployment/desktop/Test-DesktopPackage.ps1 `
+      $validationOutput = & ./deployment/desktop/Test-DesktopPackage.ps1 `
         -ArchivePath './dist/desktop/MT5Agent-Desktop-v0.1.4-windows-x64.zip' `
         -BuildReportPath './reports/desktop-build.json' `
         -ExpectedCommit $env:CI_COMMIT_SHA `
         -ExpectedPipelineId $env:CI_PIPELINE_ID `
-        -ExtractionDirectory './reports/desktop-package-validation/extracted' |
-        Set-Content -Path './reports/desktop-package-validation/result.json' -Encoding utf8
-      if ($LASTEXITCODE -ne 0) { throw 'Desktop package integrity validation failed' }
+        -ExtractionDirectory './reports/desktop-package-validation/extracted' `
+        -LaunchSmoke
+      $validationReport = ($validationOutput -join [Environment]::NewLine) | ConvertFrom-Json
+      $validationJson = $validationReport | ConvertTo-Json -Depth 5
+      Set-Content -Path './reports/desktop-package-validation/result.json' -Value $validationJson -Encoding utf8
+      if ($validationReport.status -ne 'PASS') { throw 'Desktop package integrity validation did not report PASS' }
   artifacts:
     when: always
     expire_in: 30 days
