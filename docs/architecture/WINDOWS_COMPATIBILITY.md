@@ -12,7 +12,7 @@ Phase 5 blocker. A deferred row is not a compatibility pass.
 
 | Operating system | Desktop requirement | Phase 5 result |
 |---|---|---|
-| Windows 10 x64 | Interactive desktop | **PARTIAL — Phase 5 execution passed for tested cases.** Windows 10 Pro build 19045 x64; official .NET Framework 4.8 targeting pack, clean x64 rebuild, 41 C# tests, 318 Windows Python tests (2 gated skips run separately and passed), interactive WPF/UIA at 96 DPI, offline/live Management status, and reversible SCM Agent integration passed. Product Service packaging, one runtime DACL-negative, RDP/multi-session, higher DPI, long soak and release pipeline remain pending. |
+| Windows 10 x64 | Interactive desktop | **PARTIAL — Phase 5 execution passed for tested cases.** Windows 10 Pro build 19045 x64; official .NET Framework 4.8 targeting pack, clean x64 rebuild, 41 C# tests, 318 Windows Python tests (2 gated skips run separately and passed), interactive WPF/UIA at 96 DPI, offline/live Management status, reversible SCM Agent integration, and Pipeline [#46](http://gitlab.local/root/agent/-/pipelines/46) passed. Product Service packaging, one runtime DACL-negative, RDP/multi-session, higher DPI, and long soak remain pending. |
 | Windows 11 x64 | Interactive desktop | `DEFERRED — PRODUCT OWNER VALIDATION` |
 | Windows Server 2022 x64 | Desktop Experience only; Server Core unsupported | `DEFERRED — PRODUCT OWNER VALIDATION` |
 | Windows Server 2025 x64 | Desktop Experience only; Server Core unsupported | `DEFERRED — PRODUCT OWNER VALIDATION` |

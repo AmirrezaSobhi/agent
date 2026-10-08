@@ -113,6 +113,9 @@ production load, Worker/MT5, long soak, or repeated recovery.
 
 ## GitLab and release boundary
 
-No Phase 5 GitLab pipeline or deployable package is represented by this local
-evidence bundle. Phase 4 pipeline #45 is historical only. No trade was executed;
-no Windows 11 or Windows Server environment was created or tested.
+Phase 5 Pipeline [#46](http://gitlab.local/root/agent/-/pipelines/46) passed all
+9 jobs for source/evidence commit `f841c55021af0535f39632b02d9efcd7e0ca37a0`;
+its job graph includes Windows validation, Windows/Linux regression, WPF
+Management tests, Windows build, three smoke jobs, and packaging. Pipeline #46
+does not validate a commercial deployment package. No trade was executed; no
+Windows 11 or Windows Server environment was created or tested.

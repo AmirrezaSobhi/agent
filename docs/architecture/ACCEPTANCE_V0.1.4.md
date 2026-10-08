@@ -95,8 +95,8 @@ does not pass these criteria by implication.
 | A13 | Unknown execution outcome is never blindly replayed | Use fake service/fake broker contract fixture to drop response after synthetic dispatch; assert `OUTCOME_UNKNOWN` and no retry without reconciliation | No live or test-account order operations; zero-trade simulation required |
 | A14 | Diagnostics do not expose secrets | Seed synthetic canary secrets; inspect UI, logs, exports and error paths | Not executed; bundle absent |
 | A15 | Support export is previewable and never sent without explicit consent | Preview exact files/manifest; cancel; assert zero network transmission; if remote upload is later added, separate explicit consent/audit test | Local export only in Option A; remote support deferred |
-| A16 | Reproducible WPF build and minimal deployment package work on a prepared host | Build, hash and test the exact artifact; validate user-scope extraction on the required Phase 5 OS | Windows 10 WPF build and executable hash recorded; no package/extraction test or same-artifact pipeline yet. Windows 11/Server rows are `DEFERRED — PRODUCT OWNER VALIDATION`, outside Phase 5 OS test scope. |
-| A17 | Windows and desktop CI tests pass | Build/analysis/unit/contract tests on Windows build runner; UI Automation on interactive desktop runner; Python regressions unchanged | Phase 5 Windows 10 clean x64 build, C# 41/41, Python 318 passed/2 gated skips (then ACL experiments 2/2 separately), Linux 276/36, and interactive UIA passed. Phase 5 branch pipeline still pending. |
+| A16 | Reproducible WPF build and minimal deployment package work on a prepared host | Build, hash and test the exact artifact; validate user-scope extraction on the required Phase 5 OS | Windows 10 WPF build and executable hash recorded. Pipeline #46 passed its existing `package:windows` Agent job, but no WPF package/extraction or same-WPF-artifact promotion was tested. Windows 11/Server rows are `DEFERRED — PRODUCT OWNER VALIDATION`, outside Phase 5 OS test scope. |
+| A17 | Windows and desktop CI tests pass | Build/analysis/unit/contract tests on Windows build runner; UI Automation on interactive desktop runner; Python regressions unchanged | Pipeline [#46](http://gitlab.local/root/agent/-/pipelines/46) passed all 9 jobs on commit `f841c55021af0535f39632b02d9efcd7e0ca37a0`: `validate:windows`, `test:linux`, `test:windows`, `test:wpf-management`, `build:windows`, three smoke jobs, and `package:windows`. Separate interactive Windows 10 UIA and ACL evidence is recorded above. |
 | A18 | No real trades are executed | Confirm demo/test account and inspect command logs/test harness; no order operations | Mission constraint; no trades run |
 | A19 | v0.1.3 behavior does not regress | Same-artifact regression suite plus Session 0/Worker/pipe and safe-read smoke | Linux Python suite 268 passed/36 skipped; Windows IPC tests passed. Existing production MT5 Runtime/Worker smoke was not rerun |
 | A20 | Build Once → Test Same Artifact → Release Same Artifact is preserved | Build manifest and SHA-256 match the exact package consumed by tests and release | Existing Python pipeline remains unchanged; WPF build job emits test artifacts, but same-artifact deployment packaging/release is not implemented |
@@ -138,13 +138,15 @@ VALIDATION`. They are not Phase 5 blockers and are not marked passed.
 | Worker lifecycle/security | **PASS for the Worker ACL fixture only.** Session 0 LocalSystem launched a controlled test Worker into interactive Session 1; designated-user identity and duplicate launch rejection passed; Window Station/Desktop DACL restored and hash-verified. | This is not an installed MT5 Runtime/Worker test; no trade. |
 | RDP/multi-session/reboot | **PENDING.** Console Session 1 and Session 0 Service were exercised; no RDP user session was active. | Shared Runner was not disconnected, logged off, or rebooted. Release impact: RDP reconnect/logoff and boot recovery remain unverified; assess on an isolated interactive host before commercial deployment. |
 | Performance | **PARTIAL.** Existing startup N=5 median 152.7ms/P95(max) 198.0ms; idle 20s CPU 0.155%, private bytes median 55.7MiB/max 58.4MiB; offline refresh N=10 median 2018.1ms/P95(max) 2099.4ms; navigation during refresh N=10 median 27.9ms/P95(max) 51.1ms. Against the test Service: read-only status IPC N=30 median 0.32ms/P95 32.89ms/max 33.15ms; bounded `logs.query` N=10, up to 10 events, median 0.30ms/P95 31.57ms. | Small test Service and process-level probe; no successful UI refresh latency percentile, reconnect timing, 5-minute CPU, 10-minute memory, 8-hour soak, or production load. |
-| GitLab | **PENDING.** No Phase 5 pipeline ID yet. | Phase 4 pipeline #45 is historical and does not satisfy this gate. |
+| GitLab | **PASS.** Pipeline [#46](http://gitlab.local/root/agent/-/pipelines/46) passed all 9 jobs on `f841c55021af0535f39632b02d9efcd7e0ca37a0`. | Final docs-only follow-up commit is checked separately; #46 verifies the implementation/evidence commit. |
 | Trading | **PASS.** No real trade or order command executed. | Only safe status and controlled Worker ACL fixture. |
 
 The temporary SCM harness closes the Windows 10 Agent/Service/Management-pipe
 integration test for the exercised configuration, but does not supply a
 product Service installer or provisioned Worker. Keep the NetworkService DACL
-negative, RDP/session matrix and Phase 5 pipeline gates open until evidence is
-available. The three deferred OS tests do not prevent Phase 5 completion.
+negative and RDP/session matrix gates open until evidence is available. Pipeline
+[#46](http://gitlab.local/root/agent/-/pipelines/46) passed on the Phase 5
+implementation/evidence commit. The three deferred OS tests do not prevent
+Phase 5 completion.
 Commercial release remains a separate decision and is not automatically
 authorized by this phase.

@@ -163,7 +163,7 @@ deferral does not block Phase 5. It does not establish commercial compatibility.
 | Security | OS DACL default-deny; caller TokenUser SID; per-operation allowlist; no secret/path disclosure | Actual Session 0 test Agent Pipe; authorized local Admin status/log query; LocalSystem negative operations; `logs.query` UI screenshot; Worker ACL tests | **PARTIAL.** Caller extraction/allowlist behaved correctly; LocalSystem received `UNAUTHORIZED`; bounded log projection returned fixed events. Existing Windows suite 318 passed/2 gated skips, then Worker ACL experiments separately passed 2/2 with DACL rollback. | NetworkService negative Scheduled Task returned `0x80070005` before process evidence; no runtime DACL denial is claimed. Revalidate against product Service deployment identity. |
 | Maintainability | Clean x64 rebuild, no project cycles, analyzer zero high findings | Official .NET Framework targeting pack, MSBuild rebuild, 41 C# tests | **PARTIAL.** Build and tests pass. | Static analyzer/coverage reports not collected. |
 | Scalability | 10,000 log rows virtualized; first page ≤1s | Existing bounded filtering tests | **PENDING.** | No 10k-row UI run and no real log records. |
-| Testability | Deterministic tests, no hidden skips counted as pass | Windows/Linux test logs and JUnit | **PARTIAL.** Windows C# 41/41; Windows Python 318/2 skipped; Linux 276/36 skipped; ACL tests separately 2/2. | Phase 5 GitLab pipeline not yet verified. |
+| Testability | Deterministic tests, no hidden skips counted as pass | Windows/Linux test logs and JUnit | **PASS for executed suite.** Phase 5 Pipeline [#46](http://gitlab.local/root/agent/-/pipelines/46) passed all 9 jobs, including Windows validation/build, Windows and Linux regression, WPF Management tests and all three smoke jobs. Local Windows evidence: C# 41/41; Python 318/2 gated skips, with gated ACL cases separately 2/2; Linux 276/36 platform skips. | Runtime DACL-negative and unexecuted lifecycle/DPI/accessibility cases remain separate open gates. |
 | Compatibility | Windows 10 test; other product rows deferred | Build, UIA, 96 DPI and test evidence | **PARTIAL for Windows 10; other three DEFERRED — PRODUCT OWNER VALIDATION.** | RDP/multi-session, additional DPI and actual product Service deployment remain unverified. No other OS test is required in Phase 5. |
 | Installation/update | Option A, already-provisioned Agent; package/build integrity | WPF executable hash recorded; no commercial package created | **PENDING.** | Minimal deployable package and same-artifact CI provenance remain for later release gate. |
 | Accessibility | Keyboard reachable, visible focus, Automation names/roles | UIA keyboard Tab/focus and named navigation/buttons | **PARTIAL.** | Screen-reader and contrast-tool checks absent. |
@@ -189,5 +189,6 @@ The repository still has no productized Agent Service installer/adapter. The
 approved temporary SCM integration harness has been removed after its tests;
 its limited evidence is not commercial deployment evidence. RDP/logoff/reboot
 were not run on the shared console host. No Windows 11 or Server test was
-attempted. No real trade was executed. GitLab Phase 5 pipeline evidence is
-pending.
+attempted. No real trade was executed. Pipeline [#46](http://gitlab.local/root/agent/-/pipelines/46)
+passed all 9 jobs on commit `f841c55021af0535f39632b02d9efcd7e0ca37a0`; the
+follow-up documentation commit receives a separate pipeline check.

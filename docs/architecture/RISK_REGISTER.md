@@ -40,7 +40,7 @@ architectural failure modes and missing verification evidence.
 | AR-17 | P0 partially mitigated: Worker ACL tests passed 2/2; temporary SCM harness verified real Agent Core in Session 0 and allowed Admin status/logs, while LocalSystem requests received `UNAUTHORIZED`. NetworkService task failed before execution; unallowlisted-client DACL denial and product Service identity remain unverified. |
 | AR-20 | Revised: Windows 11/Server 2022/2025 tests are explicitly deferred to Product Owner validation and are excluded from Phase 5 completion. The three OS rows are not an infrastructure blocker. |
 | AR-21 | New — no productized SCM Service wrapper/installer exists. A temporary SCM harness was explicitly authorized, exercised and rolled back on `window10-test`; it hosted the real Python Agent Core in Session 0 with Runtime disabled. Customer-ready SCM provisioning, recovery policy and live Worker session remain unverified. |
-| AR-22 | New — Phase 5 GitLab branch pipeline is not yet evidenced. Push/API authorization and pipeline status must be verified before delivery. |
+| AR-22 | Phase 5 GitLab branch CI was executed through the authenticated UI; Pipeline [#46](http://gitlab.local/root/agent/-/pipelines/46) passed all 9 jobs on `f841c55021af0535f39632b02d9efcd7e0ca37a0`. The documentation follow-up receives a separate pipeline check. |
 
 No real trade was executed. No Windows 11 or Server environment was provisioned or
 accessed. The Windows 10 test reports and screenshots are in the [Phase 5

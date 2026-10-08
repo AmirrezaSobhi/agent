@@ -1,8 +1,10 @@
 # v0.1.4 WPF Implementation Plan
 
-**Status:** Phases 1–4 are implemented. Phase 5 Windows 10 build/tests and
-interactive UI validation have been executed; installed-Service lifecycle and
-GitLab pipeline evidence remain pending. Python Core remains Python.
+**Status:** Phases 1–4 are implemented. Phase 5 Windows 10 build/tests,
+interactive UI validation, and reversible SCM integration harness have been
+executed. Pipeline [#46](http://gitlab.local/root/agent/-/pipelines/46) passed
+all 9 jobs on commit `f841c55021af0535f39632b02d9efcd7e0ca37a0`. Remaining
+Phase 5 evidence gaps are recorded below. Python Core remains Python.
 
 ## Approved release boundary — Option A
 
@@ -136,7 +138,8 @@ open.**
   reconnection, IPC measurements, and Dashboard text wrapping correction.
 - **Still required:** runtime DACL-negative test under an unallowlisted user,
   RDP/session scenarios where safe, remaining available DPI/accessibility
-  checks, Phase 5 GitLab branch pipeline, and production packaging/signing.
+  checks, and production packaging/signing. Pipeline #46 passed all nine jobs
+  for commit `f841c55021af0535f39632b02d9efcd7e0ca37a0`.
 - **Risks:** repository still has no productized SCM Service wrapper/installer;
   the temporary .NET ServiceBase wrapper is test evidence only. Shared console
   reboot/RDP interruption was avoided. Other OS tests belong to the Product
@@ -215,5 +218,8 @@ temporary .NET ServiceBase test host was removed after isolated SCM
 start/stop/restart and pipe-reconnection tests. RDP/logoff/reboot remain
 unexecuted on the shared console host. Windows 11, Server 2022 and Server 2025
 are `DEFERRED — PRODUCT OWNER VALIDATION`, not Phase 5 blockers. The
-NetworkService runtime DACL-negative and Phase 5 GitLab pipeline remain open.
+NetworkService runtime DACL-negative remains open. Phase 5 Pipeline
+[#46](http://gitlab.local/root/agent/-/pipelines/46) passed all 9 jobs for
+`f841c55021af0535f39632b02d9efcd7e0ca37a0`; a documentation-only follow-up
+commit will be validated separately.
 Do not claim commercial readiness.
