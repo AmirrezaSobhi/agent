@@ -1,10 +1,15 @@
 # Architecture
 
-**Baseline:** v0.1.3 development candidate. The split-session Runtime Worker is
-implemented and lab validated. Phase 4D is **LIVE CI ACCEPTED / GO** in
-[Pipeline #11](evidence/v0.1.3/phase4d-live-ci-acceptance.md), including the
-Session 0 Agent / Session 1 Worker and terminal. Live CI acceptance is distinct
-from commercial production readiness; see [CI](CI.md) and [Action Plan](ACTION_PLAN.md).
+**Baseline:** released v0.1.3. The split-session Runtime Worker is implemented
+and lab validated. Release Pipeline #16 accepted the tagged artifact; Pipeline
+#17 later validated the `develop` revision. Pipeline #11 remains historical
+Phase 4D candidate evidence in the
+[original acceptance record](evidence/v0.1.3/phase4d-live-ci-acceptance.md).
+The initial runtime smoke failure in Pipeline #17 has an unknown cause and
+does not establish general Worker startup reliability; see
+[post-release validation](evidence/v0.1.3/post-release-validation.md). CI
+acceptance is distinct from commercial production readiness; see [CI](CI.md)
+and [Action Plan](ACTION_PLAN.md).
 
 ## Runtime boundary
 
@@ -80,7 +85,8 @@ not a signed installer or a general customer VPS support commitment.
 The control-plane Agent has no production MetaTrader5 or NumPy runtime
 dependency. The PyInstaller Agent candidate excludes MetaTrader5, NumPy, the
 interactive Worker implementation, the legacy direct `MT5Adapter`, and
-`terminal_inspection`. Recursive archive inspection passed in Pipeline #11. The
+`terminal_inspection`. Recursive archive inspection passed in Pipeline #16;
+the earlier candidate was also inspected in Pipeline #11. The
 Worker uses its separate pinned dependency set. A direct adapter remains only
 for explicit development/legacy and compatibility test use. See
 [configuration](CONFIGURATION.md), [CI](CI.md), and [release process](RELEASE_PROCESS.md).
@@ -99,4 +105,27 @@ The current process can run as a Session 0 control process, but a commercial
 Windows Service installer, service recovery policy, signed upgrade flow, and
 generalized customer provisioning are not yet accepted. Do not describe the
 product as commercially production ready until those remaining gates pass;
-Phase 4D live CI acceptance alone does not productize installation or support. See [known issues](KNOWN_ISSUES.md) and [Action Plan](ACTION_PLAN.md).
+Phase 4D live CI acceptance alone does not productize installation or support.
+See [known issues](KNOWN_ISSUES.md) and [Action Plan](ACTION_PLAN.md).
+
+## Future Desktop UI planning boundary
+
+The Windows Desktop UI is a **planning proposal**, not an implemented
+component. The product direction is KivyMD subject to compatibility and
+packaging feasibility. The UI must remain an independent management and
+observation client; Agent Core and the MT5 Runtime Worker must continue when
+the UI or tray closes or crashes.
+
+The current `/command` HTTP transport is not approved as the UI control
+interface: the default composition does not configure authentication or
+authorization. The authenticated Named Pipe serves the existing Session 0
+Agent-to-interactive-Worker boundary and must not be directly exposed to the
+UI. A future local control interface requires its own explicit identity,
+authorization, input-validation, secret-redaction, session, and process
+isolation design. Windows startup/tray ownership also remains unresolved; the
+lab Worker bootstrap does not establish a customer Agent/UI startup mechanism.
+
+The detailed conceptual UI/Core/Worker flow, product decisions, security and
+session questions, and proposed acceptance criteria are in the
+[v0.1.4 Desktop UI plan](planning/v0.1.4-desktop-ui.md). They do not change the
+implemented runtime architecture above or authorize implementation.

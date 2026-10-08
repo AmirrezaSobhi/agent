@@ -21,12 +21,14 @@ flowchart LR
 ```
 
 The split-session Worker path and unattended lab cold-boot bootstrap are
-**LAB VALIDATED**. Phase 4D is **LIVE CI ACCEPTED / GO** for v0.1.3 at commit
-`c4b945122ad7e7174dbbb433cb91b42cb66f1c72`: Pipeline #11 passed all eight gates,
-including isolated packaging and Worker-backed runtime integration. See the
-[versioned acceptance evidence](docs/evidence/v0.1.3/phase4d-live-ci-acceptance.md).
-Branch promotion, tagging, and release publication remain separately authorized;
-this is an accepted candidate, not a published release.
+**LAB VALIDATED**. MT5 Agent v0.1.3 was released from tag `v0.1.3` at commit
+`970c04712853295fd065094b11a2bd541b5a9db8` on 2026-10-06. Release Pipeline #16
+passed all eight gates. Pipeline #17 separately validated the `develop` commit
+`2e01ff78c447d5242e0d582944c43f0d952b3446`; its first MT5 runtime smoke failed
+and a later execution succeeded, with the initial failure cause still unknown.
+See the [release acceptance and provenance](docs/releases/v0.1.3-release-notes.md),
+[Pipeline #11 historical acceptance](docs/evidence/v0.1.3/phase4d-live-ci-acceptance.md),
+and [post-release validation](docs/evidence/v0.1.3/post-release-validation.md).
 See [Architecture](docs/ARCHITECTURE.md) and [Action Plan](docs/ACTION_PLAN.md).
 
 ## Development and dependencies
@@ -43,10 +45,11 @@ same candidate against the persistent Worker. The release invariant is:
 
 > **BUILD ONCE → TEST SAME ARTIFACT → RELEASE SAME ARTIFACT**
 
-Pipeline #11 verified the same candidate through build, control smoke, runtime,
-and packaging without a post-smoke rebuild. See [CI/CD](docs/CI.md),
+Pipeline #16 verified the released candidate through build, control smoke,
+runtime, and packaging without a post-smoke rebuild. Pipeline #11 remains a
+separate historical acceptance record. See [CI/CD](docs/CI.md),
 [Release Process](docs/RELEASE_PROCESS.md), and the
-[draft v0.1.3 release notes](docs/releases/v0.1.3-release-notes.md).
+[v0.1.3 release notes](docs/releases/v0.1.3-release-notes.md).
 
 ## Documentation
 

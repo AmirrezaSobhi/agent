@@ -98,3 +98,15 @@ The focused follow-up changes only Markdown:
 Application code, version declarations, requirements, CI/scripts, Runner/system
 policy and persistent MT5 configuration are unchanged. No Wiki write, branch
 promotion, tag or Release creation is part of the formalization.
+
+## Post-release addendum — 2026-10-08
+
+The audit above remains the 2026-10-06 pre-release snapshot; its original
+findings and recommendations are preserved as historical evidence. A later
+authenticated GitLab API review confirmed that v0.1.3 was released from tag
+`v0.1.3` at commit `970c04712853295fd065094b11a2bd541b5a9db8` on 2026-10-06,
+with Pipeline #16 and package Job #125. The published Package Registry artifact
+and its SHA-256 are recorded in the
+[post-release validation record](post-release-validation.md). Pipeline #17 is
+separate post-release validation on `develop`; it does not replace Pipeline #16
+release provenance.

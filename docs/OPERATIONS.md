@@ -79,6 +79,20 @@ identity, and safe read through the Agent. Do not manually start the task or
 terminal before collecting failure evidence. Do not treat the lab test as
 proof of customer installation/support readiness.
 
+## Worker startup reliability observation
+
+The post-release Pipeline #17 history contains an initial failed
+`smoke:mt5-runtime` Job #132 followed by successful Job #134. Job #132's trace
+records a script exception and does not contain the expected runtime report;
+its root cause is unknown. Job #134 recorded `MT5_CONNECTED`, Agent Session 0,
+Worker and terminal Session 1, and three successful safe reads. The reported
+Windows reboot and manual retry are operational observations, not facts
+independently proven by the GitLab API. This single recovery sequence does not
+prove a startup-timing cause or resolve Worker startup reliability. Preserve
+failure evidence before any operator retry and investigate the lifecycle in a
+separately scoped reliability effort. See
+[post-release validation](evidence/v0.1.3/post-release-validation.md).
+
 ## Safe shutdown
 
 Use the supported Agent stop path and let the control client detach. The Agent
@@ -95,10 +109,15 @@ keys; those remain machine-owner/VPS-provider responsibilities.
 
 ## Clock skew and audit correlation
 
-Phase 4D acceptance observed approximately **10h30m** MT5-host UTC skew relative
-to Linux UTC. [Pipeline #11 evidence](evidence/v0.1.3/phase4d-live-ci-acceptance.md)
-retains commit, pipeline, and artifact hash as provenance; wall-clock ordering
-across hosts is unreliable. The Worker and terminal survived candidate cleanup.
+Phase 4D acceptance in Pipeline #11 observed approximately **10h30m** MT5-host
+UTC skew relative to Linux UTC.
+[Pipeline #11 evidence](evidence/v0.1.3/phase4d-live-ci-acceptance.md) retains
+commit, pipeline, and artifact hash as provenance; the Worker and terminal
+survived candidate cleanup. The later release record for Pipeline #16 states
+that W32Time synchronization was established with an active external source,
+UTC accuracy was independently checked, and tag-pipeline timestamps correlated
+with GitLab timestamps. This release-gate observation does not establish
+autonomous time polling or persistence through reboot/network transitions.
 
 Skew can distort command-age/deadline interpretation, duplicate/replay windows,
 log ordering, telemetry freshness, certificate validity checks, and incident
@@ -107,17 +126,16 @@ that every future subsystem is active. Use correlation IDs and observed
 process/session identity alongside timestamps; record host/UTC offset when
 collecting evidence. Do not change timestamps in historical acceptance records.
 
-Controlled `develop → staging` is not blocked by this observation alone because
-the required non-trading/hash/session gates passed. Before final publication,
-require either clock remediation plus revalidation or explicit release-owner
-acceptance of the remaining risk. Commercial operations need a defined clock
-monitoring and tolerance policy.
+The previously observed offset was addressed for the v0.1.3 release acceptance;
+the remaining operational follow-up is to evaluate autonomous time polling and
+validate synchronization persistence through reboot and network transitions.
+Commercial operations still need a defined clock-monitoring and tolerance policy.
 
-Future remediation requires a separately approved maintenance plan: read-only
-compare guest/host UTC, timezone presentation, hypervisor time synchronization,
-Windows Time Service source/status, and network reachability; choose one managed
-time authority and assess large clock-step effects on the persistent runtime.
-Then authorize the minimal correction, verify measured UTC offset and stability,
-and rerun health/safe reads and relevant deadline/replay/observability tests.
-Do not modify host time, NTP, timezone, Windows Time Service, Worker/task, or MT5
-configuration under an ordinary CI/documentation task.
+If monitoring shows drift again, use a separately approved maintenance plan to
+compare guest/host UTC, timezone presentation, hypervisor synchronization,
+Windows Time Service source/status, and network reachability. Assess large
+clock-step effects on the persistent runtime before authorizing any correction.
+Verify the measured UTC offset and stability, then repeat relevant health,
+safe-read, deadline/replay, and observability validation. Do not modify host
+time, NTP, timezone, Windows Time Service, Worker/task, or MT5 configuration
+under an ordinary CI/documentation task.

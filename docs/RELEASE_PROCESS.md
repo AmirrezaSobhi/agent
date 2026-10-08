@@ -57,37 +57,28 @@ accounts, tasks, Autologon, pipe ACLs, or machine security settings.
 
 ## Current status
 
-Phase 4D is **LIVE CI ACCEPTED / GO** for the
-[Pipeline #11 candidate](evidence/v0.1.3/phase4d-live-ci-acceptance.md), version
-0.1.3 at `c4b945122ad7e7174dbbb433cb91b42cb66f1c72`.
-[Draft release notes](releases/v0.1.3-release-notes.md) are prepared; v0.1.3 is
-not tagged or published. The earlier local Phase 4C executable is not the
-accepted release candidate.
+**v0.1.3 is released.** The GitLab Release was published on 2026-10-06 at
+02:58:30 UTC from tag `v0.1.3`, commit
+`970c04712853295fd065094b11a2bd541b5a9db8`. Tag Pipeline #16 passed all eight
+gates; package Job #125 produced the official release package. The
+[release record](releases/v0.1.3-release-notes.md) carries the published
+artifact provenance. Pipeline #11 remains historical candidate acceptance;
+Pipeline #17 is separate post-release validation on `develop` and is documented
+in [post-release evidence](evidence/v0.1.3/post-release-validation.md).
 
-## Controlled promotion and publication plan
+## Historical promotion and publication record
 
-The [release-readiness audit](evidence/v0.1.3/release-readiness.md) records branch
-heads/divergence, CI/ref behavior, clock risk, and artifact retention.
+The [release-readiness audit](evidence/v0.1.3/release-readiness.md) is a dated
+2026-10-06 snapshot of the pre-release review. Its original conclusions remain
+historical; the appended post-release addendum records the later release state.
 
-1. Review the documentation follow-up and require its complete develop pipeline
-   to pass. Keep the Pipeline #11 evidence tied to its original source commit.
-2. Obtain explicit promotion authorization, then merge `develop → staging`
-   preserving branch history; do not force-push or reset the historical merges.
-3. Require all eight gates on the resulting staging ref and review that new
-   candidate's provenance, diff, and non-trading runtime evidence.
-4. Resolve the clock risk, or obtain explicit release-owner risk acceptance;
-   verify package retention and draft release notes. Obtain separate authorization
-   to merge `staging → main` and require all eight main gates.
-5. After separate approval, create `v0.1.3` on the reviewed main commit. The tag
-   workflow runs a fresh, separately provenanced candidate through all eight
-   gates; require the tag/source version match. Do not claim the tag artifact is
-   the Pipeline #11 artifact or rebuild a smoke-tested candidate.
-6. With separate publication authorization, manually create the GitLab Release
-   from that tag pipeline's exact `package:windows` output and receipts. Verify
-   SHA-256 and publish the draft notes with the final tag provenance. CI currently
-   neither creates tags nor publishes Releases. Confirm the downstream mirror
-   separately; GitLab remains canonical.
+The release was published from the tag pipeline, not from the earlier Pipeline
+#11 candidate. Pipeline #16 is the production provenance for the published
+binary. Pipeline #17 ran later on `develop` and does not replace or redefine the
+release provenance. The release artifact and checksum are recorded in the
+[v0.1.3 release notes](releases/v0.1.3-release-notes.md).
 
-The historical Pipeline #11 binary may only be published unchanged under a
-separately approved plan that explicitly identifies its source commit and
-pipeline; its receipts cannot be relabeled to a documentation/merge/tag commit.
+Any future release still requires the applicable branch review, passing target
+ref pipeline, exact package provenance, and separately authorized tag and
+publication actions. Never relabel Pipeline #11 or #17 receipts as provenance
+for the v0.1.3 release or for a future release.
