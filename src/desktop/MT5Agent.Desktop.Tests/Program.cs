@@ -456,13 +456,18 @@ namespace MT5Agent.Desktop.Tests
 
         private static int ManagementPipeSmoke(string evidencePath, string runtimeEvidence)
         {
+            ManagementStatus status = null;
             try
             {
-                var status = new NamedPipeManagementClient().GetStatusAsync(CancellationToken.None).GetAwaiter().GetResult();
-                Assert(status.IsObserved && status.AgentState == "AGENT_RUNNING", "Python pipe status was not observed.");
-                Assert(status.WorkerState == "READY" && status.Mt5Connected, "Python pipe runtime fields did not deserialize.");
+                status = new NamedPipeManagementClient().GetStatusAsync(CancellationToken.None).GetAwaiter().GetResult();
+                if (!status.IsObserved || status.AgentState != "AGENT_RUNNING")
+                    throw new InvalidOperationException("AGENT_STATUS_NOT_RUNNING");
+                if (status.WorkerState != "READY" || !status.Mt5Connected)
+                    throw new InvalidOperationException("WORKER_OR_MT5_STATUS_NOT_READY");
                 var evidence = "IPC_SMOKE_PASS session=" + System.Diagnostics.Process.GetCurrentProcess().SessionId +
-                    " protocol=1 agent=AGENT_RUNNING worker=READY mt5_connected=true runtime_evidence=" + runtimeEvidence;
+                    " protocol=1 agent=" + status.AgentState + " worker=" + status.WorkerState +
+                    " mt5=" + status.Mt5State + " freshness=" + status.Freshness +
+                    " source=" + status.SourceIdentity + " runtime_evidence=" + runtimeEvidence;
                 File.WriteAllText(evidencePath, evidence);
                 Console.WriteLine(evidence);
                 return 0;
@@ -470,7 +475,10 @@ namespace MT5Agent.Desktop.Tests
             catch (Exception ex)
             {
                 var evidence = "IPC_SMOKE_FAIL type=" + ex.GetType().Name +
-                    (ex is ManagementIpcException ? " code=" + ((ManagementIpcException)ex).Code : "");
+                    (ex is ManagementIpcException ? " code=" + ((ManagementIpcException)ex).Code :
+                        (ex is InvalidOperationException ? " check=" + ex.Message : "")) +
+                    (status == null ? "" : " agent=" + status.AgentState + " worker=" + status.WorkerState +
+                        " mt5=" + status.Mt5State + " freshness=" + status.Freshness + " source=" + status.SourceIdentity);
                 File.WriteAllText(evidencePath, evidence);
                 Console.Error.WriteLine(evidence);
                 return 1;
