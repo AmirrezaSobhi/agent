@@ -18,6 +18,7 @@ secrets, or full account-information payloads in reports.
 | Terminal process exits/crashes | Worker-owned MT5 runtime | Observe the Worker state and its bounded reconnect policy; verify a replacement terminal remains in the same owner/session/path. Do not launch a second terminal manually or terminate unrelated processes. |
 | Scheduled Task not running | User logon/task policy | Verify the runtime user has a real interactive session; inspect task enablement, trigger, InteractiveToken, result, and restart policy. `Run whether user is logged on or not` is not the interactive Worker mode. |
 | Runtime session missing after reboot | Automatic-logon bootstrap | Collect boot time, session inventory, and safe Autologon metadata only. Do not inspect the stored credential or manually log in during unattended acceptance. |
+| MT5 runtime smoke fails on startup | Worker/session/terminal startup path | Preserve the failed job trace and report first. Pipeline #17 Job #132 failed and later Job #134 passed, but the initial cause is unknown. Do not assume a timing defect or treat one successful retry as resolution. |
 | Agent degraded but HTTP server alive | Expected split-runtime behavior | `AGENT_RUNNING` is process/lifecycle state; inspect `runtime_state`, Worker availability, and MT5 connectivity separately. Agent remains alive to report runtime loss. |
 | CI candidate hash mismatch | Artifact provenance | Compare build evidence, source commit, pipeline ID, artifact filename and SHA-256 at each gate. Fail closed; do not rebuild or substitute a binary after smoke. |
 | Account read succeeds but output appears in logs | Privacy boundary | Stop sharing the evidence, remove/redact it according to incident policy, and inspect logging/evidence code. CI should record only success and limited field count. |
@@ -30,6 +31,11 @@ than sorting all logs by wall time. The accepted MT5 host showed about 10h30m
 skew. Use the separately authorized
 [operations remediation plan](OPERATIONS.md#clock-skew-and-audit-correlation);
 do not repair time or restart the runtime as a diagnostic shortcut.
+
+Pipeline #16's release record states that UTC accuracy and timestamp correlation
+were checked for the tag pipeline. It does not establish autonomous polling or
+synchronization persistence after reboot/network transitions; those remain
+operational follow-up.
 
 ## Escalation evidence
 

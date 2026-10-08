@@ -1,12 +1,15 @@
 # Documentation Index
 
 Repository documentation is the canonical, version-controlled product source
-of truth. The enabled GitLab Wiki currently has no pages; its proposed
-navigation portal links here rather than maintaining conflicting copies.
+of truth. An authenticated GitLab API check on 2026-10-08 returned no Wiki pages.
+The Wiki remains a proposed navigation portal that links here rather than
+maintaining conflicting copies; recheck its inventory before any publication.
 
-**Phase 4D: LIVE CI ACCEPTED / GO.** Start with the
-[v0.1.3 acceptance record](evidence/v0.1.3/phase4d-live-ci-acceptance.md) and
-[release-readiness audit](evidence/v0.1.3/release-readiness.md).
+**v0.1.3 is released.** Tag Pipeline #16 at `970c04712853295fd065094b11a2bd541b5a9db8`
+passed the eight release gates. Pipeline #17 is a separate post-release
+validation on `develop`. Start with the [release notes](releases/v0.1.3-release-notes.md),
+[post-release validation](evidence/v0.1.3/post-release-validation.md), and
+[historical Phase 4D acceptance](evidence/v0.1.3/phase4d-live-ci-acceptance.md).
 
 ## Architecture
 
@@ -38,12 +41,14 @@ navigation portal links here rather than maintaining conflicting copies.
 ## Release and roadmap
 
 - [Release process](RELEASE_PROCESS.md)
-- [v0.1.3 live CI acceptance](evidence/v0.1.3/phase4d-live-ci-acceptance.md)
-- [v0.1.3 release-readiness audit](evidence/v0.1.3/release-readiness.md)
-- [Draft v0.1.3 release notes](releases/v0.1.3-release-notes.md)
+- [v0.1.3 release notes and provenance](releases/v0.1.3-release-notes.md)
+- [v0.1.3 post-release validation](evidence/v0.1.3/post-release-validation.md)
+- [Historical v0.1.3 release-readiness audit](evidence/v0.1.3/release-readiness.md)
+- [Historical Phase 4D candidate acceptance](evidence/v0.1.3/phase4d-live-ci-acceptance.md)
 - [Release checklist](../deployment/RELEASE_CHECKLIST.md)
 - [Action Plan](ACTION_PLAN.md)
 - [Product roadmap](ROADMAP.md)
+- [v0.1.4 Desktop UI planning](planning/v0.1.4-desktop-ui.md)
 - [Known issues](KNOWN_ISSUES.md)
 - [Changelog](../CHANGELOG.md)
 
