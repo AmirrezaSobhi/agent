@@ -61,6 +61,8 @@ def test_desktop_package_is_built_once_and_verified_as_the_tested_artifact():
     assert "Test-DesktopPackage.ps1" in verify
     assert "ExpectedCommit $env:CI_COMMIT_SHA" in verify
     assert "ExpectedPipelineId $env:CI_PIPELINE_ID" in verify
+    assert "Desktop build omitted required output" in build
+    assert "packageReport.package_sha256" in build
 
 
 def test_workflow_branch_and_tag_rules_remain_intact():

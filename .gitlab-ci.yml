@@ -180,8 +180,23 @@ desktop:build-package:
         -OutputDirectory './dist/desktop' `
         -SourceCommit $env:CI_COMMIT_SHA `
         -PipelineId $env:CI_PIPELINE_ID `
-        -BuildJobId $env:CI_JOB_ID | Set-Content -Path 'reports/desktop-build.json' -Encoding utf8
+        -BuildJobId $env:CI_JOB_ID
       if ($LASTEXITCODE -ne 0) { throw 'Desktop package creation failed' }
+      $packagePath = './dist/desktop/MT5Agent-Desktop-v0.1.4-windows-x64.zip'
+      $reportPath = './dist/desktop/desktop-build.json'
+      $testOutputPath = './desktop-test-output'
+      foreach ($requiredPath in @($packagePath, $reportPath, $testOutputPath)) {
+        if (-not (Test-Path -LiteralPath $requiredPath)) { throw "Desktop build omitted required output: $requiredPath" }
+      }
+      $packageReport = Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json
+      if ($packageReport.source_commit -ne $env:CI_COMMIT_SHA -or
+          $packageReport.pipeline_id -ne $env:CI_PIPELINE_ID -or
+          $packageReport.build_job_id -ne $env:CI_JOB_ID -or
+          $packageReport.package_filename -ne (Split-Path -Leaf $packagePath)) {
+        throw 'Desktop package build report provenance is incomplete or mismatched.'
+      }
+      Copy-Item -LiteralPath $reportPath -Destination './reports/desktop-build.json'
+      Write-Host "Desktop package: $($packageReport.package_filename); SHA-256: $($packageReport.package_sha256); EXE SHA-256: $($packageReport.desktop_executable_sha256)"
   artifacts:
     name: 'MT5Agent-Desktop-$CI_COMMIT_SHORT_SHA-$CI_PIPELINE_ID'
     expire_in: 30 days
