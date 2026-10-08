@@ -186,3 +186,20 @@ under the runtime principal in a nonzero interactive session. Multiple logged-
 on UI sessions use distinct SIDs and user preference stores. Only explicitly
 provisioned local SIDs/groups may connect to the management pipe. Session 0
 CI tests do not count as interactive UI tests.
+
+## Phase 5 runtime validation — 2026-10-08
+
+**Status: pending for installed-Service and multi-session acceptance.** The
+authorized Runner inventory contains two Windows 10 Pro 22H2 x64 hosts. A
+read-only service inventory found no MT5Agent Agent Service on either host.
+The MT5 Runner has Python and `terminal64` processes in Session 1, but that does
+not establish service registration, service startup, Management Pipe ownership,
+or recovery behavior. No process was stopped, restarted or reconfigured.
+
+Therefore Phase 5 has not validated Service start/stop, Worker independence
+under an installed Service, Windows restart, RDP disconnect/reconnect, logoff,
+multi-user behavior, or runtime failover. These remain release-blocking
+acceptance items. The complete authorized-host inventory and OS gaps are in the
+[Windows compatibility matrix](WINDOWS_COMPATIBILITY.md). The Phase 4
+interactive session evidence remains historical and must not be represented as
+a Phase 5 revalidation.

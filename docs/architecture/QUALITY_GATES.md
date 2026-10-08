@@ -141,3 +141,27 @@ Windows 11 or Server 2022/2025 run was included.
   multi-session/RDP, installed Service lifecycle, other supported OS versions
   and production packaging remain unmeasured/unverified.
 - No trading command or order operation was called.
+
+## Phase 5 measurement and evidence status — 2026-10-08
+
+The thresholds above remain the release targets. Phase 5 did not collect new
+interactive application measurements. Startup time, idle CPU, private bytes,
+refresh/IPC latency distributions, log-view performance, reconnection time,
+navigation soak, high-DPI layout, UI Automation/accessibility, or stability
+soak are **not measured**. The Phase 4 one-sample IPC time must not be reported
+as a Phase 5 percentile.
+
+The current authorized host inventory contains Windows 10 Pro build 19045 x64
+runners only. No Windows 11, Windows Server 2022 Desktop Experience, or Windows
+Server 2025 Desktop Experience compatibility result exists. No installed
+MT5Agent Windows Service was found; accordingly Service lifecycle gates remain
+blocked on a prepared host. The Phase 4 Session 1 screenshots are historical,
+not Phase 5 verification. See the [Windows compatibility matrix](WINDOWS_COMPATIBILITY.md)
+and the [Phase 5 baseline snapshot](IMPLEMENTATION_BASELINE.md#phase-5-verification-snapshot--2026-10-08).
+
+No new test suite executed from the Linux authoring host because its system
+Python has no `pytest` module. Do not install dependencies into the host to
+mask this limitation; run regression through the repository's Windows/Linux
+GitLab jobs and retain exact commit/job reports. Existing `test:windows` ACL
+cases remain skipped unless the dedicated environment gate and principal are
+provided; skipped cases are unresolved, not passed.

@@ -28,3 +28,17 @@ must be reassessed as evidence changes.
 
 No risk entry asserts a vulnerability has been exploited. Risks here are
 architectural failure modes and missing verification evidence.
+
+## Phase 5 evidence update — 2026-10-08
+
+| ID | Updated Phase 5 evidence / treatment |
+|---|---|
+| AR-04 | Still Open: two Windows 10 runner hosts do not establish RDP/logoff/reboot behavior; no Phase 5 lifecycle run was performed. |
+| AR-07 | Still Open: Phase 4 stale/offline behavior evidence exists; no Phase 5 visual/freshness revalidation. |
+| AR-12 | Still Open: Windows 10 clean build is evidenced historically; Windows 11/Server matrix and Phase 5 artifact validation are absent. |
+| AR-13 | Infrastructure gap remains: no UI automation/display-capture connection available to this execution and no Server/Windows 11 environment identified. |
+| AR-17 | P0 remains Open: no installed Agent Service was present; Worker ACL experiment gates remain unexecuted; production identity/ACL evidence is absent. |
+| AR-20 | New — Phase 5 validation environment lacks supported OS coverage and installed Service; effect is v0.1.4 release readiness cannot be asserted; mitigation is prepare authorized hosts and collect same-artifact OS/Service evidence; state: Infrastructure blocker. |
+
+These updates do not change product scope or downgrade the existing security,
+compatibility, or release gates. See [Windows Compatibility Matrix](WINDOWS_COMPATIBILITY.md).

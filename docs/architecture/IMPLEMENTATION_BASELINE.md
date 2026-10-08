@@ -279,3 +279,29 @@ Evidence paths above are repository-relative and symbols/tests are named where
 available. A file or test existing does not itself prove production wiring;
 pipeline passes only prove the tested commit and runner scenario. The complete
 acceptance checklist is [v0.1.4 acceptance](ACCEPTANCE_V0.1.4.md).
+
+## Phase 5 verification snapshot — 2026-10-08
+
+**Assessment: no application source defect was confirmed or changed in this
+snapshot.** The branch starts at Phase 4 evidence commit
+`59a6b7c97326f0ac22ba26f5243117972b623ade`; pipeline #45 tested the parent
+implementation commit `438c80f7de350351a7767db573ab9ce5c76a885f`, not the
+evidence-only commit. Phase 5 worktree was clean before documentation edits.
+
+| Area | Phase 5 result | Evidence / limitation |
+|---|---|---|
+| Windows inventory | Two Windows 10 Pro build 19045 x64 Runner hosts identified | [Compatibility matrix](WINDOWS_COMPATIBILITY.md); no Windows 11/Server 2022/2025 host identified |
+| Installed Agent Service | Not found by service name/display-name matching MT5/Agent on either host | No Service stop/start or installed-Service integration was attempted; service-backed validation is blocked by unavailable provisioned Agent Service |
+| Runtime processes | `win10-mt5-runner` has Python and `terminal64` processes in interactive Session 1 | Read-only inventory only; no identity/config/credentials were read and processes were not touched. This is not proof of the installed Agent Service or session recovery |
+| Runner identity | `win10-runner` GitLab Runner is Running/Automatic as LocalSystem; `win10-mt5-runner` Runner is Running as `.\Administrator` | Session 0 ACL experiment prerequisites partly exist on `window10-test`; runtime-principal and ACL flag are absent from Runner config. The dedicated tests were not executed in this snapshot |
+| Security review | Management v1 remains SID-allowlisted, DACL-protected, default-deny, read-only; `logs.query` returns fixed-message in-memory records, max 100 per query/200 retained | `agent/infrastructure/management_named_pipe.py` (`_caller_sid`, `_handle`, `_query_events`, `_security_attributes`); no new Windows negative-test run in this snapshot |
+| Interactive WPF / DPI / accessibility | Phase 4 screenshots and UI Automation remain the latest evidence | `docs/evidence/v0.1.4/phase4/`; no Phase 5 interactive launch, screenshot, scale or accessibility run |
+| Performance / stability | Not measured in Phase 5 | No startup, CPU, memory, refresh latency, soak, or restart-recovery metrics collected |
+| Regression / CI | Pending Phase 5 branch pipeline | Historical Phase 4 pipeline #45 passed all 9 jobs against implementation commit `438c80f7`; it is not evidence for Phase 5 changes |
+
+No real trade was run. No Service, Worker, Windows account, security policy,
+VM, disk or snapshot was modified. `python3 -m pytest -q` could not start on the
+Linux authoring host because `/usr/bin/python3` has no `pytest` module; Windows
+CI is the available regression path. See [Quality Gates](QUALITY_GATES.md) for
+the release blockers and [Windows Compatibility Matrix](WINDOWS_COMPATIBILITY.md)
+for exact host inventory.

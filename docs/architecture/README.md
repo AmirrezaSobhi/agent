@@ -32,8 +32,8 @@ does not supersede historical release evidence. Status labels are normative:
    [`src/desktop`](../../src/desktop/README.md); the Management v1 pipe is
    read-only and its scope/evidence are recorded in the IPC contract.
 7. [Implementation plan](IMPLEMENTATION_PLAN.md), [roadmap](ROADMAP.md),
-   [risks](RISK_REGISTER.md), [v0.1.4 acceptance](ACCEPTANCE_V0.1.4.md), and
-   [glossary](GLOSSARY.md).
+   [risks](RISK_REGISTER.md), [v0.1.4 acceptance](ACCEPTANCE_V0.1.4.md),
+   [Windows compatibility matrix](WINDOWS_COMPATIBILITY.md), and [glossary](GLOSSARY.md).
 8. [Architecture ADRs](adr/README.md) (17 records; one superseded historical ADR).
 
 ## Existing source records

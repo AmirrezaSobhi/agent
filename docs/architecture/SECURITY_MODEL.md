@@ -114,3 +114,36 @@ redaction review. Before Runtime restart operations ship, additionally prove
 owned-process identity and no broad terminal kill. Before central enrollment/
 trading: protocol and key lifecycle review, command authorization, expiry/
 replay, policy revision, execution lease, and ambiguous-outcome reconciliation.
+
+## Phase 5 focused implementation review — 2026-10-08
+
+Source review of `agent/infrastructure/management_named_pipe.py` confirmed the
+management listener requires an explicit SID allowlist; its pipe DACL grants
+its Service process rights and only bounded read/write client rights to listed
+SIDs. `_caller_sid` extracts `TokenUser` only after
+`ImpersonateNamedPipeClient`, closes the thread token, and calls `RevertToSelf`
+in `finally`; a revert failure sets a fatal flag and stops the listener.
+`_handle` rejects callers outside the SID allowlist before dispatch. Supported
+operations remain read-only: `protocol.negotiate`, `status.get`, and
+`logs.query`.
+
+`logs.query` is not a filesystem API: callers cannot supply paths, filters are
+a fixed severity enum, retention is a 200-entry in-memory deque, and a response
+returns no more than 100 entries. Request and response messages are bounded by
+64 KiB. These properties were code-reviewed, not newly exercised on Windows in
+this phase. Existing Phase 4 IPC tests remain the latest execution evidence.
+
+The two dedicated Runtime Worker Window Station/Desktop DACL tests remain
+**not executed** in the current evidence snapshot: both require an explicit
+`MT5_AGENT_ACL_EXPERIMENT=1` gate, while the Runner config contains neither
+that flag nor `MT5_AGENT_WORKER_PRINCIPAL`. Do not count the Phase 4 skips as
+passes. The test harness is designed to add one session logon-SID ACE and
+restore/verify the exact original DACL in `finally`, but the test's rollback
+claim is unverified until executed in its fail-closed authorized Session 0
+context. See the Windows Runner inventory and status in
+[Implementation Baseline](IMPLEMENTATION_BASELINE.md#phase-5-verification-snapshot--2026-10-08).
+
+No source security defect was confirmed in this focused review. This is not a
+full security certification; production Service identity, cross-user/session
+negative tests, the two Worker ACL tests, and real installed-Service pipe ACL
+verification remain release-blocking.

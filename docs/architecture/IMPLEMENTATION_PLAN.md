@@ -192,3 +192,20 @@ verified UI automation lane.
 [WPF Solution](WPF_SOLUTION.md) · [IPC Contract](IPC_CONTRACT.md) ·
 [Quality Gates](QUALITY_GATES.md) · [Acceptance](ACCEPTANCE_V0.1.4.md) ·
 [Roadmap](ROADMAP.md)
+
+### Phase 5 execution result — 2026-10-08
+
+The Phase 5 worktree was created at the verified Phase 4 final commit
+`59a6b7c97326f0ac22ba26f5243117972b623ade`. Inventory found Windows 10 Pro
+build 19045 x64 runners only and no installed MT5Agent Agent Service. The
+execution environment could not attach to the remote interactive desktop for
+WPF UI Automation or screenshots. No permitted source defect was confirmed;
+therefore no application implementation was changed in this evidence update.
+
+Blocked/pending deliverables: actual installed-Service lifecycle; two gated
+Worker ACL tests; RDP/logoff/reboot and multi-session validation; Windows 11,
+Server 2022 Desktop Experience, Server 2025 Desktop Experience; interactive
+visual/DPI/accessibility checks; repeatable CPU/memory/latency/soak data; and
+Phase 5 CI pipeline evidence. See the [Phase 5 baseline](IMPLEMENTATION_BASELINE.md#phase-5-verification-snapshot--2026-10-08)
+and [compatibility matrix](WINDOWS_COMPATIBILITY.md). Do not mark Phase 5 or
+commercial readiness complete until required blockers are cleared.

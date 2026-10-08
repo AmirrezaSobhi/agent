@@ -117,3 +117,21 @@ Full multi-runtime execution, central Web Console, production billing,
 enterprise custom roles, Remote Support implementation, central offline
 license issuance, complete auto-update/rollback and production multi-Agent
 failover. No criterion in this list authorizes those features for v0.1.4.
+
+## Phase 5 hardening status — 2026-10-08
+
+Phase 5 has not passed its release gates. The two authorized Windows hosts are
+Windows 10 Pro build 19045 x64; no Windows 11 or supported Windows Server test
+host was found. No installed MT5Agent Agent Service was found on either host,
+so Service startup/restart, pipe recovery, Worker independence and RDP/session
+lifecycle scenarios were not executed. No Phase 5 interactive UI capture, DPI
+or accessibility measurement, performance sample, or soak result exists.
+
+The two Runtime Worker ACL experiment tests remain pending and must not be
+counted among the previously reported two skips. Their fail-closed test requires
+an explicit dedicated flag and local worker principal. No real trades were run.
+The Linux authoring host could not run pytest (`No module named pytest`). See
+[Phase 5 implementation baseline](IMPLEMENTATION_BASELINE.md#phase-5-verification-snapshot--2026-10-08),
+[Quality Gates](QUALITY_GATES.md), and the [Windows compatibility matrix](WINDOWS_COMPATIBILITY.md)
+for evidence and remaining blockers. Phase 4 pipeline #45 is historical and
+was not run against Phase 5 documentation.

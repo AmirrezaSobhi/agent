@@ -104,3 +104,14 @@ validation, and Windows matrix evidence. Full account execution is unsupported.
 [Phase 1 build/test instructions](../../src/desktop/README.md) ·
 [IPC Contract](IPC_CONTRACT.md) · [Quality Gates](QUALITY_GATES.md) ·
 [Acceptance](ACCEPTANCE_V0.1.4.md)
+
+## Phase 5 interactive validation — 2026-10-08
+
+The available Windows hosts have interactive console sessions, but this
+execution could not attach a UI automation/display capture client to them. The
+latest actual WPF launch, UI Automation and theme/tray screenshots are the
+Phase 4 Windows 10 Session 1 evidence under
+[`../evidence/v0.1.4/phase4/`](../evidence/v0.1.4/phase4/). Do not mark the
+Phase 5 visual, DPI, accessibility, notification, or lifecycle gates as
+revalidated. No Phase 5 visual defect was confirmed because the application
+was not launched in an interactive desktop during this phase.
