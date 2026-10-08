@@ -459,7 +459,9 @@ namespace MT5Agent.Desktop.Tests
             ManagementStatus status = null;
             try
             {
+                var timer = System.Diagnostics.Stopwatch.StartNew();
                 status = new NamedPipeManagementClient().GetStatusAsync(CancellationToken.None).GetAwaiter().GetResult();
+                timer.Stop();
                 if (!status.IsObserved || status.AgentState != "AGENT_RUNNING")
                     throw new InvalidOperationException("AGENT_STATUS_NOT_RUNNING");
                 if (status.WorkerState != "WORKER_READY" || !status.Mt5Connected)
@@ -467,7 +469,8 @@ namespace MT5Agent.Desktop.Tests
                 var evidence = "IPC_SMOKE_PASS session=" + System.Diagnostics.Process.GetCurrentProcess().SessionId +
                     " protocol=1 agent=" + status.AgentState + " worker=" + status.WorkerState +
                     " mt5=" + status.Mt5State + " freshness=" + status.Freshness +
-                    " source=" + status.SourceIdentity + " runtime_evidence=" + runtimeEvidence;
+                    " source=" + status.SourceIdentity + " ipc_round_trip_ms=" + timer.ElapsedMilliseconds +
+                    " runtime_evidence=" + runtimeEvidence;
                 File.WriteAllText(evidencePath, evidence);
                 Console.WriteLine(evidence);
                 return 0;
