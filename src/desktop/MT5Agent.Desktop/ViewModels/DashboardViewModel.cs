@@ -12,17 +12,23 @@ namespace MT5Agent.Desktop.ViewModels
     {
         private readonly IManagementClient _management;
         private readonly IErrorHandler _errors;
+        private readonly IUserPreferencesStore _preferences;
+        private readonly IDesktopNotifier _notifier;
         private bool _isLoading;
         private string _message = Strings.NoSecureChannel;
         private string _inlineError;
         private string _freshnessText = Strings.NoObservationYet;
         private string _lastObservationText = Strings.NoObservationYet;
         private bool _hasObservedStatus;
+        private bool? _lastConnectionState;
 
-        public DashboardViewModel(IManagementClient management, IErrorHandler errors)
+        public DashboardViewModel(IManagementClient management, IErrorHandler errors,
+            IUserPreferencesStore preferences = null, IDesktopNotifier notifier = null)
         {
             _management = management;
             _errors = errors;
+            _preferences = preferences;
+            _notifier = notifier;
             Cards = new ObservableCollection<StatusCardViewModel>
             {
                 new StatusCardViewModel(Strings.ServiceStatus, Strings.Unknown, Strings.ServiceUnavailableDetail),
@@ -39,6 +45,7 @@ namespace MT5Agent.Desktop.ViewModels
         public ObservableCollection<StatusCardViewModel> Cards { get; private set; }
         public AsyncCommand RefreshCommand { get; private set; }
         public bool IsLoading { get { return _isLoading; } private set { SetProperty(ref _isLoading, value); } }
+        public int RefreshIntervalSeconds { get { return _preferences == null ? 10 : _preferences.Load().RefreshIntervalSeconds; } }
         public string Message { get { return _message; } private set { SetProperty(ref _message, value); } }
         public string InlineError { get { return _inlineError; } private set { SetProperty(ref _inlineError, value); } }
         public string FreshnessText { get { return _freshnessText; } private set { SetProperty(ref _freshnessText, value); } }
@@ -52,12 +59,15 @@ namespace MT5Agent.Desktop.ViewModels
                 var result = await _management.GetStatusAsync(cancellationToken);
                 if (result == null || !result.IsObserved)
                 {
+                    RecordConnectionState(false);
                     Cards[4].Set(Strings.Disconnected, Strings.ManagementUnavailableDetail);
                     if (_hasObservedStatus) MarkOffline();
                     else Message = result == null || String.IsNullOrWhiteSpace(result.Reason) ? Strings.NoSecureChannel : result.Reason;
                     return;
                 }
                 _hasObservedStatus = true;
+                _errors.Clear();
+                RecordConnectionState(true);
                 Cards[0].Set(DisplayServiceState(result.ServiceState), Strings.ServiceUnavailableDetail);
                 Cards[1].Set(DisplayAgentState(result.AgentState), Strings.AgentResponsiveDetail);
                 Cards[2].Set(DisplayWorkerState(result.WorkerState), SafeDetail(result.ErrorCode, result.RuntimeState));
@@ -79,12 +89,20 @@ namespace MT5Agent.Desktop.ViewModels
             catch (System.OperationCanceledException) { throw; }
             catch (System.Exception ex)
             {
+                RecordConnectionState(false);
                 InlineError = ex is ManagementIpcException
                     ? String.Format(Strings.StatusErrorCode, ((ManagementIpcException)ex).Code)
                     : Strings.RefreshError;
                 Cards[4].Set(Strings.Disconnected, Strings.ManagementUnavailableDetail);
                 if (_hasObservedStatus) MarkOffline();
-                _errors.Handle(ex, "Dashboard.Refresh");
+                var pipeUnavailable = ex is ManagementIpcException &&
+                    (String.Equals(((ManagementIpcException)ex).Code, "PIPE_NOT_FOUND", StringComparison.Ordinal) ||
+                     String.Equals(((ManagementIpcException)ex).Code, "PIPE_BROKEN", StringComparison.Ordinal) ||
+                     String.Equals(((ManagementIpcException)ex).Code, "PIPE_BUSY", StringComparison.Ordinal) ||
+                     String.Equals(((ManagementIpcException)ex).Code, "ACCESS_DENIED", StringComparison.Ordinal) ||
+                     String.Equals(((ManagementIpcException)ex).Code, "TIMEOUT", StringComparison.Ordinal) ||
+                     String.Equals(((ManagementIpcException)ex).Code, "SERVICE_UNAVAILABLE", StringComparison.Ordinal));
+                if (!pipeUnavailable) _errors.Handle(ex, "Dashboard.Refresh");
             }
             finally { IsLoading = false; }
         }
@@ -92,6 +110,13 @@ namespace MT5Agent.Desktop.ViewModels
         public void CancelRefresh()
         {
             if (RefreshCommand != null) RefreshCommand.Cancel();
+        }
+
+        private void RecordConnectionState(bool connected)
+        {
+            if (_lastConnectionState.HasValue && _lastConnectionState.Value != connected && _notifier != null)
+                _notifier.ConnectionChanged(connected);
+            _lastConnectionState = connected;
         }
 
         private void MarkStale()

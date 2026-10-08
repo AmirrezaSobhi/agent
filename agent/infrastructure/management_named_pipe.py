@@ -9,6 +9,7 @@ import threading
 import time
 import uuid
 import ctypes
+from collections import deque
 from datetime import datetime, timezone
 from ctypes import wintypes
 from typing import Callable
@@ -58,7 +59,7 @@ def parse_request(raw: bytes, *, max_bytes: int = MAX_MESSAGE_BYTES) -> dict[str
     if value.get("protocol_version") != PROTOCOL_VERSION:
         raise ManagementProtocolError("PROTOCOL_MISMATCH")
     operation = value.get("operation")
-    if operation not in ("protocol.negotiate", "status.get"):
+    if operation not in ("protocol.negotiate", "status.get", "logs.query"):
         raise ManagementProtocolError("UNSUPPORTED_OPERATION")
     request_id = _required_uuid(value.get("request_id"))
     correlation_id = _required_uuid(value.get("correlation_id"))
@@ -165,6 +166,8 @@ class ManagementNamedPipeServer:
         self._logger = logger or logging.getLogger(__name__)
         self._stopping = threading.Event()
         self._fatal_identity_failure = False
+        self._events = deque(maxlen=200)
+        self._events_lock = threading.Lock()
         if os.name == "nt" and self._allowed_sids:
             self._validate_sids()
 
@@ -323,19 +326,46 @@ class ManagementNamedPipeServer:
             request_id, correlation_id = request["request_id"], request["correlation_id"]
             operation = request["operation"]
             if caller_sid not in self._allowed_sids:
+                self._record_event("WARNING", "UNAUTHORIZED", "Unauthorized management request rejected.")
                 return error_response(request_id, correlation_id, "UNAUTHORIZED"), operation
             if operation == "protocol.negotiate":
                 data = {"supported_versions": [PROTOCOL_VERSION], "pipe": PIPE_NAME}
+            elif operation == "logs.query":
+                data = self._query_events(request["payload"])
             else:
                 data = self._status_provider()
+                self._record_event("INFO", "STATUS_OBSERVED", "Read-only Agent status was observed.")
             response = {"protocol_version": PROTOCOL_VERSION, "request_id": request_id,
                         "correlation_id": correlation_id, "result": "ok", "code": "OK",
                         "message": "Status observed.", "observed_at_utc": data.get("observed_at_utc"), "data": data}
             return response, operation
         except ManagementProtocolError as exc:
+            self._record_event("WARNING", exc.code, "Management request was rejected.")
             return error_response(request_id, correlation_id, exc.code), "invalid"
         except Exception:
+            self._record_event("ERROR", "INTERNAL_ERROR", "Management request failed.")
             return error_response(request_id, correlation_id, "INTERNAL_ERROR"), "status.get"
+
+    def _record_event(self, severity: str, code: str, message: str) -> None:
+        # This in-memory event stream contains fixed messages only. It never
+        # reads a caller-selected path or persists request data/secrets.
+        item = {"timestamp_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                "severity": severity, "source": "Agent Management", "code": code, "message": message}
+        with self._events_lock:
+            self._events.appendleft(item)
+
+    def _query_events(self, payload: dict[str, object]) -> dict[str, object]:
+        limit = payload.get("limit", 100)
+        severity = payload.get("severity", "ALL")
+        if not isinstance(limit, int) or isinstance(limit, bool) or limit < 1 or limit > 100:
+            raise ManagementProtocolError("INVALID_REQUEST")
+        if severity not in ("ALL", "INFO", "WARNING", "ERROR"):
+            raise ManagementProtocolError("INVALID_REQUEST")
+        with self._events_lock:
+            events = list(self._events)
+        if severity != "ALL":
+            events = [event for event in events if event["severity"] == severity]
+        return {"events": events[:limit], "count": min(len(events), limit), "source": "Agent Management"}
 
     def _write_response(self, handle, response: dict[str, object]) -> None:
         _, _, file, _, _ = self._modules()

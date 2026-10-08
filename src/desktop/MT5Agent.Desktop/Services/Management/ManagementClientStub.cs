@@ -19,5 +19,12 @@ namespace MT5Agent.Desktop.Services
                 Reason = Resources.Strings.NoRuntimeStatusQueried
             };
         }
+
+        public async Task<System.Collections.Generic.IList<ManagementLogEntry>> GetLogsAsync(int limit, string severity,
+            CancellationToken cancellationToken)
+        {
+            await Task.Delay(350, cancellationToken).ConfigureAwait(false);
+            return new System.Collections.Generic.List<ManagementLogEntry>();
+        }
     }
 }

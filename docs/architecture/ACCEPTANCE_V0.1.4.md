@@ -1,7 +1,8 @@
 # v0.1.4 Acceptance Checklist
 
-**Status:** Measurable release checklist. Phase 1 evidence is partial and is
-listed below; no v0.1.4 release gate is claimed fully passed. Product
+**Status:** Measurable release checklist. Phase 4 implementation and one
+Windows 10 desktop validation are evidenced, but no v0.1.4 release gate is
+declared complete. Product
 Owner-approved boundary is Option A: WPF Desktop Client and testable user-scope
 package for an already installed/provisioned Agent/Runtime. No real trades are
 permitted.
@@ -43,6 +44,24 @@ candidate Agent in Session 0, not the installed Service, and did not launch the
 interactive WPF window. Screenshots, P95 performance, other supported Windows
 versions, and installed Service lifecycle remain open.
 
+## Phase 4 implementation and Windows desktop evidence — 2026-10-08
+
+The Phase 4 branch clean-built the WPF application with the official .NET
+Framework 4.8 targeting pack on Windows 10 Pro 22H2 x64 and ran 40/40 C# tests,
+317 Python tests (2 Runtime Worker ACL experiment skips), and 23/23 Management
+IPC/security tests. In active console Session 1, UIA navigated all implemented
+screens, switched themes, minimized/restored through the tray, verified
+close-to-tray retained the process, and exited through the tray menu. Window
+screenshots are in [`../evidence/v0.1.4/phase4/`](../evidence/v0.1.4/phase4/).
+Dashboard/Runtime/Logs/Diagnostics showed unavailable state when the Agent
+Management Pipe was unavailable. These results verify one Windows 10 host;
+they do not verify Windows 11/Server compatibility, scaling/accessibility,
+installed Service lifecycle, cross-user/RDP behavior, performance gates, or
+production package installation. The GitLab Phase 4 branch pipeline could not
+be independently run/read because the configured API credential was invalid.
+No Phase 4 pipeline pass is claimed. Details are recorded in the
+[Phase 4 implementation baseline](IMPLEMENTATION_BASELINE.md#phase-4-desktop-operations--2026-10-08).
+
 ## Scope and release gates
 
 Mandatory foundation: C#/WPF/XAML/.NET Framework 4.8/MVVM shell, truthful local
@@ -60,12 +79,12 @@ failover are out of scope.
 “Not executed” means no evidence was collected for v0.1.4. Existing v0.1.3 CI
 does not pass these criteria by implication.
 
-| ID | Acceptance criterion | Verification evidence required | Initial status / gap |
+| ID | Acceptance criterion | Verification evidence required | Initial status / gap (see Phase 4 snapshot above for newer evidence) |
 |---|---|---|---|
-| A01 | UI runs independently from Agent Service | Windows test starts UI with Service running/stopped; UI process and service state evidence | Partial: shell build and composition do not start Agent; interactive launch/state test not run |
+| A01 | UI runs independently from Agent Service | Windows test starts UI with Service running/stopped; UI process and service state evidence | Partial: UI was launched without Agent/Management Pipe in interactive Windows Session 1; installed-Service running/stopped matrix remains unverified |
 | A02 | UI crash does not terminate Agent or Worker | Fault-inject UI exit; assert Service/Worker PID and health remain | Not executed; UI harness absent |
 | A03 | Agent remains operational when UI closes | Close/exit UI; poll Agent and Worker health independently | Not executed |
-| A04 | Service-offline UI opens successfully | Stop Service; launch UI; inspect recovery guidance without crash/hang | Partial: no Service dependency in startup; visual/offline launch not run interactively |
+| A04 | Service-offline UI opens successfully | Stop Service; launch UI; inspect recovery guidance without crash/hang | Partial: offline Management Pipe UI opened and displayed unavailable state interactively; installed Service stop test remains pending |
 | A05 | Cached state is clearly labeled stale | Disconnect probe source; assert observation age/source and stale label | Partial: stale on >15-second source age or >2-minute future clock skew; offline last values are labeled stale. Windows CI and visual verification pending |
 | A06 | Dashboard displays actual runtime information | Compare UI projection with live diagnostic/Worker evidence, including unavailable case | Partial: Windows CI queried the candidate Agent through the WPF client and observed live Worker/MT5 state; installed Service and interactive UI verification remain |
 | A07 | Unauthorized privileged requests are rejected | Negative tests by user/session/principal/action; audit denial and no side effect | Partial: real Windows DACL denied another SID; token SID extraction and allowlist verified. No privileged mutations exist; full multi-user matrix remains |
@@ -78,7 +97,7 @@ does not pass these criteria by implication.
 | A14 | Diagnostics do not expose secrets | Seed synthetic canary secrets; inspect UI, logs, exports and error paths | Not executed; bundle absent |
 | A15 | Support export is previewable and never sent without explicit consent | Preview exact files/manifest; cancel; assert zero network transmission; if remote upload is later added, separate explicit consent/audit test | Local export only in Option A; remote support deferred |
 | A16 | WPF deployment package works on already prepared supported hosts | Extract/install user-scope package and launch on each approved OS; assert preexisting Service/config unchanged; verify package manifest/hash | No full install/upgrade/repair/uninstall acceptance; no Service provisioning |
-| A17 | Windows and desktop CI tests pass | Build/analysis/unit/contract tests on Windows build runner; UI Automation on interactive desktop runner; Python regressions unchanged | Pipeline 43 passed; WPF 29/29, Windows Management IPC 16/16, Linux 270 passed/36 skipped, and live MT5 smoke passed. UIA and other OS jobs remain gaps |
+| A17 | Windows and desktop CI tests pass | Build/analysis/unit/contract tests on Windows build runner; UI Automation on interactive desktop runner; Python regressions unchanged | Phase 4 Windows build and local C# 40/40, Windows Python 317 passed/2 skipped, IPC 23/23, and interactive UIA passed on Windows 10. Phase 4 GitLab pipeline unavailable; other OS jobs remain gaps |
 | A18 | No real trades are executed | Confirm demo/test account and inspect command logs/test harness; no order operations | Mission constraint; no trades run |
 | A19 | v0.1.3 behavior does not regress | Same-artifact regression suite plus Session 0/Worker/pipe and safe-read smoke | Linux Python suite 268 passed/36 skipped; Windows IPC tests passed. Existing production MT5 Runtime/Worker smoke was not rerun |
 | A20 | Build Once → Test Same Artifact → Release Same Artifact is preserved | Build manifest and SHA-256 match the exact package consumed by tests and release | Existing Python pipeline remains unchanged; WPF build job emits test artifacts, but same-artifact deployment packaging/release is not implemented |

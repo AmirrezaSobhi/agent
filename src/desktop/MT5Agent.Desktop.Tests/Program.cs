@@ -43,12 +43,23 @@ namespace MT5Agent.Desktop.Tests
             Run("AsyncCommand disposal cancels active work", AsyncCommandDisposal);
             Run("AsyncCommand reports sanitized error state", AsyncCommandErrorState);
             Run("Settings command persists and applies theme", SettingsCommandPersistsTheme);
+            Run("User settings validate and persist behavior preferences atomically", UserSettingsPersistBehavior);
+            Run("Tray lifecycle distinguishes close-to-tray from explicit exit", TrayLifecyclePolicyBehavior);
+            Run("Runtime page maps only authenticated status and marks identity unavailable", RuntimePageStatus);
+            Run("Logs search and severity filtering stay bounded", LogsFilteringAndBounds);
+            Run("Expected Logs timeout stays a local offline state", LogsExpectedTimeout);
+            Run("Diagnostics retain local metadata while Agent is offline", DiagnosticsOfflineMetadata);
+            Run("Diagnostics use an unshimmed OS label", DiagnosticsOperatingSystemLabel);
+            Run("Expected Diagnostics timeout stays a connection state", DiagnosticsExpectedTimeout);
             Run("Dashboard keeps unobserved runtime data unavailable", DashboardOfflineState);
             Run("Dashboard exposes a failed status request", DashboardErrorState);
+            Run("Expected offline pipe state does not become a global error banner", DashboardOfflineDoesNotRaiseGlobalError);
+            Run("Connection notifications are emitted only on known state transitions", DashboardConnectionNotifications);
             Run("Dashboard distinguishes stale status from a live response", DashboardStaleStatus);
             Run("Dashboard background request leaves Dispatcher responsive", DispatcherResponsiveness);
             Run("Application service disposal releases the active page", ApplicationServiceDisposal);
             Run("Management IPC serializes and deserializes the v1 status contract", ManagementClientReadsTypedStatus);
+            Run("Management IPC serializes bounded log query and deserializes safe events", ManagementClientReadsBoundedLogs);
             Run("Management IPC fails closed on protocol mismatch", ManagementClientRejectsVersionMismatch);
             Run("Management IPC rejects oversized response frames", ManagementClientRejectsOversizedFrame);
             Run("Management IPC cancellation interrupts a pending response", ManagementClientCancellation);
@@ -240,6 +251,116 @@ namespace MT5Agent.Desktop.Tests
             });
         }
 
+        private static void UserSettingsPersistBehavior()
+        {
+            WithTempDirectory(directory =>
+            {
+                var path = Path.Combine(directory, "preferences.v1");
+                var store = new UserPreferencesStore(path);
+                var preferences = store.Load();
+                preferences.RefreshIntervalSeconds = 30;
+                preferences.NotificationsEnabled = false;
+                preferences.CloseToTray = true;
+                store.SaveAsync(preferences, CancellationToken.None).GetAwaiter().GetResult();
+                var loaded = store.Load();
+                Assert(loaded.RefreshIntervalSeconds == 30 && !loaded.NotificationsEnabled && loaded.CloseToTray,
+                    "Behavior preferences did not round-trip through per-user storage.");
+                preferences.RefreshIntervalSeconds = 3;
+                AssertThrows<ArgumentException>(() => store.SaveAsync(preferences, CancellationToken.None).GetAwaiter().GetResult());
+                Assert(store.Load().RefreshIntervalSeconds == 30, "An invalid preference replaced the last valid file.");
+            });
+        }
+
+        private static void TrayLifecyclePolicyBehavior()
+        {
+            Assert(TrayLifecyclePolicy.ShouldHideOnClose(false, true), "Configured close-to-tray should hide the UI.");
+            Assert(!TrayLifecyclePolicy.ShouldHideOnClose(true, true), "Explicit Exit must always close the UI.");
+            Assert(!TrayLifecyclePolicy.ShouldHideOnClose(false, false), "Disabled close-to-tray should close the UI.");
+        }
+
+        private static void RuntimePageStatus()
+        {
+            var client = new FakeManagementClient { Handler = token => Task.FromResult(new ManagementStatus {
+                IsObserved = true, AgentState = "AGENT_RUNNING", WorkerState = "WORKER_READY",
+                RuntimeState = "MT5_CONNECTED", Mt5State = "CONNECTED", SourceIdentity = "MT5Agent.AgentCore",
+                ObservedAtUtc = DateTime.UtcNow }) };
+            var errors = new ErrorService();
+            var vm = new RuntimeViewModel(client, errors);
+            vm.RefreshAsync(CancellationToken.None).GetAwaiter().GetResult();
+            Assert(vm.AgentState == "AGENT RUNNING" && vm.WorkerState == "WORKER READY" && vm.Mt5State == "CONNECTED",
+                "Runtime page did not display observed Agent and Worker state.");
+            Assert(vm.RuntimeIdentity == Strings.RuntimeIdentityNotExposed && vm.ProcessSession == Strings.ProcessSessionNotExposed,
+                "Runtime identity or session was fabricated.");
+            vm.Dispose(); errors.Dispose();
+        }
+
+        private static void LogsFilteringAndBounds()
+        {
+            var values = new System.Collections.Generic.List<ManagementLogEntry> {
+                new ManagementLogEntry { TimestampUtc = DateTime.UtcNow, Severity = "INFO", Source = "Agent Management", Code = "STATUS_OBSERVED", Message = "Status observed" },
+                new ManagementLogEntry { TimestampUtc = DateTime.UtcNow, Severity = "WARNING", Source = "Agent Management", Code = "UNAUTHORIZED", Message = "Request rejected" } };
+            var client = new FakeManagementClient { LogsHandler = (limit, severity, token) => Task.FromResult<System.Collections.Generic.IList<ManagementLogEntry>>(values) };
+            var errors = new ErrorService(); var vm = new LogsViewModel(client, errors);
+            vm.LoadAsync(CancellationToken.None).GetAwaiter().GetResult();
+            Assert(vm.Entries.Count == 2 && vm.FilteredEntries.Count == 2, "Bounded log result did not load.");
+            vm.Severity = "WARNING";
+            Assert(vm.FilteredEntries.Count == 1 && vm.FilteredEntries[0].Code == "UNAUTHORIZED", "Severity filtering failed.");
+            vm.SearchText = "missing";
+            Assert(vm.FilteredEntries.Count == 0 && !vm.HasEntries, "Search filtering failed.");
+            vm.Dispose(); errors.Dispose();
+        }
+
+        private static void LogsExpectedTimeout()
+        {
+            var errors = new ErrorService();
+            var client = new FakeManagementClient
+            {
+                LogsHandler = (limit, severity, token) => Task.FromException<System.Collections.Generic.IList<ManagementLogEntry>>(
+                    new ManagementIpcException("TIMEOUT"))
+            };
+            var vm = new LogsViewModel(client, errors);
+            vm.LoadAsync(CancellationToken.None).GetAwaiter().GetResult();
+            Assert(!errors.HasError && vm.Message.Contains("TIMEOUT") && !vm.HasEntries,
+                "Expected Management log timeout became a global error or fabricated entries.");
+            vm.Dispose(); errors.Dispose();
+        }
+
+        private static void DiagnosticsOfflineMetadata()
+        {
+            var errors = new ErrorService();
+            var vm = new DiagnosticsViewModel(new UnavailableManagementClient(), errors);
+            Assert(vm.Items.Count >= 6 && vm.Items[0].Name == "UI version", "Local diagnostic metadata was not populated.");
+            vm.RefreshAsync(CancellationToken.None).GetAwaiter().GetResult();
+            Assert(vm.ConnectionError == Strings.DiagnosticsAgentUnavailable, "Offline Agent state was not reported clearly.");
+            vm.RefreshCommand.Dispose(); errors.Dispose();
+        }
+
+        private static void DiagnosticsOperatingSystemLabel()
+        {
+            var errors = new ErrorService();
+            var vm = new DiagnosticsViewModel(new UnavailableManagementClient(), errors);
+            DiagnosticItem item = null;
+            foreach (var candidate in vm.Items) if (candidate.Name == "Operating system") item = candidate;
+            Assert(item != null && item.Value != "Unknown", "Local OS version label was unavailable.");
+            Assert(!item.Value.StartsWith("Microsoft Windows NT", StringComparison.OrdinalIgnoreCase),
+                "Diagnostics exposed a compatibility-shimmed NT version instead of a Windows product label.");
+            vm.RefreshCommand.Dispose(); errors.Dispose();
+        }
+
+        private static void DiagnosticsExpectedTimeout()
+        {
+            var errors = new ErrorService();
+            var client = new FakeManagementClient
+            {
+                Handler = token => Task.FromException<ManagementStatus>(new ManagementIpcException("TIMEOUT"))
+            };
+            var vm = new DiagnosticsViewModel(client, errors);
+            vm.RefreshAsync(CancellationToken.None).GetAwaiter().GetResult();
+            Assert(!errors.HasError && vm.ConnectionError.Contains("TIMEOUT"),
+                "Expected Management timeout was promoted to a global error banner.");
+            vm.RefreshCommand.Dispose(); errors.Dispose();
+        }
+
         private static void DashboardOfflineState()
         {
             var client = new FakeManagementClient();
@@ -261,6 +382,36 @@ namespace MT5Agent.Desktop.Tests
             vm.RefreshAsync(CancellationToken.None).GetAwaiter().GetResult();
             Assert(vm.InlineError != null && errors.HasError && !vm.IsLoading, "Dashboard error state was not surfaced.");
             Assert(!errors.Message.Contains("synthetic-detail"), "Raw exception was exposed.");
+            vm.Dispose(); errors.Dispose();
+        }
+
+        private static void DashboardOfflineDoesNotRaiseGlobalError()
+        {
+            var client = new FakeManagementClient { Handler = token => Task.FromException<ManagementStatus>(new ManagementIpcException("PIPE_NOT_FOUND")) };
+            var errors = new ErrorService(); var vm = new DashboardViewModel(client, errors);
+            vm.RefreshAsync(CancellationToken.None).GetAwaiter().GetResult();
+            Assert(!errors.HasError && vm.Cards[4].Value == Strings.Disconnected && vm.InlineError != null,
+                "Expected offline state should remain in the Dashboard without a shell-level failure banner.");
+            vm.Dispose(); errors.Dispose();
+        }
+
+        private static void DashboardConnectionNotifications()
+        {
+            var state = true;
+            var client = new FakeManagementClient
+            {
+                Handler = token => state
+                    ? Task.FromResult(new ManagementStatus { IsObserved = true, AgentState = "RESPONSIVE", WorkerState = "READY", Mt5State = "CONNECTED", ServiceState = "UNKNOWN", CentralState = "NOT_CONFIGURED", TradingCapability = "UNSUPPORTED", TradingAuthorized = "NOT_AUTHORIZED", TradingReadiness = "UNSUPPORTED", SourceIdentity = "fixture", ObservedAtUtc = DateTime.UtcNow })
+                    : Task.FromException<ManagementStatus>(new ManagementIpcException("TIMEOUT"))
+            };
+            var notifier = new RecordingNotifier(); var errors = new ErrorService();
+            var vm = new DashboardViewModel(client, errors, null, notifier);
+            vm.RefreshAsync(CancellationToken.None).GetAwaiter().GetResult();
+            Assert(notifier.Transitions.Count == 0, "First healthy observation should not emit a false restoration notice.");
+            state = false; vm.RefreshAsync(CancellationToken.None).GetAwaiter().GetResult();
+            state = true; vm.RefreshAsync(CancellationToken.None).GetAwaiter().GetResult();
+            Assert(notifier.Transitions.Count == 2 && !notifier.Transitions[0] && notifier.Transitions[1],
+                "Connection loss/recovery notifications did not follow observed state transitions.");
             vm.Dispose(); errors.Dispose();
         }
 
@@ -356,6 +507,30 @@ namespace MT5Agent.Desktop.Tests
                 result.SourceIdentity == "MT5Agent.AgentCore", "Status provenance or unknown service state was lost.");
             Assert(result.CentralState == "NOT_CONFIGURED" && result.TradingCapability == "UNSUPPORTED",
                 "Local Setup or trading capability was falsely enabled.");
+        }
+
+        private static void ManagementClientReadsBoundedLogs()
+        {
+            var server = StartMockPipe(1, request =>
+            {
+                Assert((string)request["operation"] == "logs.query", "The client did not use the dedicated read-only log operation.");
+                var payload = (Dictionary<string, object>)request["payload"];
+                Assert(Convert.ToInt32(payload["limit"]) == 100 && (string)payload["severity"] == "ALL",
+                    "The log request exceeded or changed its bounded query contract.");
+                var entry = new Dictionary<string, object> {
+                    { "timestamp_utc", DateTime.UtcNow.ToString("o") }, { "severity", "INFO" },
+                    { "source", "Agent Management" }, { "code", "STATUS_OBSERVED" },
+                    { "message", "Read-only Agent status was observed." } };
+                var data = new Dictionary<string, object> { { "events", new object[] { entry } } };
+                return new Dictionary<string, object> {
+                    { "protocol_version", 1 }, { "request_id", request["request_id"] },
+                    { "correlation_id", request["correlation_id"] }, { "result", "ok" },
+                    { "code", "OK" }, { "data", data } };
+            }, 0);
+            var entries = new NamedPipeManagementClient().GetLogsAsync(100, "ALL", CancellationToken.None).GetAwaiter().GetResult();
+            Assert(server.Join(3000), "Management log mock did not finish.");
+            Assert(entries.Count == 1 && entries[0].Source == "Agent Management" && entries[0].Code == "STATUS_OBSERVED",
+                "The client did not deserialize the safe log contract.");
         }
 
         private static void ManagementClientRejectsVersionMismatch()

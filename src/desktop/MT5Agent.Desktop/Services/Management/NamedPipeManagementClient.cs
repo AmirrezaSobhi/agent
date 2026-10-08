@@ -22,18 +22,49 @@ namespace MT5Agent.Desktop.Services
 
         public async Task<ManagementStatus> GetStatusAsync(CancellationToken cancellationToken)
         {
+            var raw = await RequestAsync("status.get", new Dictionary<string, object>(), cancellationToken).ConfigureAwait(false);
+            return ParseStatus(raw);
+        }
+
+        public async Task<IList<ManagementLogEntry>> GetLogsAsync(int limit, string severity, CancellationToken cancellationToken)
+        {
+            if (limit < 1 || limit > 100) throw new ArgumentOutOfRangeException("limit");
+            if (severity != "ALL" && severity != "INFO" && severity != "WARNING" && severity != "ERROR")
+                throw new ArgumentException("Unsupported severity filter.", "severity");
+            var raw = await RequestAsync("logs.query", new Dictionary<string, object>
+                { { "limit", limit }, { "severity", severity } }, cancellationToken).ConfigureAwait(false);
+            var envelope = DeserializeEnvelope(raw);
+            if (!String.Equals(Text(envelope, "result"), "ok", StringComparison.Ordinal))
+                throw new ManagementIpcException(Text(envelope, "code") ?? "INTERNAL_ERROR");
+            var data = envelope["data"] as IDictionary<string, object>;
+            var values = data == null ? null : data["events"] as System.Collections.IList;
+            if (values == null || values.Count > limit) throw new ManagementIpcException("INVALID_RESPONSE");
+            var entries = new List<ManagementLogEntry>();
+            foreach (var item in values)
+            {
+                var timestamp = ParseTimestamp(ReadText(item, "timestamp_utc"));
+                var message = ReadText(item, "message");
+                if (!timestamp.HasValue || String.IsNullOrEmpty(message) || message.Length > 256)
+                    throw new ManagementIpcException("INVALID_RESPONSE");
+                entries.Add(new ManagementLogEntry { TimestampUtc = timestamp.Value,
+                    Severity = ReadText(item, "severity") ?? "INFO", Source = ReadText(item, "source") ?? "Agent Management",
+                    Code = ReadText(item, "code") ?? "UNKNOWN", Message = message });
+            }
+            return entries;
+        }
+
+        private async Task<byte[]> RequestAsync(string operation, IDictionary<string, object> payload,
+            CancellationToken cancellationToken)
+        {
             var requestId = Guid.NewGuid().ToString("D");
             var correlationId = Guid.NewGuid().ToString("D");
-            var request = new Dictionary<string, object>
-            {
+            var request = new Dictionary<string, object> {
                 { "protocol_version", ProtocolVersion }, { "request_id", requestId },
-                { "correlation_id", correlationId }, { "operation", "status.get" },
+                { "correlation_id", correlationId }, { "operation", operation },
                 { "deadline_utc", DateTime.UtcNow.AddMilliseconds(TimeoutMilliseconds).ToString("o", CultureInfo.InvariantCulture) },
-                { "payload", new Dictionary<string, object>() }
-            };
+                { "payload", payload } };
             var raw = Encoding.UTF8.GetBytes(_serializer.Serialize(request));
             if (raw.Length > MaxMessageBytes) throw new ManagementIpcException("MESSAGE_TOO_LARGE");
-
             using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
             {
                 timeout.CancelAfter(TimeoutMilliseconds);
@@ -41,26 +72,18 @@ namespace MT5Agent.Desktop.Services
                 for (var attempt = 0; attempt < 3; attempt++)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    var retry = false;
-                    try
-                    {
-                        var status = await SendOnceAsync(raw, requestId, correlationId, timeout.Token).ConfigureAwait(false);
-                        cancellationToken.ThrowIfCancellationRequested();
-                        return status;
-                    }
+                    try { return await SendOnceAsync(raw, requestId, correlationId, timeout.Token).ConfigureAwait(false); }
                     catch (ManagementIpcException ex)
                     {
                         if (ex.Code != "PIPE_BUSY" && ex.Code != "PIPE_NOT_FOUND") throw;
                         lastFailure = ex;
-                        retry = true;
                     }
                     catch (OperationCanceledException)
                     {
                         if (cancellationToken.IsCancellationRequested) throw;
                         throw new ManagementIpcException("TIMEOUT");
                     }
-                    if (retry && attempt < 2)
-                        await Task.Delay(100 * (attempt + 1), timeout.Token).ConfigureAwait(false);
+                    if (attempt < 2) await Task.Delay(100 * (attempt + 1), timeout.Token).ConfigureAwait(false);
                 }
                 cancellationToken.ThrowIfCancellationRequested();
                 if (timeout.IsCancellationRequested) throw new ManagementIpcException("TIMEOUT");
@@ -68,7 +91,7 @@ namespace MT5Agent.Desktop.Services
             }
         }
 
-        private async Task<ManagementStatus> SendOnceAsync(byte[] request, string requestId,
+        private async Task<byte[]> SendOnceAsync(byte[] request, string requestId,
             string correlationId, CancellationToken cancellationToken)
         {
             using (var pipe = new NamedPipeClientStream(".", PipeName, PipeDirection.InOut,
@@ -101,7 +124,7 @@ namespace MT5Agent.Desktop.Services
             }
         }
 
-        private async Task<ManagementStatus> ExchangeAsync(NamedPipeClientStream pipe, byte[] request,
+        private async Task<byte[]> ExchangeAsync(NamedPipeClientStream pipe, byte[] request,
             string requestId, string correlationId, CancellationToken cancellationToken)
         {
             await pipe.ConnectAsync(TimeoutMilliseconds, cancellationToken).ConfigureAwait(false);
@@ -111,7 +134,8 @@ namespace MT5Agent.Desktop.Services
             var acknowledgement = Encoding.UTF8.GetBytes(_serializer.Serialize(
                 new Dictionary<string, object> { { "ack", requestId } }));
             await pipe.WriteAsync(acknowledgement, 0, acknowledgement.Length, cancellationToken).ConfigureAwait(false);
-            return ParseResponse(responseBytes, requestId, correlationId);
+            ValidateEnvelope(responseBytes, requestId, correlationId);
+            return responseBytes;
         }
 
         private static void ObserveFault(Task task)
@@ -135,19 +159,9 @@ namespace MT5Agent.Desktop.Services
             }
         }
 
-        private ManagementStatus ParseResponse(byte[] bytes, string requestId, string correlationId)
+        private ManagementStatus ParseStatus(byte[] bytes)
         {
-            Dictionary<string, object> envelope;
-            try { envelope = _serializer.Deserialize<Dictionary<string, object>>(Encoding.UTF8.GetString(bytes)); }
-            catch (Exception ex) { throw new ManagementIpcException("INVALID_RESPONSE", ex); }
-            if (envelope == null || IntValue(envelope, "protocol_version") != ProtocolVersion)
-                throw new ManagementIpcException("PROTOCOL_MISMATCH");
-            if (String.Equals(Text(envelope, "result"), "error", StringComparison.Ordinal) &&
-                String.Equals(Text(envelope, "code"), "MESSAGE_TOO_LARGE", StringComparison.Ordinal))
-                throw new ManagementIpcException("MESSAGE_TOO_LARGE");
-            if (!String.Equals(Text(envelope, "request_id"), requestId, StringComparison.Ordinal) ||
-                !String.Equals(Text(envelope, "correlation_id"), correlationId, StringComparison.Ordinal))
-                throw new ManagementIpcException("CORRELATION_MISMATCH");
+            var envelope = DeserializeEnvelope(bytes);
             if (!String.Equals(Text(envelope, "result"), "ok", StringComparison.Ordinal))
                 throw new ManagementIpcException(Text(envelope, "code") ?? "INTERNAL_ERROR");
             var data = envelope["data"] as Dictionary<string, object>;
@@ -185,8 +199,39 @@ namespace MT5Agent.Desktop.Services
             };
         }
 
+        private Dictionary<string, object> DeserializeEnvelope(byte[] bytes)
+        {
+            try
+            {
+                var envelope = _serializer.Deserialize<Dictionary<string, object>>(Encoding.UTF8.GetString(bytes));
+                if (envelope == null || IntValue(envelope, "protocol_version") != ProtocolVersion)
+                    throw new ManagementIpcException("PROTOCOL_MISMATCH");
+                return envelope;
+            }
+            catch (ManagementIpcException) { throw; }
+            catch (Exception ex) { throw new ManagementIpcException("INVALID_RESPONSE", ex); }
+        }
+
+        private void ValidateEnvelope(byte[] bytes, string requestId, string correlationId)
+        {
+            var envelope = DeserializeEnvelope(bytes);
+            if (!String.Equals(Text(envelope, "request_id"), requestId, StringComparison.Ordinal) ||
+                !String.Equals(Text(envelope, "correlation_id"), correlationId, StringComparison.Ordinal))
+                throw new ManagementIpcException("CORRELATION_MISMATCH");
+            if (String.Equals(Text(envelope, "result"), "error", StringComparison.Ordinal))
+                throw new ManagementIpcException(Text(envelope, "code") ?? "INTERNAL_ERROR");
+        }
+
         private static string Text(IDictionary<string, object> data, string key)
         { object value; return data.TryGetValue(key, out value) ? value as string : null; }
+
+        private static string ReadText(object value, string key)
+        {
+            var generic = value as IDictionary<string, object>;
+            if (generic != null) return Text(generic, key);
+            var dictionary = value as System.Collections.IDictionary;
+            return dictionary == null ? null : dictionary[key] as string;
+        }
 
         private static int IntValue(IDictionary<string, object> data, string key)
         { object value; return data.TryGetValue(key, out value) ? Convert.ToInt32(value, CultureInfo.InvariantCulture) : -1; }

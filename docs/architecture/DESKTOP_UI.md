@@ -4,8 +4,10 @@
 Product Owner. **Option A** is approved: this is a client for an already
 installed/provisioned Agent and Runtime. The WPF shell, tests, read-only
 Management IPC and observed Agent/Runtime status integration now exist under
-[`src/desktop`](../../src/desktop/README.md); tray and operational pages are
-not implemented. The earlier Kivy
+[`src/desktop`](../../src/desktop/README.md). Runtime, per-user Settings,
+bounded Management Logs, local Diagnostics, and notification-area lifecycle
+are implemented; interactive Windows release validation remains a distinct
+gate. The earlier Kivy
 planning note is retained as superseded history at
 [planning/v0.1.4-desktop-ui.md](../planning/v0.1.4-desktop-ui.md).
 
@@ -69,12 +71,13 @@ non-color status cues and Windows display-scaling tests.
 
 ## Tray, close, notifications
 
-Configurable Close to Tray versus Exit UI; reopening from Start Menu; tray
-failure isolated from Agent execution. Distinguish hide, UI exit, service
-stop and runtime stop. Notifications have severity, notification center, tray
-status, supported Windows notifications, preferences, deduplication and rate
-limits. Suppressing display must never suppress a safety guard, audit, or
-command rejection.
+Configurable Close to Tray versus Exit UI; reopening from Start Menu or tray;
+tray failure isolated from Agent execution. Distinguish hide, UI exit, service
+stop and runtime stop. Notifications currently report Agent connectivity
+transitions through the Windows notification area, honor the per-user
+preference, and use a 30-second rate limit. A persistent Notification Center
+and general severity workflow are deferred. Suppressing display never
+suppresses a safety guard, audit, or command rejection.
 
 ## Progressive disclosure
 

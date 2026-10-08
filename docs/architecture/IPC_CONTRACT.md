@@ -1,8 +1,8 @@
 # Local Management IPC and Status Contract
 
-**Status:** Implemented, limited read-only v1 contract (2026-10-08). Only
-`protocol.negotiate` and `status.get` are supported. Diagnostics, log queries,
-preferences, and Runtime restart remain planned and unauthorized. Current
+**Status:** Implemented, limited read-only v1 contract (2026-10-08).
+`protocol.negotiate`, `status.get`, and bounded `logs.query` are supported.
+Runtime/Service restart remains unauthorized. Current
 evidence is summarized in [Implementation Baseline](IMPLEMENTATION_BASELINE.md).
 
 ## Recommendation: a separate Windows Named Pipe
@@ -46,10 +46,10 @@ reviewed authenticated design; it must not reuse `/command` as-is.
    are ignored. Identity or restoration failure denies the request; restoration
    failure stops the management listener. `GetNamedPipeClientProcessId` is not
    authentication.
-4. **Per-operation authorization:** allowlist authorization currently covers
-   only read-only `protocol.negotiate` and `status.get`. Service start/stop is
-   outside the pipe and subject to SCM ACL/UAC. Trading, diagnostics,
-   preferences, and Runtime mutations are absent.
+4. **Per-operation authorization:** allowlist authorization covers read-only
+   `protocol.negotiate`, `status.get`, and `logs.query`. Service start/stop is
+   outside the pipe and subject to SCM ACL/UAC. Trading and Runtime mutations
+   are absent; Desktop diagnostics/preferences are local operations.
 5. **Multiple sessions:** each Windows user has a distinct SID and preference
    store. The Service can accept clients from approved SIDs but returns only
    permitted projections; one user's layout or credentials never leak to
@@ -113,8 +113,14 @@ correlation ID. Windows Service state is `UNKNOWN` because Agent Core does not
 query SCM. Central management is `NOT_CONFIGURED`; trading capability is
 `UNSUPPORTED`, authorization is `UNKNOWN`, and readiness is `UNAVAILABLE`.
 The Agent cannot prove user trading authorization. It does not submit, modify,
-or close orders. Diagnostics, logs, preferences and Runtime/Service controls
-are not implemented. No generic `command.execute`, arbitrary path, terminal
+or close orders. `logs.query` returns up to 100 events from a fixed 200-event
+in-memory ring buffer in the Management server. Events contain UTC time,
+severity, source, fixed event code and a fixed sanitized message; the request
+accepts only `limit` (1–100) and `severity` (`ALL`, `INFO`, `WARNING`,
+`ERROR`). It accepts no path, text expression or caller-supplied content, and
+does not read or persist files. The log source covers Management status and
+request-rejection events only, not the Agent's full operational log stream.
+No generic `command.execute`, arbitrary path, terminal
 process launch/kill, central credential, or trading operation exists.
 
 ## Limits, concurrency, timeout, and cancellation
@@ -161,10 +167,10 @@ and cancels pending work on navigation/unload.
 
 Use UTC Agent timestamps and compute age with the Desktop's UTC clock.
 Timestamps more than two minutes in the future are STALE and are never
-presented as current. Cache only
-sanitized status for the current Windows user. Persist offline UI event history
-as a bounded per-user file: maximum 1 MiB or 7 days, whichever comes first;
-mark each record as cached/local and do not merge it into security audit.
+presented as current. The UI keeps last successful status only in the current
+view model and labels it stale after disconnection. It does not persist status
+or offline event history. Management log events are volatile and are cleared
+when the Agent process exits.
 
 ## Error taxonomy and recovery
 

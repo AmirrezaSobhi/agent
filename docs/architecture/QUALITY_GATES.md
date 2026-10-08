@@ -118,3 +118,26 @@ These results do not prove the installed Service lifecycle or interactive UI.
 No idle CPU, memory, visual, DPI, accessibility, P95, or long-duration reconnect
 measurement is claimed until collected on an interactive Windows host. No
 Windows 11 or Server 2022/2025 run was included.
+
+## Phase 4 Windows validation — 2026-10-08
+
+- On the Windows 10 Pro 22H2 x64 host, MSBuild `4.8.9037.0` completed
+  `MSBuild.exe MT5Agent.Desktop.sln /t:Rebuild /p:Configuration=Release
+  /p:Platform=x64 /m:1 /nologo /verbosity:minimal` using the official .NET
+  Framework 4.8 targeting assemblies, without `FrameworkPathOverride`.
+- The Phase 4 C# test executable passed **40/40** tests (recorded after the
+  final rebuild). Windows Python suite passed **317**, skipped **2** dedicated
+  Runtime Worker ACL experiment gates, and failed **0**. Windows Management
+  IPC/security tests passed **23/23**, no skips.
+- In active Windows console Session 1, UI Automation navigated Dashboard,
+  Runtime, Settings, Logs, Diagnostics and About; switched themes; minimized
+  and restored from the notification area; exercised close-to-tray; and used
+  the tray context-menu Exit. The process remained alive after minimize and
+  close-to-tray, then exited through Exit. Screenshots are stored under
+  `docs/evidence/v0.1.4/phase4/` and linked from the implementation baseline.
+- CPU/RAM, responsiveness percentiles, high-DPI scaling, accessibility, soak,
+  multi-session/RDP, installed Service lifecycle, other supported OS versions
+  and production packaging remain unmeasured/unverified. The GitLab API token
+  configured for this host is invalid, so no Phase 4 branch pipeline could be
+  created/read through API. No pipeline success is claimed here.
+- No trading command or order operation was called.

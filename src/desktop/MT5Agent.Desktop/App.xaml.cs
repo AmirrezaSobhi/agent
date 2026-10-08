@@ -10,6 +10,7 @@ namespace MT5Agent.Desktop
     public partial class App : Application
     {
         private ApplicationServices _services;
+        private TrayService _tray;
 
         public void OnApplicationStartup(object sender, StartupEventArgs e)
         {
@@ -23,11 +24,14 @@ namespace MT5Agent.Desktop
                 var errors = new ErrorService();
                 var managementClient = new NamedPipeManagementClient();
                 var navigation = new NavigationService();
-                _services = new ApplicationServices(preferences, themeService, errors, managementClient, navigation);
+                _tray = new TrayService(preferences, Dispatcher);
+                _services = new ApplicationServices(preferences, themeService, errors, managementClient, navigation, _tray);
                 _services.RegisterRoutes();
 
                 var shell = new ShellViewModel(navigation, errors);
-                var window = new MainWindow { DataContext = shell };
+                var window = new MainWindow(preferences, _tray) { DataContext = shell };
+                _tray.Attach(window);
+                _tray.ExitRequested += (exitSender, exitArgs) => window.RequestExit();
                 MainWindow = window;
                 window.Show();
             }
@@ -48,6 +52,7 @@ namespace MT5Agent.Desktop
                 _services.Dispose();
                 _services = null;
             }
+            if (_tray != null) { _tray.Dispose(); _tray = null; }
         }
     }
 }

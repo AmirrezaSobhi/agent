@@ -6,6 +6,16 @@ namespace MT5Agent.Desktop.Services
     public interface IManagementClient
     {
         Task<ManagementStatus> GetStatusAsync(CancellationToken cancellationToken);
+        Task<System.Collections.Generic.IList<ManagementLogEntry>> GetLogsAsync(int limit, string severity, CancellationToken cancellationToken);
+    }
+
+    public sealed class ManagementLogEntry
+    {
+        public System.DateTime TimestampUtc { get; set; }
+        public string Severity { get; set; }
+        public string Source { get; set; }
+        public string Code { get; set; }
+        public string Message { get; set; }
     }
 
     public sealed class ManagementStatus

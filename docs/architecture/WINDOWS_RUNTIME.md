@@ -27,6 +27,36 @@ flowchart LR
   UI <-->|implemented read-only Management.v1 pipe| Local
 ```
 
+## Desktop UI process and tray lifecycle — Phase 4
+
+The WPF client starts without probing or starting the Agent. Dashboard and
+Runtime status requests use only the authorized Management Pipe; failures are
+shown as offline/unavailable while the UI stays open. Local Windows/target
+framework diagnostics remain available without the pipe. Settings are per
+Windows user under that user's LocalAppData and do not write machine Service
+configuration.
+
+The notification-area icon owns only UI visibility. Minimize hides the window;
+the configured Close to Tray option hides it on window close. The tray offers
+Open/restore and explicit Exit. Exiting disposes the C# notification icon and
+WPF resources, but never sends Service/Worker stop requests. Agent connectivity
+notices are limited to connection transitions, honor the user preference and
+are rate-limited. Startup registration is currently unsupported.
+
+Runtime identity, process ID, and Windows session are not in the current
+Management status projection and are shown as unavailable by the Runtime page.
+The UI does not infer them or open the Worker pipe. Runtime restart and Service
+control are not implemented.
+
+Interactive Windows 10 x64 evidence: UI Automation reached the Dashboard,
+Runtime, Settings, Logs, Diagnostics and About pages and changed themes in
+console Session 1. The WPF window was captured on the active desktop. A
+minimize/close-to-tray process-retention check passed. Tray icon rendering was
+observed in the Windows notification-area overflow. The round trip from tray
+activation to restored window and Exit context-menu action is still a release
+gate. See the Phase 4 validation record in
+[Implementation Baseline](IMPLEMENTATION_BASELINE.md).
+
 The Session 0 Agent does not own the GUI-dependent MT5 API connection. The
 Worker and terminal run in a valid nonzero interactive session under a distinct
 runtime principal. The UI is independently started and never calls the

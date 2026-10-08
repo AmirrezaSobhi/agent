@@ -124,5 +124,52 @@ namespace MT5Agent.Desktop.Resources
         public static string Stale { get { return Get("Stale"); } }
         public static string Unknown { get { return Get("Unknown"); } }
         public static string Error { get { return Get("Error"); } }
+        public static string RuntimeOperationsDescription { get { return Get("RuntimeOperationsDescription"); } }
+        public static string RuntimeSnapshot { get { return Get("RuntimeSnapshot"); } }
+        public static string RuntimeState { get { return Get("RuntimeState"); } }
+        public static string LastKnownStateStale { get { return Get("LastKnownStateStale"); } }
+        public static string RuntimeDetails { get { return Get("RuntimeDetails"); } }
+        public static string ManagementSource { get { return Get("ManagementSource"); } }
+        public static string RuntimeIdentity { get { return Get("RuntimeIdentity"); } }
+        public static string RuntimeIdentityNotExposed { get { return Get("RuntimeIdentityNotExposed"); } }
+        public static string ProcessSession { get { return Get("ProcessSession"); } }
+        public static string ProcessSessionNotExposed { get { return Get("ProcessSessionNotExposed"); } }
+        public static string CurrentError { get { return Get("CurrentError"); } }
+        public static string RecoveryGuidance { get { return Get("RecoveryGuidance"); } }
+        public static string RuntimeRecoveryDefault { get { return Get("RuntimeRecoveryDefault"); } }
+        public static string RuntimeStatusUnavailable { get { return Get("RuntimeStatusUnavailable"); } }
+        public static string RuntimeErrorCode { get { return Get("RuntimeErrorCode"); } }
+        public static string SettingsOperationsDescription { get { return Get("SettingsOperationsDescription"); } }
+        public static string Appearance { get { return Get("Appearance"); } }
+        public static string RefreshInterval { get { return Get("RefreshInterval"); } }
+        public static string RefreshIntervalDescription { get { return Get("RefreshIntervalDescription"); } }
+        public static string NotificationsEnabled { get { return Get("NotificationsEnabled"); } }
+        public static string CloseToTray { get { return Get("CloseToTray"); } }
+        public static string Language { get { return Get("Language"); } }
+        public static string LanguageEnglish { get { return Get("LanguageEnglish"); } }
+        public static string StartupBehavior { get { return Get("StartupBehavior"); } }
+        public static string StartupUnsupported { get { return Get("StartupUnsupported"); } }
+        public static string ManagementConnection { get { return Get("ManagementConnection"); } }
+        public static string SaveSettings { get { return Get("SaveSettings"); } }
+        public static string Saving { get { return Get("Saving"); } }
+        public static string UnsavedChanges { get { return Get("UnsavedChanges"); } }
+        public static string PreferencesSaveError { get { return Get("PreferencesSaveError"); } }
+        public static string LogsOperationalDescription { get { return Get("LogsOperationalDescription"); } }
+        public static string RefreshLogs { get { return Get("RefreshLogs"); } }
+        public static string LoadingLogs { get { return Get("LoadingLogs"); } }
+        public static string NoManagementEvents { get { return Get("NoManagementEvents"); } }
+        public static string LogsSourceNotice { get { return Get("LogsSourceNotice"); } }
+        public static string LogsUnavailable { get { return Get("LogsUnavailable"); } }
+        public static string LogsUnavailableCode { get { return Get("LogsUnavailableCode"); } }
+        public static string DiagnosticsLocalDescription { get { return Get("DiagnosticsLocalDescription"); } }
+        public static string RefreshDiagnostics { get { return Get("RefreshDiagnostics"); } }
+        public static string LocalDiagnosticSnapshot { get { return Get("LocalDiagnosticSnapshot"); } }
+        public static string LastManagementResponse { get { return Get("LastManagementResponse"); } }
+        public static string ConnectionDiagnostics { get { return Get("ConnectionDiagnostics"); } }
+        public static string DiagnosticsPrivacy { get { return Get("DiagnosticsPrivacy"); } }
+        public static string NoConnectionError { get { return Get("NoConnectionError"); } }
+        public static string CheckingConnection { get { return Get("CheckingConnection"); } }
+        public static string DiagnosticsAgentUnavailable { get { return Get("DiagnosticsAgentUnavailable"); } }
+        public static string NotObserved { get { return Get("NotObserved"); } }
     }
 }

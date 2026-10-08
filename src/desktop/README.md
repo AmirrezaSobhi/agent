@@ -1,9 +1,11 @@
 # MT5Agent Desktop — WPF Foundation and Management IPC
 
-**State:** Phase 1 WPF foundation plus Phase 2 read-only Management IPC are
-implemented. The official .NET Framework 4.8 targeting-pack build and tests
-passed on one Windows 10 runner. Interactive visual verification and the
-remaining supported OS matrix are still unverified.
+**State:** Phases 1–4 are implemented on the Phase 4 branch. The x64 WPF
+application has Runtime, per-user Settings, bounded Management Logs, local
+Diagnostics, and notification-area lifecycle support. Windows build and
+automated tests ran on one Windows 10 x64 interactive host. Windows 11 and
+Server matrix validation, GitLab branch pipeline, installed Service lifecycle,
+and release packaging remain pending.
 
 ## Implemented
 
@@ -12,17 +14,28 @@ remaining supported OS matrix are still unverified.
   cancellation, disposal, centralized errors, English `.resx` resources and
   light/dark per-user preferences.
 - Dashboard, Runtime, Settings, Logs, Diagnostics and About views. Accounts,
-  Security, Updates and Support are explicitly informational/unavailable.
+  Security, Updates, and Support remain explicitly unavailable.
 - `NamedPipeManagementClient` communicates asynchronously only with
   `MT5Agent.Management.v1`. It applies a 64 KiB limit, two-second timeout,
   cancellation, correlation/version validation and bounded reconnect attempts.
-- Python Management IPC accepts only `protocol.negotiate` and read-only
-  `status.get`, uses an explicit user SID allowlist plus caller-token identity,
-  and returns an observed Agent/Worker/MT5 projection. Central reports
+- Python Management IPC accepts read-only `protocol.negotiate`, `status.get`,
+  and `logs.query`, uses an explicit user SID allowlist plus caller-token
+  identity, and returns observed Agent/Worker/MT5 projection plus fixed-message
+  events from a 200-entry volatile buffer (100 records maximum per query).
+  Logs accept no path and never read files. Central reports
   `NOT_CONFIGURED`; trading reports `UNSUPPORTED` and `NOT_AUTHORIZED`.
 - With the Service stopped or allowlist missing, the UI remains available and
   presents offline/unavailable state. The UI does not call `/command` or open
-  the internal Worker pipe. No trade or Service control exists.
+  the internal Worker pipe. The tray can restore or explicitly exit the UI;
+  closing/minimizing the window never controls the Agent or Worker. No trade or
+  Service control exists.
+- User preferences (theme, bounded refresh interval, notifications and
+  close-to-tray) are validated and atomically saved in LocalAppData. Startup
+  registration is shown as unavailable; it is not changed by the client.
+- Runtime identity/process/session details are explicitly shown as unexposed
+  because the current Management status contract does not report them.
+- Local Diagnostics show the UI/framework/OS and last verified Agent response.
+  Support export and remote upload are not implemented.
 
 ## Build and run on Windows x64
 
@@ -60,10 +73,18 @@ The Service identity is also included in the pipe DACL for server operations.
   Developer Pack installed; reference assemblies confirmed present. Clean
   Release x64 MSBuild `4.8.9037.0` rebuild succeeded without
   `FrameworkPathOverride`.
-- WPF/ViewModel/Management IPC tests: **27 passed, 0 failed**.
-- Windows Python Management IPC tests: **15 passed, 0 failed**.
-- Linux Python regression suite: **268 passed, 36 skipped**. Skips are not
-  counted as passes.
+- Phase 4 WPF/ViewModel/Management IPC tests: **40 passed, 0 failed** on the
+  final Windows rebuild, including OS-label and expected-offline diagnostics
+  regressions.
+- Windows Python regression suite: **317 passed, 2 skipped**. The skips are
+  dedicated Runtime Worker ACL experiment gates and are not counted as passes.
+- Windows Management IPC contract/security suite: **23 passed, 0 skipped**.
+- UI Automation drove Dashboard, Runtime, Settings, Logs, Diagnostics, About,
+  and theme switching in the active Windows console session. WPF `PrintWindow`
+  screenshots captured the rendered window. Minimize-to-tray retained the UI
+  process; tray restore, close-to-tray retention, and context-menu Exit were
+  exercised successfully in the active session. The capture image set is in
+  [`docs/evidence/v0.1.4/phase4/`](../../docs/evidence/v0.1.4/phase4/).
 - Isolated security spike proved actual Named Pipe caller SID extraction,
   DACL allow/deny, impersonation restoration/fail-closed behavior, forged SID
   claim rejection and LocalSystem Session 0 to interactive Session 1.
@@ -76,12 +97,12 @@ The Service identity is also included in the pipe DACL for server operations.
 
 | Area | State | Evidence gap or boundary |
 |---|---|---|
-| Interactive visual/DPI/UI Automation review | Not verified | CI runner is Session 0; no screenshot or interactive UIA run. |
+| Interactive visual/DPI/UI Automation review | Partial | Windows 10 x64 console Session 1 UIA verified navigation, theme change, minimize/restore, close-to-tray, and explicit Exit; screenshots exist. DPI/scaling variants and other supported OS remain open. |
 | Supported OS matrix | Partially verified | Only Windows 10 Pro 22H2 build/test evidence; Windows 11 and Server 2022/2025 not run. |
 | Production Agent Service identity/provisioning | Open | Spike used disposable LocalSystem service. SID list is configured manually; no reader group provisioning. |
 | Multi-user/multi-session behavior | Partial | Session 0/1 communication tested; full multiple-user isolation matrix not run. |
 | Service start/stop and Runtime restart | Not implemented | No privileged operation or custom helper. SCM/UAC guidance only. |
-| Logs, diagnostics collection, support export, tray, notifications | Planned | Pages are informational; no data collection or external transmission. |
+| Logs, diagnostics, tray, notifications | Implemented, bounded | Logs expose only fixed-message Management events; no raw file access or support upload. Interactive tray lifecycle verified on the Windows 10 console host. |
 | Packaging and release | Not implemented | Reproducible UI build is verified; user-scope deployment package and same-artifact release flow remain future gates. |
 | Performance, memory, CPU, soak | Not measured | Dispatcher responsiveness covered by unit harness, not commercial thresholds. |
 

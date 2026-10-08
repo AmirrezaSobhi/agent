@@ -32,9 +32,9 @@
   <data name="Mt5Status" xml:space="preserve"><value>MT5 connection</value></data>
   <data name="CentralStatus" xml:space="preserve"><value>Central platform</value></data>
   <data name="TradingStatus" xml:space="preserve"><value>Trading capability</value></data>
-  <data name="PageRuntimeDescription" xml:space="preserve"><value>Runtime health will appear here after the secure local channel is available.</value></data>
-  <data name="PageLogsDescription" xml:space="preserve"><value>Log access is unavailable until an authorized, privacy-safe source is implemented.</value></data>
-  <data name="PageDiagnosticsDescription" xml:space="preserve"><value>Local diagnostics are not connected to the Agent yet. No system data was collected.</value></data>
+  <data name="PageRuntimeDescription" xml:space="preserve"><value>Runtime status reported by the authenticated local Management channel.</value></data>
+  <data name="PageLogsDescription" xml:space="preserve"><value>Review bounded, sanitized Management channel events. Raw files and unrestricted log access are not exposed.</value></data>
+  <data name="PageDiagnosticsDescription" xml:space="preserve"><value>Local application and authenticated Agent status diagnostics. No credentials or arbitrary paths are collected.</value></data>
   <data name="PageAccountsDescription" xml:space="preserve"><value>Account discovery and management are not available in this release.</value></data>
   <data name="PageSecurityDescription" xml:space="preserve"><value>Security controls will be shown when a verified local authorization source is available.</value></data>
   <data name="PageUpdatesDescription" xml:space="preserve"><value>Update checking is not available in this release.</value></data>
@@ -44,7 +44,7 @@
   <data name="ThemeDark" xml:space="preserve"><value>Dark</value></data>
   <data name="ThemeLight" xml:space="preserve"><value>Light</value></data>
   <data name="ThemeToggle" xml:space="preserve"><value>Switch theme</value></data>
-  <data name="Saved" xml:space="preserve"><value>Saved for this user</value></data>
+  <data name="Saved" xml:space="preserve"><value>Saved for this Windows user</value></data>
   <data name="Loading" xml:space="preserve"><value>Checking…</value></data>
   <data name="ErrorTitle" xml:space="preserve"><value>Something went wrong</value></data>
   <data name="Retry" xml:space="preserve"><value>Try again</value></data>
@@ -66,7 +66,7 @@
   <data name="ThemeSetting" xml:space="preserve"><value>Theme</value></data>
   <data name="NoRuntimeData" xml:space="preserve"><value>No runtime data is being displayed.</value></data>
   <data name="NoLogFilesRead" xml:space="preserve"><value>No files were read and no log data is cached by this screen.</value></data>
-  <data name="DiagnosticsNoCollection" xml:space="preserve"><value>Diagnostics require a bounded, authorized source. This page currently performs no collection.</value></data>
+  <data name="DiagnosticsNoCollection" xml:space="preserve"><value>Diagnostic collection is limited to local application metadata and the authenticated read-only Management contract.</value></data>
   <data name="PreferencesScope" xml:space="preserve"><value>Appearance is stored in this Windows user profile. It does not change machine or Agent configuration.</value></data>
   <data name="ServiceUnavailableDetail" xml:space="preserve"><value>No fresh Agent Service health response is available.</value></data>
   <data name="RuntimeUnavailableDetail" xml:space="preserve"><value>No Runtime query is available.</value></data>
@@ -113,4 +113,51 @@
   <data name="Stale" xml:space="preserve"><value>Stale</value></data>
   <data name="Unknown" xml:space="preserve"><value>Unknown</value></data>
   <data name="Error" xml:space="preserve"><value>Error</value></data>
+  <data name="RuntimeOperationsDescription" xml:space="preserve"><value>One authenticated, read-only snapshot. Process and Windows session identities are not exposed by the current contract.</value></data>
+  <data name="RuntimeSnapshot" xml:space="preserve"><value>Runtime snapshot</value></data>
+  <data name="RuntimeState" xml:space="preserve"><value>Runtime state</value></data>
+  <data name="LastKnownStateStale" xml:space="preserve"><value>Last known state may be stale. Refresh to verify the current state.</value></data>
+  <data name="RuntimeDetails" xml:space="preserve"><value>Identity and recovery</value></data>
+  <data name="ManagementSource" xml:space="preserve"><value>Observed source</value></data>
+  <data name="RuntimeIdentity" xml:space="preserve"><value>Runtime identity</value></data>
+  <data name="RuntimeIdentityNotExposed" xml:space="preserve"><value>Not exposed by the read-only status contract</value></data>
+  <data name="ProcessSession" xml:space="preserve"><value>Process and session</value></data>
+  <data name="ProcessSessionNotExposed" xml:space="preserve"><value>Not exposed by the read-only status contract</value></data>
+  <data name="CurrentError" xml:space="preserve"><value>Current error</value></data>
+  <data name="RecoveryGuidance" xml:space="preserve"><value>Recovery guidance</value></data>
+  <data name="RuntimeRecoveryDefault" xml:space="preserve"><value>Confirm the Agent is running and this Windows user is authorized. Use the documented Windows Services recovery path if administrator access is available. Runtime controls are not provided here.</value></data>
+  <data name="RuntimeStatusUnavailable" xml:space="preserve"><value>No current runtime snapshot is available.</value></data>
+  <data name="RuntimeErrorCode" xml:space="preserve"><value>Management status unavailable ({0}).</value></data>
+  <data name="SettingsOperationsDescription" xml:space="preserve"><value>Per-user presentation preferences. These settings do not change machine security or trading policy.</value></data>
+  <data name="Appearance" xml:space="preserve"><value>Appearance and behavior</value></data>
+  <data name="RefreshInterval" xml:space="preserve"><value>Status refresh interval</value></data>
+  <data name="RefreshIntervalDescription" xml:space="preserve"><value>Applies to Dashboard polling. Supported intervals are 5–60 seconds.</value></data>
+  <data name="NotificationsEnabled" xml:space="preserve"><value>Show Agent connection notifications</value></data>
+  <data name="CloseToTray" xml:space="preserve"><value>Keep the application in the notification area when the window closes</value></data>
+  <data name="Language" xml:space="preserve"><value>Language</value></data>
+  <data name="LanguageEnglish" xml:space="preserve"><value>English</value></data>
+  <data name="StartupBehavior" xml:space="preserve"><value>Start with Windows</value></data>
+  <data name="StartupUnsupported" xml:space="preserve"><value>Not available. Startup registration is not configured by this client.</value></data>
+  <data name="ManagementConnection" xml:space="preserve"><value>Local management connection</value></data>
+  <data name="SaveSettings" xml:space="preserve"><value>Save preferences</value></data>
+  <data name="Saving" xml:space="preserve"><value>Saving…</value></data>
+  <data name="UnsavedChanges" xml:space="preserve"><value>Unsaved changes</value></data>
+  <data name="PreferencesSaveError" xml:space="preserve"><value>Preferences could not be saved. The previous file remains intact.</value></data>
+  <data name="LogsOperationalDescription" xml:space="preserve"><value>Recent fixed-message Management events from a bounded in-memory buffer. This view does not read arbitrary files.</value></data>
+  <data name="RefreshLogs" xml:space="preserve"><value>Refresh logs</value></data>
+  <data name="LoadingLogs" xml:space="preserve"><value>Loading bounded events…</value></data>
+  <data name="NoManagementEvents" xml:space="preserve"><value>No Management events have been recorded in this Agent session.</value></data>
+  <data name="LogsSourceNotice" xml:space="preserve"><value>Showing up to 100 in-memory Agent Management events. Restarting the Agent clears this history.</value></data>
+  <data name="LogsUnavailable" xml:space="preserve"><value>Logs are unavailable while the Agent is offline or access is denied.</value></data>
+  <data name="LogsUnavailableCode" xml:space="preserve"><value>Management log query unavailable ({0}). No files were read.</value></data>
+  <data name="DiagnosticsLocalDescription" xml:space="preserve"><value>Local application details and a read-only Agent status check. Diagnostics remain on this device.</value></data>
+  <data name="RefreshDiagnostics" xml:space="preserve"><value>Check Agent</value></data>
+  <data name="LocalDiagnosticSnapshot" xml:space="preserve"><value>Local diagnostic snapshot</value></data>
+  <data name="LastManagementResponse" xml:space="preserve"><value>Last successful Management response</value></data>
+  <data name="ConnectionDiagnostics" xml:space="preserve"><value>Connection result</value></data>
+  <data name="DiagnosticsPrivacy" xml:space="preserve"><value>No support bundle is uploaded. Passwords, tokens, broker credentials, and machine paths are not collected.</value></data>
+  <data name="NoConnectionError" xml:space="preserve"><value>No current connection error</value></data>
+  <data name="CheckingConnection" xml:space="preserve"><value>Checking the local Agent…</value></data>
+  <data name="DiagnosticsAgentUnavailable" xml:space="preserve"><value>Agent unavailable or this user is not authorized. Local operating-system diagnostics are still shown.</value></data>
+  <data name="NotObserved" xml:space="preserve"><value>Not observed</value></data>
 </root>

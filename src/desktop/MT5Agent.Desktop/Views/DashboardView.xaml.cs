@@ -21,7 +21,11 @@ namespace MT5Agent.Desktop.Views
         {
             _refreshTimer.Start();
             var viewModel = DataContext as DashboardViewModel;
-            if (viewModel != null && viewModel.RefreshCommand.CanExecute(null)) viewModel.RefreshCommand.Execute(null);
+            if (viewModel != null)
+            {
+                _refreshTimer.Interval = System.TimeSpan.FromSeconds(viewModel.RefreshIntervalSeconds);
+                if (viewModel.RefreshCommand.CanExecute(null)) viewModel.RefreshCommand.Execute(null);
+            }
         }
 
         private void OnUnloaded(object sender, System.Windows.RoutedEventArgs e)

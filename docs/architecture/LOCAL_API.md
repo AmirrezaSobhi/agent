@@ -1,8 +1,9 @@
 # Local Management Interface
 
-**Status:** Implemented read-only Windows Named Pipe v1 for the two allowlisted
-operations documented in the [IPC contract](IPC_CONTRACT.md). Privileged
-controls, diagnostics, logs, preferences, and Runtime restart remain absent.
+**Status:** Implemented read-only Windows Named Pipe v1 for
+`protocol.negotiate`, `status.get`, and bounded `logs.query` as described in
+the [IPC contract](IPC_CONTRACT.md). Runtime/Service controls and arbitrary
+file access remain absent. Desktop diagnostics/preferences are local-only.
 
 ## Security baseline
 
@@ -36,11 +37,14 @@ and a dedicated route. The present `/command` implementation is not reused.
 
 ## Scope and operation permissions
 
-Implemented operations are `protocol.negotiate` and read-only `status.get`.
-The only authorization class today is the configured SID allowlist; there are
-no role distinctions because no mutating operation exists. Service start/stop
-uses Windows SCM permissions and UAC, not this pipe. Diagnostics, paged log
-query, preferences, Runtime restart, and trading endpoint are absent.
+Implemented operations are `protocol.negotiate`, read-only `status.get`, and
+read-only `logs.query`. The log query returns at most 100 fixed-message events
+from a 200-entry in-memory Management buffer; it accepts only a bounded count
+and enumerated severity. It accepts no file path and reads no filesystem data.
+The only authorization class is the configured SID allowlist; there are no
+role distinctions because no mutating operation exists. Service start/stop
+uses Windows SCM permissions and UAC, not this pipe. Runtime restart and
+trading operations remain absent.
 
 Resolve operation permission from server-derived caller SID, operation and
 resource scope. Never trust a client-supplied username/SID. Fail closed if

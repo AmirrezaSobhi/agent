@@ -35,6 +35,35 @@ def test_management_protocol_has_fixed_pipe_and_bounded_frame():
     assert parse_request(json.dumps(body).encode())["operation"] == "status.get"
 
 
+def test_management_log_query_is_a_fixed_read_only_operation():
+    body = request("logs.query")
+    body["payload"] = {"limit": 10, "severity": "WARNING"}
+    assert parse_request(json.dumps(body).encode())["operation"] == "logs.query"
+    assert parse_request(json.dumps(body).encode())["payload"]["severity"] == "WARNING"
+
+
+def test_management_event_buffer_is_bounded_and_contains_only_fixed_safe_fields():
+    server = ManagementNamedPipeServer(lambda: {"observed_at_utc": "2026-10-08T00:00:00Z"}, ())
+    for _ in range(250):
+        server._record_event("INFO", "STATUS_OBSERVED", "Read-only Agent status was observed.")
+    result = server._query_events({"limit": 100, "severity": "ALL"})
+    assert result["count"] == 100
+    assert set(result["events"][0]) == {"timestamp_utc", "severity", "source", "code", "message"}
+    assert "account" not in json.dumps(result).lower()
+
+
+@pytest.mark.parametrize("payload", [
+    {"limit": 0, "severity": "ALL"},
+    {"limit": 101, "severity": "ALL"},
+    {"limit": True, "severity": "ALL"},
+    {"limit": 10, "severity": "TRACE"},
+])
+def test_management_log_query_rejects_unbounded_or_unknown_filters(payload):
+    server = ManagementNamedPipeServer(lambda: {}, ())
+    with pytest.raises(ManagementProtocolError, match="INVALID_REQUEST"):
+        server._query_events(payload)
+
+
 @pytest.mark.parametrize("body,code", [
     (b"not-json", "INVALID_REQUEST"),
     (b"[]", "INVALID_REQUEST"),

@@ -12,14 +12,27 @@ namespace MT5Agent.Desktop.Tests
         public void Apply(ThemePreference theme) { CurrentTheme = theme; ApplyCount++; }
     }
 
+    internal sealed class RecordingNotifier : IDesktopNotifier
+    {
+        public readonly System.Collections.Generic.List<bool> Transitions = new System.Collections.Generic.List<bool>();
+        public void ConnectionChanged(bool connected) { Transitions.Add(connected); }
+    }
+
     internal sealed class FakeManagementClient : IManagementClient
     {
         public Func<CancellationToken, Task<ManagementStatus>> Handler { get; set; }
+        public Func<int, string, CancellationToken, Task<System.Collections.Generic.IList<ManagementLogEntry>>> LogsHandler { get; set; }
         public Task<ManagementStatus> GetStatusAsync(CancellationToken cancellationToken)
         {
             if (Handler == null) return Task.FromResult(new ManagementStatus
                 { IsObserved = false, Reason = "No secure connection is configured." });
             return Handler(cancellationToken);
+        }
+        public Task<System.Collections.Generic.IList<ManagementLogEntry>> GetLogsAsync(int limit, string severity, CancellationToken cancellationToken)
+        {
+            return LogsHandler == null
+                ? Task.FromResult<System.Collections.Generic.IList<ManagementLogEntry>>(new System.Collections.Generic.List<ManagementLogEntry>())
+                : LogsHandler(limit, severity, cancellationToken);
         }
     }
 }

@@ -5,19 +5,23 @@
     <StackPanel>
         <TextBlock Text="{Binding SectionLabel}" Style="{StaticResource EyebrowText}" Foreground="{DynamicResource AccentBrush}" />
         <TextBlock Text="{x:Static res:Strings.SettingsTitle}" Style="{StaticResource PageTitle}" Margin="0,9,0,5" />
-        <TextBlock Text="{Binding Description}" Style="{StaticResource BodyText}" Margin="0,0,0,24" />
-        <Border Style="{StaticResource CardBorder}" MaxWidth="650" HorizontalAlignment="Left" Padding="22">
-            <Grid>
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
-                    <TextBlock Text="{Binding SettingLabel}" FontSize="15" FontWeight="SemiBold" />
-                    <TextBlock Text="{Binding ThemeLabel}" Foreground="{DynamicResource AccentBrush}" FontSize="13" Margin="0,6,0,2" />
-                    <TextBlock Text="{Binding SaveState}" Style="{StaticResource BodyText}" FontSize="12" />
-                </StackPanel>
-                <Button Grid.Column="1" Style="{StaticResource QuietButton}" Command="{Binding ToggleThemeCommand}"
-                        Content="{x:Static res:Strings.ThemeToggle}" AutomationProperties.Name="{x:Static res:Strings.ThemeAutomationName}" />
-            </Grid>
+        <TextBlock Text="{Binding Description}" Style="{StaticResource BodyText}" Margin="0,0,0,22" />
+        <Border Style="{StaticResource CardBorder}" MaxWidth="760" HorizontalAlignment="Left" Padding="22" Margin="0,0,0,16">
+            <StackPanel>
+                <TextBlock Text="{x:Static res:Strings.Appearance}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,14" />
+                <Grid Margin="0,6"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="220"/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="{x:Static res:Strings.ThemeSetting}" FontWeight="SemiBold"/><TextBlock Text="{Binding ThemeLabel}" Style="{StaticResource BodyText}" Margin="0,3,0,0"/></StackPanel><Button Grid.Column="1" Style="{StaticResource QuietButton}" Command="{Binding ToggleThemeCommand}" Content="{x:Static res:Strings.ThemeToggle}" AutomationProperties.Name="{x:Static res:Strings.ThemeAutomationName}"/></Grid>
+                <Grid Margin="0,6"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="220"/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="{x:Static res:Strings.RefreshInterval}" FontWeight="SemiBold"/><TextBlock Text="{x:Static res:Strings.RefreshIntervalDescription}" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,3,8,0"/></StackPanel><ComboBox Grid.Column="1" ItemsSource="{Binding RefreshIntervals}" SelectedItem="{Binding RefreshIntervalSeconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" MinHeight="36" VerticalContentAlignment="Center"/></Grid>
+                <CheckBox Content="{x:Static res:Strings.NotificationsEnabled}" IsChecked="{Binding NotificationsEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,14,0,4"/>
+                <CheckBox Content="{x:Static res:Strings.CloseToTray}" IsChecked="{Binding CloseToTray, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,12"/>
+                <TextBlock Text="{x:Static res:Strings.Language}" FontWeight="SemiBold"/><TextBlock Text="{Binding Language}" Style="{StaticResource BodyText}" Margin="0,3,0,12"/>
+                <TextBlock Text="{x:Static res:Strings.StartupBehavior}" FontWeight="SemiBold"/><TextBlock Text="{Binding StartupBehavior}" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,3,0,12"/>
+                <TextBlock Text="{x:Static res:Strings.ManagementConnection}" FontWeight="SemiBold"/><TextBlock Text="{Binding ConnectionInformation}" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,3,0,0"/>
+            </StackPanel>
         </Border>
-        <TextBlock Text="{Binding ScopeDescription}" Style="{StaticResource BodyText}" Margin="0,16,0,0" MaxWidth="650" />
+        <StackPanel Orientation="Horizontal" MaxWidth="760" HorizontalAlignment="Left">
+            <Button Style="{StaticResource PrimaryButton}" Command="{Binding SaveSettingsCommand}" Content="{x:Static res:Strings.SaveSettings}"/>
+            <TextBlock Text="{Binding SaveState}" Style="{StaticResource BodyText}" VerticalAlignment="Center" Margin="14,0,0,0"/>
+        </StackPanel>
+        <TextBlock Text="{Binding ScopeDescription}" Style="{StaticResource BodyText}" Margin="0,16,0,0" MaxWidth="760" TextWrapping="Wrap" />
     </StackPanel>
 </UserControl>

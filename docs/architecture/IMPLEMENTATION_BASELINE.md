@@ -233,6 +233,45 @@ validation gates.
 5. Clock synchronization condition, release transport TLS, release-owner
    approval and publisher write access must be rechecked at release time.
 
+## Phase 4 Desktop Operations — 2026-10-08
+
+**Implementation state: implemented in the working Phase 4 branch; Windows
+build, automated regression and an interactive Windows 10 desktop session
+verified. GitLab pipeline and commercial release gates remain open.** The
+branch starts from Phase 3 commit `01d94d11958dbc74e40252c671dfe61b75a9125a`.
+
+- Clean Windows x64 Release rebuild succeeded with MSBuild `4.8.9037.0`, the
+  official .NET Framework 4.8 targeting assemblies, and no
+  `FrameworkPathOverride`.
+- C# WPF/ViewModel/Management suite: **40 passed, 0 failed** on the Windows
+  runner. Full Windows Python regression: **317 passed, 2 skipped, 0 failed**;
+  skips are dedicated Runtime Worker ACL experiment gates. Management IPC
+  contract/security suite: **23 passed, 0 skipped**.
+- Active Windows console Session 1 validation launched the WPF application
+  without requiring the Agent. UI Automation navigated Dashboard, Runtime,
+  Settings, Logs, Diagnostics and About and switched from dark to light theme.
+  The test exercised minimize-to-tray, tray restore, close-to-tray retention,
+  and explicit tray Exit; the UI process survived minimize/close-to-tray and
+  exited via Exit. Screenshots are captured in
+  [`../evidence/v0.1.4/phase4/`](../evidence/v0.1.4/phase4/). These are one
+  Windows 10 Pro 22H2 desktop's results, not four-OS/DPI/accessibility coverage.
+- Diagnostics reads the Windows product/build labels from the local Current
+  Version registry key because an unmanifested .NET Framework executable can
+  receive a compatibility-shimmed `Environment.OSVersion` value. No credentials
+  or machine paths are collected. Recognized pipe offline/timeout outcomes
+  remain local connection states rather than generic global error banners.
+- `logs.query` returns a bounded count of fixed-message in-memory Management
+  events only. It does not expose file paths, file contents, credentials,
+  arbitrary commands, Service controls, Worker-pipe access, or trading.
+- GitLab did not provide an independently verifiable Phase 4 pipeline result:
+  the configured API credential returned HTTP 404/invalid-token behavior. No
+  pipeline pass is asserted for this branch. The CI file and release behavior
+  were not changed. Prior Phase 3 pipeline references remain historical evidence.
+- CPU/RAM and percentile responsiveness, high-DPI, accessibility, multi-user
+  and RDP behavior, installed Service lifecycle, Windows 11/Server
+  2022/2025, and production-like package validation are still pending.
+  No real trade was executed.
+
 ## Evidence rules
 
 Evidence paths above are repository-relative and symbols/tests are named where

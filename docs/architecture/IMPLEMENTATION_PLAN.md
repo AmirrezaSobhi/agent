@@ -88,22 +88,36 @@ changed.
 
 ## Phase 4 — Desktop Operations
 
-- **Dependencies:** Phase 1 shell and Phase 2 permission contract; support
-  collection allowlist/privacy review.
-- **Likely files/modules:** Runtime, Settings, Logs, Diagnostics, Support,
-  Updates informational page, About, per-user preferences and tray/notices.
-- **Deliverables:** safe read-only runtime page; per-user preferences;
-  diagnostic summary and bounded log paging; local support export preview;
-  tray/close preference; documented SCM/UAC recovery guidance. Central/updates
-  modules show unavailable states, not simulated functions.
-- **Acceptance:** no machine setting writes from ordinary preferences; log list
-  virtualizes 10,000 fake rows; support cancel has no network transmission;
-  closing tray/UI leaves Agent and Worker running; SCM actions remain OS-ACL
-  governed, no custom helper.
-- **Tests:** user-scope storage isolation; log paging/performance; redaction
-  canaries; UI lifecycle and service-offline integration.
-- **Risks:** accessing protected Service logs may be denied; show that condition
-  cleanly without expanding permissions.
+**Status: Implemented in branch `feat/v0.1.4-phase4-desktop-operations`; CI and
+interactive Windows release validation remain pending.**
+
+- **Dependencies:** Phase 1 shell, Phase 2 read-only identity/authorization
+  contract and Phase 3 status projection.
+- **Deliverables:** Runtime page maps authenticated Agent/Worker/MT5 status and
+  labels unavailable runtime identity/process/session fields; Settings persist
+  theme, bounded refresh interval, notification and close-to-tray preferences
+  under the current user's LocalAppData; Diagnostics show local version,
+  framework target, OS and last Agent response/error; Logs query a fixed-message
+  in-memory Agent Management ring buffer (200 retained, 100 maximum returned)
+  with local severity/search filtering; tray open/minimize/close-to-tray and
+  explicit Exit; deduplicated connection notices. Central, accounts, support,
+  startup registration and updates remain unavailable.
+- **Security boundary:** `logs.query` is read-only, same SID allowlist as status,
+  validates a count ≤100 and enumerated severity, returns static messages and
+  never accepts paths or reads files. No Service/Worker controls, secrets,
+  `/command`, Worker pipe, or trading operation was added.
+- **Tests:** Windows Release x64 rebuild passed; 40/40 C# tests passed,
+  including new user-preference validation, Runtime projection, log filtering,
+  offline diagnostics and Management log serialization tests. Full Python
+  regression rerun and interactive desktop evidence are recorded in the
+  Phase 4 implementation baseline section.
+- **Not included:** support bundle/export, log file retrieval, Windows startup
+  registration, persistent notification center and service controls; there is
+  no approved source/consent/privilege model for those features yet.
+- **Risks:** current log history is volatile and limited to Management events;
+  actual process/session identity is not available from current status
+  contract. Production Service identity, multiple-session behavior, supported
+  OS matrix, package validation, and user-desktop visual evidence remain gates.
 
 ## Phase 5 — Hardening
 

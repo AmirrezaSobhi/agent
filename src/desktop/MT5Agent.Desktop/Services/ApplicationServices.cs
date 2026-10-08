@@ -8,12 +8,17 @@ namespace MT5Agent.Desktop.Services
     {
         public ApplicationServices(IUserPreferencesStore preferences, IThemeService theme, ErrorService errors,
             IManagementClient managementClient, NavigationService navigation)
+            : this(preferences, theme, errors, managementClient, navigation, null) { }
+
+        public ApplicationServices(IUserPreferencesStore preferences, IThemeService theme, ErrorService errors,
+            IManagementClient managementClient, NavigationService navigation, IDesktopNotifier notifier)
         {
             Preferences = preferences;
             Theme = theme;
             Errors = errors;
             ManagementClient = managementClient;
             Navigation = navigation;
+            Notifier = notifier;
         }
 
         public IUserPreferencesStore Preferences { get; private set; }
@@ -21,14 +26,15 @@ namespace MT5Agent.Desktop.Services
         public ErrorService Errors { get; private set; }
         public IManagementClient ManagementClient { get; private set; }
         public NavigationService Navigation { get; private set; }
+        public IDesktopNotifier Notifier { get; private set; }
 
         public void RegisterRoutes()
         {
-            Navigation.Register("Dashboard", () => new DashboardViewModel(ManagementClient, Errors));
-            Navigation.Register("Runtime", () => new RuntimeViewModel());
-            Navigation.Register("Settings", () => new SettingsViewModel(Preferences, Theme, Errors, Theme.CurrentTheme));
-            Navigation.Register("Logs", () => new LogsViewModel());
-            Navigation.Register("Diagnostics", () => new DiagnosticsViewModel());
+            Navigation.Register("Dashboard", () => new DashboardViewModel(ManagementClient, Errors, Preferences, Notifier));
+            Navigation.Register("Runtime", () => new RuntimeViewModel(ManagementClient, Errors));
+            Navigation.Register("Settings", () => new SettingsViewModel(Preferences, Theme, Errors, Preferences.Load()));
+            Navigation.Register("Logs", () => new LogsViewModel(ManagementClient, Errors));
+            Navigation.Register("Diagnostics", () => new DiagnosticsViewModel(ManagementClient, Errors));
             Navigation.Register("About", () => new AboutViewModel());
             Navigation.Register("Accounts", () => new UnavailableViewModel("Accounts", Resources.Strings.PageAccountsDescription));
             Navigation.Register("Security", () => new UnavailableViewModel("Security", Resources.Strings.PageSecurityDescription));

@@ -55,7 +55,9 @@ flowchart TD
   configured user SID(s). Python derives caller SID from the connected pipe
   token with `ImpersonateNamedPipeClient` and `TokenUser`, then calls
   `RevertToSelf` in `finally`. Implemented operations are read-only
-  `protocol.negotiate` and `status.get`; all other operations are denied.
+  `protocol.negotiate`, `status.get`, and bounded `logs.query`; all other
+  operations are denied. Log data is a fixed-message in-memory Management
+  event buffer and the query accepts no path or arbitrary filter expression.
   Caller JSON identity claims are ignored. Empty
   `MT5_AGENT_MANAGEMENT_ALLOWED_SIDS` disables the listener.
 - Keep WPF running as the interactive user; do not elevate the whole UI to
