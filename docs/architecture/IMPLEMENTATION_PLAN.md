@@ -1,10 +1,11 @@
 # v0.1.4 WPF Implementation Plan
 
 **Status:** Phases 1–4 are implemented. Phase 5 Windows 10 build/tests,
-interactive UI validation, and reversible SCM integration harness have been
-executed. Pipeline [#46](http://gitlab.local/root/agent/-/pipelines/46) passed
-all 9 jobs on commit `f841c55021af0535f39632b02d9efcd7e0ca37a0`. Remaining
-Phase 5 evidence gaps are recorded below. Python Core remains Python.
+interactive UI validation, reversible SCM integration, and a low-privilege
+runtime Pipe DACL rejection have been executed. The latest baseline pipeline
+[#47](http://gitlab.local/root/agent/-/pipelines/47) passed all 9 jobs on
+`b780a2c703891a2e407be153d547102fab44e58a`; this predates the final closure
+evidence and does not validate the closure commit. Python Core remains Python.
 
 ## Approved release boundary — Option A
 
@@ -136,10 +137,17 @@ open.**
   allowed-SID/LocalSystem authorization checks, reversible SCM integration
   harness with the real Python Agent Core in Session 0, stop/restart/pipe
   reconnection, IPC measurements, and Dashboard text wrapping correction.
-- **Still required:** runtime DACL-negative test under an unallowlisted user,
-  RDP/session scenarios where safe, remaining available DPI/accessibility
-  checks, and production packaging/signing. Pipeline #46 passed all nine jobs
-  for commit `f841c55021af0535f39632b02d9efcd7e0ca37a0`.
+- **Completed in the final security closure:** an allowlisted Administrator
+  opened the live Management Pipe and completed 30 status plus 10 bounded log
+  requests; a temporary Users-only account was rejected with Win32
+  `ERROR_ACCESS_DENIED (5)` by the actual Pipe DACL at `CreateFile`. The
+  NetworkService Scheduled Task failure is retained as a distinct harness
+  failure, not security evidence. Tray close-to-tray was observed; the actual
+  tray Exit menu remains unverified because UI Automation exposes no app menu.
+- **Remaining:** safe RDP/session coverage, higher DPI/accessibility, long
+  soak, product Service provisioning, and production packaging/signing. These
+  are release limitations; the three other OS validations remain deferred to
+  the Product Owner and do not block Phase 5.
 - **Risks:** repository still has no productized SCM Service wrapper/installer;
   the temporary .NET ServiceBase wrapper is test evidence only. Shared console
   reboot/RDP interruption was avoided. Other OS tests belong to the Product
@@ -217,9 +225,10 @@ The repository still has no productized SCM Service adapter/installer; the
 temporary .NET ServiceBase test host was removed after isolated SCM
 start/stop/restart and pipe-reconnection tests. RDP/logoff/reboot remain
 unexecuted on the shared console host. Windows 11, Server 2022 and Server 2025
-are `DEFERRED — PRODUCT OWNER VALIDATION`, not Phase 5 blockers. The
-NetworkService runtime DACL-negative remains open. Phase 5 Pipeline
-[#46](http://gitlab.local/root/agent/-/pipelines/46) passed all 9 jobs for
-`f841c55021af0535f39632b02d9efcd7e0ca37a0`; a documentation-only follow-up
-commit will be validated separately.
+are `DEFERRED — PRODUCT OWNER VALIDATION`, not Phase 5 blockers. The runtime
+Pipe DACL negative case is now verified with an ordinary Users-only account;
+the separate NetworkService task launch failure remains classified as a
+harness failure. Tray Exit remains unverified due to the UIA surface limitation.
+Pipeline #47 is the previous baseline only. Final closure pipeline evidence is
+recorded in the Phase 5 evidence bundle after it executes.
 Do not claim commercial readiness.

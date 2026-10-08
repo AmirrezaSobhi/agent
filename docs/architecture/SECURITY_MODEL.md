@@ -140,9 +140,15 @@ for both operations, confirming the operation allowlist; the exact response
 and service process SID/session are in the Phase 5 evidence bundle. The Service
 and test host were stopped and removed after validation.
 
-The NetworkService negative DACL probe did not execute: Task Scheduler returned
-`0x80070005` before a caller SID or probe result was written. No runtime DACL
-denial is claimed for that SID. Source review confirms the Management pipe DACL
+The initial NetworkService negative DACL probe did not execute: Task Scheduler
+returned `0x80070005` before a caller SID or probe result was written, and that
+failure is not counted as a denial. A subsequent authorized, isolated test
+created a temporary ordinary Users-only account and verified its actual
+TokenUser SID; the live Management pipe's `CreateFile` returned Win32
+`ERROR_ACCESS_DENIED (5)` before any request payload. The allowlisted
+Administrator still opened the same pipe and completed the read-only status
+and bounded-log operations. Raw evidence is in the Phase 5 Windows 10 evidence
+bundle. Source review confirms the Management pipe DACL
 is built with only the Agent process token SID plus explicitly configured
 client SID(s), and no broad SID; revalidate the runtime ACL under the eventual
 product Service identity. `logs.query` remains bounded to 100 items from a

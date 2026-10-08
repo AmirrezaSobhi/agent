@@ -1,0 +1,27 @@
+{
+    "host":  "WINDOW10-TEST",
+    "utc":  "2026-10-08T19:39:48.5402466Z",
+    "session":  1,
+    "pid":  5976,
+    "handle":  "525082",
+    "title":  "MT5Agent",
+    "alive_after_wm_close":  true,
+    "taskbar_hwnd":  "65682",
+    "taskbar_name":  "",
+    "taskbar_descendants":  [
+                                "Start|ControlType.Pane||Start",
+                                "Running applications|ControlType.Pane||MSTaskSwWClass",
+                                "Running applications|ControlType.Pane||MSTaskListWClass",
+                                "System Promoted Notification Area|ControlType.Pane|1504|ToolbarWindow32",
+                                "User Promoted Notification Area|ControlType.Pane|1504|ToolbarWindow32",
+                                "System Clock, 11:09 PM, ‎10/‎8/‎2026|ControlType.Pane||TrayClockWClass",
+                                "Action Center, 1 new notification|ControlType.Pane||TrayButton"
+                            ],
+    "root_hits":  [
+                      "System Promoted Notification Area|ControlType.Pane|1504|ToolbarWindow32",
+                      "User Promoted Notification Area|ControlType.Pane|1504|ToolbarWindow32",
+                      "Action Center, 1 new notification|ControlType.Pane||TrayButton"
+                  ],
+    "result":  "INSPECTED",
+    "finished_utc":  "2026-10-08T19:39:50.9637481Z"
+}

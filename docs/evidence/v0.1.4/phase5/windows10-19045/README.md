@@ -111,11 +111,69 @@ ms, max 33.15 ms) and 10 bounded log queries (median 0.30 ms, P95 31.57 ms,
 up to 10 fixed events per response). It does not measure UI refresh latency,
 production load, Worker/MT5, long soak, or repeated recovery.
 
+## Final security closure — 2026-10-08
+
+The previous NetworkService Scheduled Task failure (`0x80070005`) was not
+reused as DACL evidence. A fresh `MT5AgentPhase5Test` SCM harness was created
+and removed under the previously approved temporary-Service scope. It ran the
+real Python Agent Core in Session 0 as LocalSystem (`S-1-5-18`) with the
+Runtime adapter disabled and the explicit allowlist limited to the local
+Administrator SID `S-1-5-21-950479549-2068523145-3370569714-500`.
+
+An ordinary local account `MT5AgentDaclProbe` was created only for the test,
+confirmed in `Users` and absent from `Administrators`, and removed afterward.
+Its test SID was `S-1-5-21-950479549-2068523145-3370569714-1011`. The probe
+obtained a Windows token using `LogonUser`, checked `TokenUser`, impersonated
+that identity, performed `CreateFile` on
+`\\.\pipe\MT5Agent.Management.v1`, and reverted impersonation in `finally`.
+The calling process was the test Administrator in Session 0; the effective
+calling thread token was the standard account in Session 0. The process never
+used a caller-supplied SID as authentication evidence and sent no protocol
+payload on the unauthorized path.
+
+Observed runtime pipe SDDL: `D:(A;;FA;;;SY)(A;;0x12019b;;;LA)`. The `LA`
+alias resolved to the explicitly allowlisted local Administrator SID. The
+authorized Admin opened the same Pipe; 30/30 `status.get` and 10/10 bounded
+`logs.query` requests returned `ok`. The standard-account impersonated
+`CreateFile` returned native Win32 `5` (`ERROR_ACCESS_DENIED`) at the Windows
+Pipe DACL boundary, before application authorization. The full sanitized
+result, including account group membership, SIDs, process/session and cleanup
+state, is [`negative-dacl-test-raw.json`](negative-dacl-test-raw.json). The
+reusable test-only caller probe is
+[`Phase5ManagementPipeDaclProbe.cs`](../../../../../tests/windows/Phase5ManagementPipeDaclProbe.cs).
+
+The forged-caller-claim/default-deny check is
+`test_default_deny_and_caller_claim_is_ignored` in
+`tests/test_management_ipc_contract.py`; it asserts forged `claimed_sid` and
+`caller_sid` values do not authorize a non-allowlisted actual SID and that
+dispatch is not called. The new branch pipeline must execute this regression.
+
+### Tray close and automation boundary
+
+On the actual Windows 10 console desktop, the rebuilt WPF application ran in
+Session 1. After saving `CloseToTray=true`, a window close left the UI process
+alive while its main window became hidden. The preference was restored to
+`false` after the run. `tray-close-to-tray-result.json` and
+`tray-uia-tree.json` record the process state and Windows UIA tree. The UIA
+provider exposed only the aggregate `User Promoted Notification Area`
+`ToolbarWindow32`; it did not expose the app's NotifyIcon or context menu, so
+the `Exit` menu item could not be invoked by this automation lane. This is an
+automation-surface limitation, not evidence of an application failure or a
+verified Tray Exit. The source path and `TrayLifecyclePolicyBehavior` unit
+test remain evidence for explicit-exit logic; manual Exit verification remains
+a release check.
+
+The repeated tray automation attempt is [`tray-exit-uia-result.txt`](tray-exit-uia-result.txt).
+It returned `PARTIAL`: close-to-tray passed, but tray-menu restore and Exit were
+not exposed. No app process, temporary service, account, scheduled task, or
+test profile remained afterward.
+
 ## GitLab and release boundary
 
-Phase 5 Pipeline [#46](http://gitlab.local/root/agent/-/pipelines/46) passed all
-9 jobs for source/evidence commit `f841c55021af0535f39632b02d9efcd7e0ca37a0`;
-its job graph includes Windows validation, Windows/Linux regression, WPF
-Management tests, Windows build, three smoke jobs, and packaging. Pipeline #46
-does not validate a commercial deployment package. No trade was executed; no
-Windows 11 or Windows Server environment was created or tested.
+Phase 5 Pipeline [#47](http://gitlab.local/root/agent/-/pipelines/47) passed all
+9 jobs on baseline commit `b780a2c703891a2e407be153d547102fab44e58a`; it is
+historical evidence and does not validate the final closure commit. The final
+closure pipeline and exact commit will be recorded here after execution. The
+pipeline job graph includes Windows validation, Windows/Linux regression, WPF
+Management tests, Windows build, three smoke jobs, and packaging. No trade was
+executed; no Windows 11 or Windows Server environment was created or tested.

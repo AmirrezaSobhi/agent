@@ -215,9 +215,11 @@ This is not an MT5 Runtime test and does not prove installed-Service startup.
 
 RDP disconnect/reconnect, logoff/login, Windows restart and production Worker
 recovery were not executed: only the shared local console session was active,
-and stopping or rebooting it could affect the Runner. The NetworkService pipe
-ACL negative task returned `0x80070005` before producing execution evidence;
-runtime DACL denial by a non-allowlisted user remains open. Windows 11, Server
+and stopping or rebooting it could affect the Runner. The earlier NetworkService
+pipe ACL negative task returned `0x80070005` before producing execution evidence;
+that harness failure was superseded by the final low-privilege DACL test in the
+Phase 5 evidence bundle, which verified a Users-only caller is denied by the
+runtime pipe DACL before protocol dispatch. Windows 11, Server
 2022 and Server 2025 remain `DEFERRED — PRODUCT OWNER VALIDATION`; their absence
 is not a Phase 5 blocker. The temporary service and generated service-host
 artifacts were stopped, deregistered and removed. No trade was run.
