@@ -3,6 +3,9 @@
 This runbook covers the current split-session runtime. Lab validation is not a
 substitute for a supported customer installer or live release pipeline.
 
+Release synchronization operations, credential prerequisites, retries, and
+conflict handling are documented in the [GitLab to GitHub Release runbook](GITHUB_RELEASE_SYNC.md).
+
 ## Ownership boundaries
 
 | Component | Owns | Does not own |

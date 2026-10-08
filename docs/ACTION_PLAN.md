@@ -41,6 +41,13 @@ boundaries, open questions, and measurable proposed gates are in the
 preferred framework candidate, subject to compatibility and packaging
 feasibility. This plan does not authorize UI implementation.
 
+One-way GitLab-to-GitHub Release synchronization has a CI implementation
+proposal and focused local tests, documented in the
+[Release sync runbook](GITHUB_RELEASE_SYNC.md). It is **not operational** until
+an administrator protects release tags, configures the scoped GitHub write
+token, and a real existing Release passes end-to-end verification. No historic
+GitHub-only release or conflicting asset has been modified.
+
 Other v0.1.4 evaluation topics remain:
 
 1. Worker startup reliability: collect repeatable evidence across startup,
