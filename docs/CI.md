@@ -114,6 +114,9 @@ No CI job creates a tag or a GitLab Release. On stable version tag pipelines,
 the GitLab Release/package assets and up to one minute for the mirrored GitHub
 tag, then reconciles GitHub using the documented fail-closed rules. The GitLab
 Release itself must already be published; a tag push alone is insufficient.
+On a protected branch, a web pipeline also exposes an optional manual
+`release:github-reconcile` job for an explicit historical tag and SHA. It does
+not block regular pipelines and verifies the tag against GitLab before use.
 
 ## Local validation
 

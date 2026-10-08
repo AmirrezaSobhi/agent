@@ -489,15 +489,18 @@ def synchronize(release: GitLabRelease, github: GitHubAPI, *, dry_run: bool = Fa
             "published": True}
 
 
-def run_from_environment(*, dry_run: bool = False) -> dict[str, Any]:
-    tag = os.environ.get("CI_COMMIT_TAG", "")
-    expected_commit = os.environ.get("CI_COMMIT_SHA", "")
+def run_from_environment(*, dry_run: bool = False, tag_override: str | None = None,
+                         commit_override: str | None = None) -> dict[str, Any]:
+    if (tag_override is None) != (commit_override is None):
+        raise SyncError("Historical reconciliation requires both --tag and --commit")
+    tag = tag_override if tag_override is not None else os.environ.get("CI_COMMIT_TAG", "")
+    expected_commit = commit_override if commit_override is not None else os.environ.get("CI_COMMIT_SHA", "")
     if not SEMVER_TAG.fullmatch(tag):
         raise SyncError("CI_COMMIT_TAG must be a stable semantic version tag")
     if not COMMIT_SHA.fullmatch(expected_commit.lower()):
         raise SyncError("CI_COMMIT_SHA is missing or invalid")
     if os.environ.get("CI_COMMIT_REF_PROTECTED", "false").lower() != "true":
-        raise SyncError("Release tags must match a protected GitLab tag rule such as v*")
+        raise SyncError("CI_COMMIT_REF_PROTECTED must be true before protected credentials are used")
 
     github_token = os.environ.get("GITHUB_RELEASE_TOKEN", "")
     if not github_token:
@@ -521,9 +524,12 @@ def main() -> int:
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dry-run", action="store_true", help="validate and report planned GitHub changes without writing")
+    parser.add_argument("--tag", help="explicit source tag for protected-branch historical reconciliation")
+    parser.add_argument("--commit", help="expected full commit SHA for --tag")
     args = parser.parse_args()
     try:
-        result = run_from_environment(dry_run=args.dry_run)
+        result = run_from_environment(dry_run=args.dry_run, tag_override=args.tag,
+                                      commit_override=args.commit)
         print(json.dumps(result, sort_keys=True))
         return 0
     except SyncError as error:

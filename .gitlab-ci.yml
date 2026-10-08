@@ -231,3 +231,18 @@ release:github-sync:
       - runner_system_failure
   script:
     - python3 tools/release_sync/github_release_sync.py
+
+# Optional manual path for reconciling a GitLab Release whose tag predates this
+# job. Both the explicit tag and its expected SHA are checked against GitLab.
+release:github-reconcile:
+  stage: release_sync
+  tags:
+    - linux-source-unit
+  needs: []
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"'
+      when: manual
+      allow_failure: true
+    - when: never
+  script:
+    - python3 tools/release_sync/github_release_sync.py --tag "$SYNC_TAG" --commit "$SYNC_COMMIT"

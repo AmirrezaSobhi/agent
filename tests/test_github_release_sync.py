@@ -164,6 +164,16 @@ class ReleaseSyncTests(unittest.TestCase):
             with self.assertRaisesRegex(SyncError, "GITHUB_RELEASE_TOKEN"):
                 run_from_environment()
 
+    def test_historical_tag_override_requires_exact_pair_and_protected_ref(self):
+        from tools.release_sync.github_release_sync import run_from_environment
+
+        env = {"CI_COMMIT_REF_PROTECTED": "false"}
+        with patch.dict("os.environ", env, clear=True):
+            with self.assertRaisesRegex(SyncError, "both --tag and --commit"):
+                run_from_environment(tag_override="v0.1.3")
+            with self.assertRaisesRegex(SyncError, "protected credentials"):
+                run_from_environment(tag_override="v0.1.3", commit_override="a" * 40)
+
 
 if __name__ == "__main__":
     unittest.main()

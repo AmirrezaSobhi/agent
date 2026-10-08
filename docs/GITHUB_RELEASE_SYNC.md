@@ -46,6 +46,16 @@ the package is ready. If the bounded wait expires, publish/repair the GitLab
 source release as appropriate and retry the failed sync job in that same tag
 pipeline. Do not create a new tag to retry synchronization.
 
+The optional `release:github-reconcile` manual job is available only in a
+GitLab web pipeline on a protected branch. It takes `SYNC_TAG` and
+`SYNC_COMMIT` pipeline variables, validates the exact GitLab tag target, and
+uses the same idempotent synchronization path. This handles Releases whose
+tag pipeline predates the sync job, including the existing `v0.1.3` Release,
+without rewriting or recreating the tag. Run it with `v0.1.3` and
+`970c04712853295fd065094b11a2bd541b5a9db8` only after the protected GitHub
+credential and tag policy prerequisites are in place. The manual job does not
+block ordinary branch pipelines.
+
 Before writing to GitHub, the script verifies the GitLab tag commit, waits up
 to 12 bounded attempts for the mirrored GitHub tag, and requires the GitHub
 tag to resolve to the exact same commit. A different target is a hard error;
@@ -108,7 +118,7 @@ The eight GitHub-only historical releases are retained. No historical
 conflicting release or asset has been changed.
 
 The workflow is **not yet operational**: the protected tag rule and GitHub
-write credential are missing, CI lint/live tag execution has not been verified,
+write credential are missing, CI Lint/live tag execution has not been verified,
 and no end-to-end GitHub publication has run. Do not describe future releases
 as automatically synchronized until those prerequisites are configured and a
 real existing release completes all checks.
