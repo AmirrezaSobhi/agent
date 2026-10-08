@@ -16,8 +16,17 @@ $archiveName = "MT5Agent-Desktop-v$version-$architecture.zip"
 $folderName = "MT5Agent-Desktop-v$version-$architecture"
 $buildOutput = (Resolve-Path -LiteralPath $BuildOutputPath).Path
 $testOutput = (Resolve-Path -LiteralPath $TestOutputPath).Path
-$testArtifact = [System.IO.Path]::GetFullPath($TestArtifactDirectory)
-$output = [System.IO.Path]::GetFullPath($OutputDirectory)
+$workingDirectory = (Get-Location).ProviderPath
+if ([System.IO.Path]::IsPathRooted($TestArtifactDirectory)) {
+    $testArtifact = [System.IO.Path]::GetFullPath($TestArtifactDirectory)
+} else {
+    $testArtifact = [System.IO.Path]::GetFullPath((Join-Path $workingDirectory $TestArtifactDirectory))
+}
+if ([System.IO.Path]::IsPathRooted($OutputDirectory)) {
+    $outputDirectory = [System.IO.Path]::GetFullPath($OutputDirectory)
+} else {
+    $outputDirectory = [System.IO.Path]::GetFullPath((Join-Path $workingDirectory $OutputDirectory))
+}
 
 if ($SourceCommit -notmatch '^[0-9a-f]{40}$') { throw 'SourceCommit must be a full lowercase Git SHA.' }
 if ($PipelineId -notmatch '^\d+$' -or $BuildJobId -notmatch '^\d+$') { throw 'Pipeline and build job IDs must be numeric.' }
@@ -48,11 +57,11 @@ foreach ($required in @($readmePath, $installPath)) {
     if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Required distribution document is missing: $required" }
 }
 
-if (-not (Test-Path -LiteralPath $output -PathType Container)) {
-    New-Item -ItemType Directory -Path $output -Force | Out-Null
+if (-not (Test-Path -LiteralPath $outputDirectory -PathType Container)) {
+    New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
 }
-$archivePath = Join-Path $output $archiveName
-$reportPath = Join-Path $output 'desktop-build.json'
+$archivePath = Join-Path $outputDirectory $archiveName
+$reportPath = Join-Path $outputDirectory 'desktop-build.json'
 if (Test-Path -LiteralPath $archivePath) { throw "Refusing to overwrite existing package: $archivePath" }
 
 $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('mt5agent-desktop-package-' + [Guid]::NewGuid().ToString('N'))

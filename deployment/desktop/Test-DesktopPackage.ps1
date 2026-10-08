@@ -18,7 +18,12 @@ if ($report.source_commit -ne $ExpectedCommit -or $report.pipeline_id -ne $Expec
     throw 'Build report provenance does not match the current pipeline.'
 }
 
-$target = [System.IO.Path]::GetFullPath($ExtractionDirectory)
+$workingDirectory = (Get-Location).ProviderPath
+if ([System.IO.Path]::IsPathRooted($ExtractionDirectory)) {
+    $target = [System.IO.Path]::GetFullPath($ExtractionDirectory)
+} else {
+    $target = [System.IO.Path]::GetFullPath((Join-Path $workingDirectory $ExtractionDirectory))
+}
 if (Test-Path -LiteralPath $target) {
     if ((Get-ChildItem -LiteralPath $target -Force | Measure-Object).Count -gt 0) {
         throw "Extraction directory must be empty: $target"

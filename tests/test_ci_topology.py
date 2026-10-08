@@ -63,6 +63,12 @@ def test_desktop_package_is_built_once_and_verified_as_the_tested_artifact():
     assert "ExpectedPipelineId $env:CI_PIPELINE_ID" in verify
     assert "Desktop build omitted required output" in build
     assert "packageReport.package_sha256" in build
+    package_builder = (ROOT / "deployment/desktop/New-DesktopPackage.ps1").read_text(encoding="utf-8")
+    package_verifier = (ROOT / "deployment/desktop/Test-DesktopPackage.ps1").read_text(encoding="utf-8")
+    assert "$workingDirectory = (Get-Location).ProviderPath" in package_builder
+    assert "$workingDirectory = (Get-Location).ProviderPath" in package_verifier
+    assert "Join-Path $workingDirectory $OutputDirectory" in package_builder
+    assert "Join-Path $workingDirectory $ExtractionDirectory" in package_verifier
 
 
 def test_workflow_branch_and_tag_rules_remain_intact():
