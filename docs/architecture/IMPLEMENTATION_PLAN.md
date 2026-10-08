@@ -2,10 +2,11 @@
 
 **Status:** Phases 1–4 are implemented. Phase 5 Windows 10 build/tests,
 interactive UI validation, reversible SCM integration, and a low-privilege
-runtime Pipe DACL rejection have been executed. The latest baseline pipeline
-[#47](http://gitlab.local/root/agent/-/pipelines/47) passed all 9 jobs on
-`b780a2c703891a2e407be153d547102fab44e58a`; this predates the final closure
-evidence and does not validate the closure commit. Python Core remains Python.
+runtime Pipe DACL rejection have been executed. Closure Pipeline
+[#48](http://gitlab.local/root/agent/-/pipelines/48) passed all 9 jobs on
+`bb7013f30c43ddf940212f9332341c0fb51ba55d` (632 tests reported). The test-only
+DACL caller probe is separate manual Windows evidence. Python Core remains
+Python.
 
 ## Approved release boundary — Option A
 
@@ -229,6 +230,7 @@ are `DEFERRED — PRODUCT OWNER VALIDATION`, not Phase 5 blockers. The runtime
 Pipe DACL negative case is now verified with an ordinary Users-only account;
 the separate NetworkService task launch failure remains classified as a
 harness failure. Tray Exit remains unverified due to the UIA surface limitation.
-Pipeline #47 is the previous baseline only. Final closure pipeline evidence is
-recorded in the Phase 5 evidence bundle after it executes.
+Closure Pipeline [#48](http://gitlab.local/root/agent/-/pipelines/48) passed all
+9 jobs on `bb7013f30c43ddf940212f9332341c0fb51ba55d`; this validates the closure
+commit, not a commercial deployment package or product-Service provisioning.
 Do not claim commercial readiness.

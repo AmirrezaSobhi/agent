@@ -170,10 +170,10 @@ test profile remained afterward.
 
 ## GitLab and release boundary
 
-Phase 5 Pipeline [#47](http://gitlab.local/root/agent/-/pipelines/47) passed all
-9 jobs on baseline commit `b780a2c703891a2e407be153d547102fab44e58a`; it is
-historical evidence and does not validate the final closure commit. The final
-closure pipeline and exact commit will be recorded here after execution. The
-pipeline job graph includes Windows validation, Windows/Linux regression, WPF
-Management tests, Windows build, three smoke jobs, and packaging. No trade was
-executed; no Windows 11 or Windows Server environment was created or tested.
+Phase 5 closure Pipeline [#48](http://gitlab.local/root/agent/-/pipelines/48)
+passed all 9 jobs on commit `bb7013f30c43ddf940212f9332341c0fb51ba55d`; GitLab
+reports 632 tests. Its job graph includes Windows validation, Windows/Linux
+regression, WPF Management tests, Windows build, three smoke jobs, and
+packaging. The test-only DACL probe in this bundle was compiled and run
+separately on Windows 10; it is not a CI job. No trade was executed; no Windows
+11 or Windows Server environment was created or tested.
