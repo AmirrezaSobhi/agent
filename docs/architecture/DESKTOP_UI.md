@@ -1,25 +1,27 @@
 # Desktop UI Architecture
 
-**Status:** Accepted product direction for an independent management console;
-technology and detailed interaction design remain proposed/open. The current
-repository has no Desktop UI or tray package. See [existing planning record](../planning/v0.1.4-desktop-ui.md).
+**Status:** C# WPF/XAML on .NET Framework 4.8 with MVVM is approved by the
+Product Owner. **Option A** is approved: this is a client for an already
+installed/provisioned Agent and Runtime. The current repository has no WPF UI
+or tray package. The earlier Kivy planning note is retained as superseded
+history at [planning/v0.1.4-desktop-ui.md](../planning/v0.1.4-desktop-ui.md).
 
 ## Responsibility and modules
 
-The UI provides status, setup/configuration, diagnostics, authorized runtime
-and service management, notifications, support and future enrollment. It does
-not own Agent lifecycle, MT5 API connection, policy authority, or trading
-strategy. Navigation modules: Dashboard, Runtime, Accounts, Security,
+The C# UI provides status, local setup for an existing Agent, diagnostics,
+authorized Runtime management, notifications, support and future enrollment.
+It does not own Agent lifecycle, MT5 API connection, policy authority, or
+trading strategy. Navigation modules: Dashboard, Runtime, Accounts, Security,
 Settings, Logs, Diagnostics, Updates, Support, About. A module may be visibly
 planned/disabled until it is operational; never imply that a future capability
 works.
 
 ```mermaid
 flowchart LR
-  UI[Desktop shell]
+  UI[C# WPF shell]
   Modules[Navigation modules]
   Tray[System tray]
-  API[Authenticated local management API]
+  API[Dedicated authenticated management Named Pipe]
   Service[Agent Service and Core]
   Worker[Internal Worker pipe]
   UI --> Modules
@@ -28,7 +30,8 @@ flowchart LR
   Service <--> Worker
 ```
 
-The only UI-to-Core path is a separate, authorized local management contract.
+The only UI-to-Core path is the proposed separate, authorized management pipe
+defined in [IPC_CONTRACT.md](IPC_CONTRACT.md).
 The UI must not connect directly to the internal Worker pipe. When the Service
 is stopped or unavailable, UI still opens and displays current inability to
 probe, last observation timestamp and recovery guidance. Stop/restart operations
@@ -37,24 +40,28 @@ service. Single instance versus controlled multi-window behavior is Open.
 
 ## Dashboard state model
 
-Dimensions: `SERVICE_RUNNING`, `AGENT_CONNECTED`, `WORKER_READY`,
-`MT5_CONNECTED`, `TRADING_ENABLED`. Each observation includes source, UTC/local
-display timestamp, age, reason and correlation/probe identity where useful.
-States: Unknown, Stale, Disconnected, Degraded, Ready. Cached state is labeled
-stale and never displayed as a current measurement. “Ready” for service does
-not imply trading is enabled. Role-aware default cards can be customized per
-user; future cloud sync is deferred. A user layout never changes permissions.
+Dimensions: `SERVICE_RUNNING`, `LOCAL_AGENT_RESPONSIVE`, `WORKER_READY`,
+`MT5_CONNECTED`, `CENTRAL_CONNECTED`, `TRADING_CAPABILITY`,
+`TRADING_AUTHORIZED`. Each observation includes source, UTC observation time,
+age, reason, and correlation ID. States include Ready, Degraded, Disconnected,
+Stale, Unknown, Unsupported, Not Configured, and Not Authorized. Local Setup
+shows central connectivity as `NOT_CONFIGURED`; v0.1.4 trading capability is
+`UNSUPPORTED`, not a fake toggle. See [IPC_CONTRACT.md](IPC_CONTRACT.md) for
+proposed freshness limits. Cached state is labeled stale, never current.
+Dashboard cards are modular; each user's ordering/visibility is a per-user
+preference seeded from machine defaults. Future central sync is deferred.
+Presentation never changes permissions.
 
 ## Language, appearance and accessibility
 
-Default UI language English; set up resource-based i18n so Persian and RTL can
-be added. Verify mirroring, mixed-direction identifiers, dates, numbers and
-screen-reader semantics before offering RTL. Professional, simple modular
-layout with design tokens and dark/light readiness. Midnight Terminal is a
-preference in the existing planning record, not a finalized design system.
-KivyMD remains conditional pending compatibility, accessibility, packaging and
-Windows lifecycle spike. Provide keyboard access, visible focus, scalable text,
-contrast, non-color status cues and Windows display-scaling tests.
+Default UI language English with `.resx` resource-based localization. Prepare
+direction-aware layout for Persian/RTL and test mixed-direction IDs, dates and
+numbers before enabling Persian. Use a consistent Fluent-inspired WPF design
+system, centrally defined color/typography/spacing/component tokens and dark/
+light themes. Approved framework selection is closed; see
+[WPF_SOLUTION.md](WPF_SOLUTION.md) for stack and library evaluation. Support
+keyboard access, visible focus, scalable text, accessible names, contrast,
+non-color status cues and Windows display-scaling tests.
 
 ## Tray, close, notifications
 
@@ -75,10 +82,17 @@ with target, consequence and audit context.
 
 ## v0.1.4 minimum
 
-Modular shell/navigation, actual Agent/runtime status, local setup, user
-preferences, service-independent startup, offline diagnostics/guidance, tray,
-close behavior, basic notices and a safe local API foundation. Technology
-choice, accessibility baseline, Windows UI automation strategy and elevated
-service-control model are release gates. Account controls that imply actual
-multi-account execution remain out of scope until their backend and policy
-contracts exist.
+Option A delivers a reproducible WPF build and testable user-scope package for
+an already prepared machine. Include modular shell/navigation, real
+Agent/Runtime status, Local Setup, per-user preferences, service-independent UI
+startup, offline diagnostics/guidance, tray, close behavior, basic notices,
+and the dedicated secure management pipe. No commercial installer or automatic
+Service provisioning is required. WPF technology is approved; remaining gates
+are UIA/accessibility, package validation, Named Pipe identity/authorization,
+and Windows matrix evidence. Full account execution is unsupported.
+
+## Related implementation references
+
+[WPF Solution and Design System](WPF_SOLUTION.md) ·
+[IPC Contract](IPC_CONTRACT.md) · [Quality Gates](QUALITY_GATES.md) ·
+[Acceptance](ACCEPTANCE_V0.1.4.md)

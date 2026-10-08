@@ -4,6 +4,13 @@
 **Repository baseline:** GitLab `origin/develop`, `d99182211696ef877171fda287dee01ef6e3fce7`, audited 2026-10-08.
 **Principle:** Design for Scale, Implement for Today.
 
+**Binding Product Owner decisions (2026-10-08):** C# / WPF / XAML / .NET
+Framework 4.8 / MVVM Desktop Client integrated with the existing Python Agent
+and Python MT5 Runtime Worker; Windows 10 x64, Windows 11 x64, Windows Server
+2022 x64, Windows Server 2025 x64; v0.1.4 is Option A, a Desktop Client for an
+already installed and provisioned Agent/Runtime. See [ADR-ARCH-015](adr/ADR-ARCH-015-wpf-technology.md)
+and [ADR-ARCH-016](adr/ADR-ARCH-016-release-boundary-option-a.md).
+
 ## 1. Purpose and status vocabulary
 
 This blueprint defines the long-term architecture of MT5Agent as the Windows
@@ -60,7 +67,7 @@ flowchart TB
     Orchestrator --> Billing
   end
   subgraph Windows[Windows Client]
-    UI[Desktop UI and tray]
+  UI[C# WPF Desktop Client and tray]
     LocalAPI[Versioned local management interface]
     Service[Agent Service]
     Core[Agent Core, policy gate, diagnostics]
@@ -79,17 +86,17 @@ flowchart TB
 ```
 
 This is a target decomposition. The actual composition currently consists of
-Agent, dispatcher, HTTP transport/host, observability, and an MT5 port selected
-at composition; see [baseline](IMPLEMENTATION_BASELINE.md). The Desktop UI,
-Windows Service packaging, local UI API, supervisor product workflow, and
-central services are not present as complete product capabilities.
+the Python Agent, dispatcher, HTTP transport/host, observability, and an MT5
+port selected at composition; see [baseline](IMPLEMENTATION_BASELINE.md). The
+C# WPF Desktop Client, its management pipe, and Windows Service packaging are
+not yet present as product capabilities.
 
 ## 4. Boundaries and trust
 
 ```mermaid
 flowchart LR
   subgraph T1[Untrusted customer and local process boundary]
-    UI[UI and other local processes]
+  UI[WPF client and other local processes]
   end
   subgraph T2[Privileged machine boundary]
     Service[Agent Service]
@@ -111,10 +118,12 @@ flowchart LR
 ```
 
 The current Named Pipe secures the Session 0 Agent-to-Worker link and is not a
-UI API. The current `/command` HTTP composition is not approved for privileged
-UI use. The UI must never receive a shortcut around Agent authorization or
-access Worker IPC directly. See [security](SECURITY_MODEL.md) and
-[local API](LOCAL_API.md).
+UI API. The current `/command` HTTP composition is not approved for UI use: its
+default composition uses allow-all authentication/authorization. Proposed
+WPF-to-Python management IPC is a **different pipe with a separate DACL,
+identity check, and per-operation authorization**. The UI must never access
+Worker IPC. See [IPC contract](IPC_CONTRACT.md), [security](SECURITY_MODEL.md),
+and [ADR-ARCH-017](adr/ADR-ARCH-017-management-ipc.md).
 
 ## 5. Core architectural rules
 
@@ -123,7 +132,8 @@ access Worker IPC directly. See [security](SECURITY_MODEL.md) and
    MT5 readiness.
 2. One active Runtime is in v0.1.4 scope. Model identity and ownership so later
    multi-runtime operation does not rely on a process-global terminal.
-3. Only the interactive Worker owns the MT5 Python API on the supported Windows
+3. C# WPF is a management client only; Python Agent remains the control plane,
+   and only the interactive Python Worker owns the MT5 API on the supported Windows
    production path. Keep MT5 operations serialized until thread safety is
    demonstrated.
 4. Enforce least privilege and explicit policy before every privileged action.
@@ -183,14 +193,16 @@ future transmission. See [operations](OPERATIONS.md).
 
 ## 9. Desktop UX target
 
-The modular console has Dashboard, Runtime, Accounts, Security, Settings,
-Logs, Diagnostics, Updates, Support, and About modules. Dashboard status
-dimensions are `SERVICE_RUNNING`, `AGENT_CONNECTED`, `WORKER_READY`,
-`MT5_CONNECTED`, and `TRADING_ENABLED`. Each is independently `unknown`,
-`stale`, `disconnected`, `degraded`, or `ready` with reason and observation
-time. English is default; i18n infrastructure anticipates Persian/RTL. KivyMD
-remains conditional on a compatibility, accessibility, and packaging spike.
-See [Desktop UI](DESKTOP_UI.md).
+The WPF/MVVM console has Dashboard, Runtime, Accounts, Security, Settings,
+Logs, Diagnostics, Updates, Support, and About modules. Status contract
+dimensions are `SERVICE_RUNNING`, `LOCAL_AGENT_RESPONSIVE`, `WORKER_READY`,
+`MT5_CONNECTED`, `CENTRAL_CONNECTED`, `TRADING_CAPABILITY`, and
+`TRADING_AUTHORIZED`. Each carries source, timestamp, age and reason. In Local
+Setup, central is `NOT_CONFIGURED`; v0.1.4 trading capability is
+`UNSUPPORTED`. English is default with resource-based i18n and RTL readiness.
+The selected stack is C#/WPF/XAML/.NET Framework 4.8/MVVM; no framework
+selection is open. See [Desktop UI](DESKTOP_UI.md) and
+[WPF Solution](WPF_SOLUTION.md).
 
 ## 10. Commercial expansion
 
@@ -202,26 +214,30 @@ may disable new discretionary operations under policy; it must not silently
 disable monitoring, reporting, or protective management of existing positions.
 Exact grace and billing rules are Open Decisions. See [vision](PRODUCT_VISION.md).
 
-## 11. v0.1.4 boundary
+## 11. v0.1.4 boundary — Approved Option A
 
-Target: modular Desktop Shell, navigation, real status, one active Runtime,
-local setup, split configuration, user preferences, English/i18n foundation,
-secure minimal local API, service-independent launch, offline guidance, tray,
-close behavior, basic notices, safe logs/diagnostics, minimal support export,
-authorized management, concurrency hardening, and Windows validation.
+Deliver a reproducible C# WPF Desktop Client for an **already installed and
+provisioned** Python Agent/Runtime. Include the modular shell, real local
+status, per-user UI preferences, a dedicated least-privilege management
+interface, offline diagnostics, tray/notifications, bounded log/diagnostic
+views, and a testable user-scope deployment package for a prepared machine.
+Keep the Python Agent and MT5 Worker as the operational foundation.
 
-Substantial privileged foundations (service installation/control, a new local
-authorization surface, runtime account creation or Autologon changes, secure
-credential transfer, production updater) require explicit release gates. Full
-multi-runtime, web console, production billing, remote support, offline license
-issuance, complete updater/rollback, and production failover are deferred.
-Acceptance and test-infrastructure gaps are tracked in
-[v0.1.4 acceptance](ACCEPTANCE_V0.1.4.md).
+v0.1.4 does **not** require commercial installer, automatic Service
+provisioning, runtime account creation, Autologon setup, enterprise deployment,
+central platform, production billing, full auto-update/rollback, multi-runtime
+execution, or multi-Agent failover. Service startup/restart remains subject to
+existing Windows permissions; do not add an elevated custom helper without
+separate approval. See [ADR-ARCH-016](adr/ADR-ARCH-016-release-boundary-option-a.md),
+[Implementation Plan](IMPLEMENTATION_PLAN.md), and
+[Acceptance](ACCEPTANCE_V0.1.4.md).
 
 ## 12. Navigation, decisions, and traceability
 
 See [roadmap](ROADMAP.md), [risk register](RISK_REGISTER.md),
-[glossary](GLOSSARY.md), and [14 architecture ADRs](adr/README.md). ADRs are
+[glossary](GLOSSARY.md), [quality gates](QUALITY_GATES.md), and
+[17 architecture ADRs](adr/README.md). ADR-ARCH-010 is retained as superseded
+history. ADRs are
 Proposed, Deferred, or Open unless a corresponding explicit product decision
 or repository ADR supports Accepted status. No ADR here authorizes product
 implementation by itself.

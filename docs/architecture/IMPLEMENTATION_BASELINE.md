@@ -38,7 +38,7 @@ point-in-time audit and may change after this draft.
 
 | Area | Finding |
 |---|---|
-| Desktop shell/tray | No Desktop UI or tray package/dependency is present; KivyMD is a conditional planning direction in `docs/planning/v0.1.4-desktop-ui.md`. |
+| Desktop shell/tray | No Desktop UI or tray package/dependency is present. Product Owner has since approved C#/WPF/XAML/.NET Framework 4.8/MVVM; the prior Kivy planning record is superseded history, not the active direction. |
 | Productized Windows Service | Current control process can run Session 0; no customer-ready service installer, service recovery, or general setup flow is evidenced. |
 | UI local API | No dedicated API. Existing `/command` uses allow-all composition defaults and is not a privileged UI contract. |
 | Account and tenant model | No productized multi-tenant Agent/Device/Account/Runtime registry or account switching workflow. Existing runtime identity metadata is not a customer account-management service. |
@@ -47,6 +47,7 @@ point-in-time audit and may change after this draft.
 | Secure config ownership | No complete split machine/user/central configuration ownership, schema migration, or credential lifecycle. |
 | Recovery | Worker lifecycle/retry foundations exist; customer-profile recovery semantics for cold boot, logoff, RDP disconnect, service stop, and failure classes remain incomplete. |
 | UI tests | Windows runner evidence exists for current runtime, but no UI automation, rendering, accessibility, tray, or interactive setup test harness was verified. |
+| WPF toolchain and package | No C# solution, net48 WPF project, Visual Studio/MSBuild job, desktop artifact, or deployment package exists at this baseline. These are planned additions; current Windows runners are Windows 10 and do not establish Server 2022/2025 coverage. |
 | Updater/support | Existing update-policy foundation and release pipeline are not a complete customer auto-updater with rollback. No reviewed support bundle or remote support product is present. |
 
 ## CI and release evidence
@@ -66,6 +67,15 @@ before a future release: configured GitLab API endpoint uses HTTP while the
 publisher requires HTTPS; protected release-owner variable was absent at that
 audit; effective job-token write permissions and full automatic publication
 path were not proven. These are not altered by this blueprint.
+
+## Binding v0.1.4 update to the baseline
+
+The code baseline above remains Python. WPF is a new management client and
+must not replace/rewrite `agent/main.py`, `agent/composition.py`, the Python
+Agent, or the interactive Worker. The approved commercial UI matrix is Windows
+10/11 x64 and Server 2022/2025 x64 Desktop Experience only. Option A packages
+the WPF UI for an already provisioned Agent; it does not claim or implement a
+commercial installer or Windows Service provisioning.
 
 ## Assumptions requiring validation
 

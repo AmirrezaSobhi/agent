@@ -15,6 +15,21 @@ Secrets are not ordinary configuration. Store under the principal that needs
 them; use a protected OS-backed mechanism only after cross-session identity,
 rotation, recovery and revocation behavior is designed.
 
+### v0.1.4 storage proposal
+
+- Keep existing Agent machine runtime settings in the current HKLM key until a
+  separately approved migration; WPF does not edit HKLM directly.
+- Store WPF layout/theme/language/notification/Close-to-Tray preferences in a
+  versioned per-user file under that user's `%LOCALAPPDATA%\MT5Agent\Desktop`
+  directory. Restrict ACL to that SID and SYSTEM; atomic temp-write/replace;
+  invalid file falls back to defaults and is quarantined without losing
+  diagnostics.
+- WPF obtains machine/runtime status through the management pipe. It does not
+  read/write runtime registry values or Service configuration itself.
+- v0.1.4 Local Setup has no central policy store and no cloud sync. Do not
+  persist a central identity/password because there is no approved central
+  enrollment contract.
+
 ## Effective policy and precedence
 
 Configuration values are not all mergeable settings. Machine facts select
@@ -23,8 +38,9 @@ delegated actions; mandatory local safety can only restrict. Proposed
 effective policy for an action is the intersection of applicable allows and
 union of applicable denies, with mandatory safety constraints evaluated first.
 Unknown/conflicting constraints fail closed for new trading. UI preferences
-never override security, update, or trading policy. Exceptions require an
-explicitly authorized, narrow, audited workflow.
+never override machine security or future central policy. In v0.1.4, user
+preferences only change UI presentation and never touch Agent/Runtime state.
+Exceptions require an explicitly authorized, narrow, audited workflow.
 
 ## Update and migration contract
 

@@ -4,6 +4,12 @@
 [Implementation Baseline](IMPLEMENTATION_BASELINE.md). This document is not a
 security certification.
 
+**Approved client stack:** C# WPF/XAML/.NET Framework 4.8/MVVM. The UI is an
+untrusted local caller relative to the Python Agent Service. The selected
+transport proposal is a distinct Windows Named Pipe, not the current `/command`
+HTTP composition and not the internal MT5 Worker pipe; see
+[IPC_CONTRACT.md](IPC_CONTRACT.md).
+
 ## Assets and principals
 
 Assets: broker credentials and sessions, account identifiers, trading
@@ -42,6 +48,13 @@ flowchart TD
   default deny, including unknown commands and schema versions.
 - Keep Worker pipe ACL/identity checks separate from UI local API. Existing
   Named Pipe supports the Session 0 Agent/Worker boundary only.
+- For the management pipe, ACL the endpoint to an explicitly provisioned local
+  SID/group, derive client SID from the kernel pipe client token, and perform
+  per-operation authorization in the Agent. Reject missing/unreadable SID and
+  revert any impersonation in `finally`. JSON caller identity is not trusted.
+- Keep WPF running as the interactive user; do not elevate the whole UI to
+  communicate with Service. Windows SCM ACL/UAC remains the separate recovery
+  path for Service start/stop.
 - Bind local management to loopback or OS IPC, but do not treat loopback as
   authentication. For HTTP, define CSRF/origin protections, random/session
   credentials, replay protections and safe browser-origin behavior. Prefer a
@@ -70,12 +83,11 @@ split-brain; clock rollback; and crash during a trading operation.
 
 ## Recovery authority
 
-A stopped Windows Service cannot serve its own control endpoint. UI recovery
-must use Service Control Manager operations mediated by Windows permissions
-and UAC, or an explicitly designed elevated helper. A helper may expose only
-the minimum service action and must not become a general privileged command
-broker. The UI must explain denied/required elevation without storing admin
-credentials.
+A stopped Windows Service cannot serve its own control endpoint. Under approved
+Option A, prefer native Service Control Manager permissions and standard UAC
+for an already provisioned Agent. A custom elevated helper is outside scope
+unless a demonstrated product requirement and separate security review justify
+it. The WPF UI remains usable if SCM denies start; never store admin credentials.
 
 ## Secrets and identity
 
@@ -87,9 +99,10 @@ store credentials without explicit customer approval and a threat review.
 
 ## Security gates
 
-Before privileged UI management ships: documented permission matrix, abuse
-cases, negative authorization tests, Windows identity tests across sessions,
-bounded concurrency tests, audit and redaction review, and independent stopped-
-service recovery review. Before central enrollment/trading: protocol and key
-lifecycle review, command authorization, expiry/replay, policy revision,
-execution lease, and ambiguous-outcome reconciliation design.
+Before management pipe ships: documented caller-SID/operation matrix, service
+identity, exact pipe DACL, identity-impersonation/revert proof, abuse cases,
+negative authorization tests across sessions, bounded concurrency, audit and
+redaction review. Before Runtime restart operations ship, additionally prove
+owned-process identity and no broad terminal kill. Before central enrollment/
+trading: protocol and key lifecycle review, command authorization, expiry/
+replay, policy revision, execution lease, and ambiguous-outcome reconciliation.

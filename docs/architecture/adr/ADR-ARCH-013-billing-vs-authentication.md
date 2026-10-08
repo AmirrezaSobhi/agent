@@ -1,6 +1,6 @@
 # ADR-ARCH-013: Billing Credits Are Not Authentication
 
-- **Status:** Proposed product constraint (commercial policy details open)
+- **Status:** Accepted product constraint; commercial billing policy details remain Open
 - **Date:** 2026-10-08
 
 ## Context

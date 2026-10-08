@@ -1,6 +1,7 @@
 # MT5Agent Architecture
 
-**Status:** Architecture Blueprint v1.0-draft; prepared for Product Owner review.
+**Status:** Architecture Blueprint v1.0-draft; technology and Option A release
+boundary approved by Product Owner; implementation details remain Proposed.
 **Baseline:** `origin/develop` at `d99182211696ef877171fda287dee01ef6e3fce7` (2026-10-08).
 
 This directory is the proposed authoritative architecture reference. Existing
@@ -23,9 +24,12 @@ does not supersede historical release evidence. Status labels are normative:
    [Windows runtime](WINDOWS_RUNTIME.md), and [local API](LOCAL_API.md).
 5. [Desktop UI](DESKTOP_UI.md), [configuration](CONFIGURATION.md), and
    [operations](OPERATIONS.md).
-6. [Roadmap](ROADMAP.md), [risks](RISK_REGISTER.md),
-   [v0.1.4 acceptance](ACCEPTANCE_V0.1.4.md), and [glossary](GLOSSARY.md).
-7. [Architecture ADRs](adr/README.md).
+6. [WPF Solution and Design System](WPF_SOLUTION.md),
+   [IPC contract](IPC_CONTRACT.md), and [quality gates](QUALITY_GATES.md).
+7. [Implementation plan](IMPLEMENTATION_PLAN.md), [roadmap](ROADMAP.md),
+   [risks](RISK_REGISTER.md), [v0.1.4 acceptance](ACCEPTANCE_V0.1.4.md), and
+   [glossary](GLOSSARY.md).
+8. [Architecture ADRs](adr/README.md) (17 records; one superseded historical ADR).
 
 ## Existing source records
 
@@ -40,3 +44,10 @@ does not supersede historical release evidence. Status labels are normative:
 This draft is additive. Where an older source record has a different point-in-
 time branch or pipeline value, consult its dated evidence in its original
 context. The refreshed baseline here is the checked-out `develop` commit above.
+
+The earlier KivyMD proposal in the planning record is superseded by the
+Product Owner-approved C#/WPF/XAML/.NET Framework 4.8/MVVM decision in
+[ADR-ARCH-015](adr/ADR-ARCH-015-wpf-technology.md). v0.1.4 uses approved
+**Option A**: a client for an already installed/provisioned Python Agent and
+Runtime, with a reproducible WPF build and testable user-scope package. See
+[ADR-ARCH-016](adr/ADR-ARCH-016-release-boundary-option-a.md).

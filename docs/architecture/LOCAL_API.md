@@ -1,77 +1,79 @@
-# Local API and IPC Contract
+# Local Management Interface
 
-**Status:** Proposed target contract. The existing named pipe is Agent-to-
-Worker. The existing HTTP `/command` interface is not an approved privileged
-UI endpoint. No proposed operation below is represented as an existing route.
+**Status:** Proposed Windows Named Pipe management channel, separate from the
+existing Agent-to-Worker pipe. Not implemented in this documentation mission.
+The privileged management operation set remains gated by the detailed
+[IPC contract](IPC_CONTRACT.md).
 
-## Candidate operations (conceptual only)
+## Security baseline
 
-- Health/status; runtime status; capabilities.
-- Read/update authorized settings.
-- Diagnostics and bounded event query.
-- Generate support bundle locally.
-- Authorized Runtime restart.
-- Authorized Windows Service start/stop via independent OS control path.
+The current Python HTTP `/command` path is not the Desktop Client API.
+`agent/application/boundary.py` supplies `AllowAllAuthenticator` and
+`AllowAllAuthorizer` when none are injected; the HTTP adapter uses
+`ThreadingHTTPServer`; host defaults to loopback but is environment-configured.
+Loopback does not establish caller SID or operation permission. Do not expose
+this composition for privileged management or route WPF requests through it.
 
-No endpoint names, payload fields, or wire schema are approved by this list.
-Trading commands should not be exposed through a general local management API.
+The existing `\\.\pipe\MT5Agent.Runtime.v1` is the Agent-to-interactive-Worker
+MT5 runtime boundary. WPF must never connect to it. The proposed Desktop
+management endpoint is `\\.\pipe\MT5Agent.Management.v1`, hosted by the Agent
+Service with its own protocol, DACL, caller identity validation, and
+authorization layer.
 
-## HTTP Loopback versus Windows IPC
+## Preferred transport and identity model
 
-| Choice | Advantages | Risks / required evidence |
-|---|---|---|
-| HTTP Loopback | Familiar client tooling, structured versioning, straightforward diagnostics | Loopback is not auth; CSRF/browser origins, port discovery, token/session handling, local-process attacks, concurrent admission and bounded execution. Existing HTTP composition currently uses allow-all defaults. |
-| Windows-native IPC | Can bind access to Windows identity/ACL and avoid listening TCP port | ACL design, session identity, impersonation, message framing, timeouts, client compatibility and elevated recovery helper complexity. Existing Worker pipe is purpose-bound and must not be reused as a UI API by default. |
+Recommend Windows Named Pipes over HTTP Loopback for this Windows-only local
+desktop client. A pipe DACL can constrain client SIDs without a TCP listener or
+browser CSRF/Origin/token bootstrap surface. The server must also derive and
+verify client SID from the OS token, then authorize each operation; pipe access
+alone is not sufficient. The exact service account and local reader/manager
+group provisioning must be validated against the existing installation model.
 
-**Open Decision:** choose after threat model, UI framework compatibility spike,
-multi-user/session tests, and a least-privilege prototype. Do not add both
-transports without a concrete compatibility need and shared authorization layer.
+HTTP Loopback is not selected. It remains a future alternative only if an
+approved non-Windows client or remote management need appears, with explicit
+authentication, CSRF/Origin checks, local-process protections, bounded work,
+and a dedicated route. The present `/command` implementation is not reused.
 
-## Required contract properties
+## Scope and operation permissions
 
-- Explicit protocol and schema versions; capability negotiation; reject unknown
-  required fields/versions safely.
-- Authentication bound to Windows user/process/service principal and request
-  audience; authorization per action/resource. Do not trust a caller-provided
-  username. Fail closed.
-- Least privilege and secret-free responses. Existing permissive development
-  authentication is never extended to privileged operations.
-- Request/correlation IDs, stable error taxonomy, audit for privileged writes,
-  and idempotency keys for retryable management mutations.
-- Input/payload/time/concurrency limits; bounded worker pool or admission and
-  backpressure; no unbounded threads/queues. Define shutdown drain semantics.
-- Concurrent requests must not cause parallel MT5 API calls. Runtime mutations
-  must serialize or use an explicit command lane.
-- Transport timeout does not prove action cancellation. Report uncertain
-  outcomes explicitly; management operation retry must be idempotent or
-  reconciled.
-- If HTTP is selected: explicit loopback binding, Origin/Host checks, CSRF
-  model, no ambient browser credentials, protected random token lifecycle and
-  port ownership validation. TLS on loopback may not alone solve local process
-  access.
+Initial v0.1.4 contract operations are protocol negotiation, read-only status,
+bounded diagnostics, paged log query, per-user preferences read/write, and
+Runtime restart only if its permission gate passes. Machine/service config
+writes are excluded from the first contract. Service start/stop uses Windows
+SCM permissions and UAC, not this pipe. No trading endpoint exists; capability
+reports `UNSUPPORTED`.
 
-## Error taxonomy proposal
+Resolve operation permission from server-derived caller SID, operation and
+resource scope. Never trust a client-supplied username/SID. Fail closed if
+caller identity, version, or authorization cannot be established. Logs and
+diagnostics return allowlisted sanitized fields only.
 
-`INVALID_REQUEST`, `UNSUPPORTED_VERSION`, `AUTHENTICATION_REQUIRED`,
-`AUTHORIZATION_DENIED`, `RESOURCE_NOT_FOUND`, `CONFLICT`, `STALE_REVISION`,
-`BUSY`, `RATE_LIMITED`, `SERVICE_UNAVAILABLE`, `OPERATION_TIMEOUT`,
-`OUTCOME_UNKNOWN`, `INTERNAL_ERROR`. Error details are actionable but omit
-secrets, raw rejected values and stack traces.
+## Protocol and reliability
 
-## Independent Service recovery path
+See [IPC_CONTRACT.md](IPC_CONTRACT.md) for proposed v1 request/response JSON,
+correlation IDs, 64 KiB frame limit, 4 active/16 queued request bounds, timeout,
+cancellation, retry, stale status, freshness, error taxonomy, reconnection and
+contract tests. Use error codes stable across C# and Python; never send raw
+exceptions, credentials, rejected secret values or MT5 Worker protocol data.
 
-Service cannot start itself after it is stopped. Use Service Control Manager
-permissions exposed through the UI's OS token/UAC or a narrowly scoped elevated
-helper with a signed installation identity, fixed allowlisted service actions,
-audit, and no arbitrary command execution. Ordinary users receive clear
-permission guidance; never collect or store administrator passwords. Restart
-and start behavior is distinct from runtime-worker restart and MT5 terminal
-restart.
+## Independent Service recovery
 
-## v0.1.4 release gate
+A stopped Service cannot answer its own API. Option A uses the documented
+Windows Service Control Manager/UAC path for operators already authorized by
+the machine. Do not create a custom elevated helper, create Windows accounts,
+or configure Autologon in v0.1.4. If SCM denies the operation, WPF remains
+available and gives clear permission/recovery guidance without collecting
+administrator credentials. Service restart, Runtime Worker restart, MT5
+terminal restart and UI restart are separate actions.
 
-Before privileged settings or runtime actions are exposed: approve transport,
-principal mapping, per-operation permission matrix, request bounds, CSRF/Origin
-controls if HTTP, audit schema, elevation flow, and negative tests across users
-and sessions. Read-only diagnostic surface may be narrower but still requires
-identity/privacy review.
+## Implementation release gates
+
+Before exposing Runtime restart or other privileged operations, approve the SID
+to operation matrix, server principal, DACL and impersonation/revert behavior,
+per-user isolation, audit schema, bounded admission and negative tests across
+Windows sessions. Read-only status still requires confidentiality review.
+
+## Related documents
+
+[Security Model](SECURITY_MODEL.md) · [Windows Runtime](WINDOWS_RUNTIME.md) ·
+[WPF Solution](WPF_SOLUTION.md) · [ADR-ARCH-017](adr/ADR-ARCH-017-management-ipc.md)

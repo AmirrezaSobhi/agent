@@ -1,6 +1,6 @@
 # ADR-ARCH-011: Agent Identity and Central Enrollment
 
-- **Status:** Deferred to v0.2.x design
+- **Status:** Deferred to v0.2.x; identity-separation requirements accepted, protocol open
 - **Date:** 2026-10-08
 
 ## Context

@@ -1,6 +1,6 @@
 # ADR-ARCH-012: Multi-Agent Single-Writer Ownership
 
-- **Status:** Deferred; required before production multi-Agent execution
+- **Status:** Deferred; single-writer safety constraints accepted, lease protocol proposed for future approval
 - **Date:** 2026-10-08
 
 ## Context

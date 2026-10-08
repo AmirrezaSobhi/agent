@@ -108,24 +108,22 @@ product as commercially production ready until those remaining gates pass;
 Phase 4D live CI acceptance alone does not productize installation or support.
 See [known issues](KNOWN_ISSUES.md) and [Action Plan](ACTION_PLAN.md).
 
-## Future Desktop UI planning boundary
+## WPF Desktop Client boundary
 
-The Windows Desktop UI is a **planning proposal**, not an implemented
-component. The product direction is KivyMD subject to compatibility and
-packaging feasibility. The UI must remain an independent management and
-observation client; Agent Core and the MT5 Runtime Worker must continue when
-the UI or tray closes or crashes.
+The Product Owner has approved a C# WPF/XAML client targeting .NET Framework
+4.8 with MVVM. v0.1.4 is Option A: a reproducible Desktop Client package for an
+already installed/provisioned Python Agent and Runtime. This is the approved
+technology/release direction; it is not yet implemented in this source tree.
+See [Architecture Blueprint](architecture/BLUEPRINT.md),
+[WPF Solution](architecture/WPF_SOLUTION.md), and [Option A ADR](architecture/adr/ADR-ARCH-016-release-boundary-option-a.md).
 
-The current `/command` HTTP transport is not approved as the UI control
-interface: the default composition does not configure authentication or
-authorization. The authenticated Named Pipe serves the existing Session 0
-Agent-to-interactive-Worker boundary and must not be directly exposed to the
-UI. A future local control interface requires its own explicit identity,
-authorization, input-validation, secret-redaction, session, and process
-isolation design. Windows startup/tray ownership also remains unresolved; the
-lab Worker bootstrap does not establish a customer Agent/UI startup mechanism.
-
-The detailed conceptual UI/Core/Worker flow, product decisions, security and
-session questions, and proposed acceptance criteria are in the
-[v0.1.4 Desktop UI plan](planning/v0.1.4-desktop-ui.md). They do not change the
-implemented runtime architecture above or authorize implementation.
+The client remains independent from Agent/Worker lifecycle and supports only
+Windows 10/11 x64 and Windows Server 2022/2025 x64 with Desktop Experience.
+The current `/command` HTTP transport is not approved as the UI control API:
+the default composition does not configure authentication or authorization.
+The existing Runtime Named Pipe remains exclusively Agent-to-Worker. The
+recommended WPF management pipe is a distinct proposed boundary with separate
+SID/DACL and operation authorization; see
+[IPC Contract](architecture/IPC_CONTRACT.md). The older Kivy plan is retained
+as superseded historical record at
+[planning/v0.1.4-desktop-ui.md](planning/v0.1.4-desktop-ui.md).

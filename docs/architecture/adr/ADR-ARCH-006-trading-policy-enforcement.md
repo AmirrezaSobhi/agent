@@ -1,6 +1,6 @@
 # ADR-ARCH-006: Trading Policy Enforcement
 
-- **Status:** Proposed
+- **Status:** Accepted safety requirements; policy evaluation algorithm remains Proposed
 - **Date:** 2026-10-08
 
 ## Context

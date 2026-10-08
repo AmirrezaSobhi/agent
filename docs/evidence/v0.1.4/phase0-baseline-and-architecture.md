@@ -163,6 +163,13 @@ request path. Keep MT5 operations serialized unless thread-safety is proven.
 
 ## v0.1.4 UI planning status
 
+**Historical snapshot:** the KivyMD direction and open questions below describe
+the repository/product state at this Phase 0 audit. They were superseded on
+2026-10-08 by Product Owner-approved WPF/.NET Framework 4.8/MVVM and Option A;
+see `docs/architecture/adr/ADR-ARCH-015-wpf-technology.md` and
+`ADR-ARCH-016-release-boundary-option-a.md`. Preserve this section as evidence,
+not as active guidance.
+
 `docs/planning/v0.1.4-desktop-ui.md` is tracked and was introduced by commit
 `04f6e7969321d065384eab40aad927addb73ef2c` on `develop`. It records KivyMD as
 the preferred but conditional Windows desktop direction; UI/Core lifecycle

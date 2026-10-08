@@ -5,17 +5,34 @@ evidence is linked in [Implementation Baseline](IMPLEMENTATION_BASELINE.md).
 
 ## Installation and maintenance
 
-Target Simple Setup for individual customers and Advanced Setup for VPS and
-enterprise. Check OS architecture/support policy and prerequisites; install
-Service and UI; choose an existing Windows runtime account or create a
-dedicated account only with explicit approval; discover MT5; verify interactive
-session readiness; run health checks. Include repair, upgrade compatibility,
-and uninstall that removes only owned resources and explains retained user data.
+**v0.1.4 Option A:** deliver a reproducible WPF build and a testable user-scope
+deployment package for a machine where Agent Service/Runtime are already
+installed and provisioned. Document .NET Framework 4.8-or-later prerequisite,
+package extraction/launch/removal, hash verification, and offline first-run.
+The package must not install/configure Service, create accounts, set Autologon,
+or mutate existing Agent configuration. Commercial Simple/Advanced installers,
+repair and enterprise provisioning are later work.
 
-Windows 10 x64 is subject to security/support policy; Windows 11 x64 and
-selected Windows Server x64 families require compatibility validation. Windows
-7 is a legacy test environment, not a new Desktop UI target. No supported OS
-matrix is fully validated by this draft.
+Approved UI OS matrix, x64 only:
+
+| OS | UI support | Requirement |
+|---|---|---|
+| Windows 10 | Supported by Product Owner | Record edition/build and current security servicing/ESU; end-of-general-support risk remains active. |
+| Windows 11 | Supported | Validate current supported release and .NET runtime. |
+| Windows Server 2022 | Supported | Desktop Experience required; Server Core unsupported. |
+| Windows Server 2025 | Supported | Desktop Experience required; Server Core unsupported. |
+
+All other Windows versions are out of scope for the commercial UI. Microsoft
+lists .NET Framework 4.8 as compatible with these OS families, with 4.8.1
+preinstalled on current Windows 11/Server 2025 and available to Server 2022;
+an app targeting 4.8 runs on the in-place 4.8.1 runtime. WPF requires an
+interactive desktop. Server Core lacks the standard GUI shell and is not a
+supported UI host.
+
+Windows 10 22H2 general support ended 2025-10-14. ESU is time/edition/program
+limited; product must not imply that technical launch compatibility equals
+Microsoft security support. Reconfirm lifecycle at every release. See
+[Quality Gates](QUALITY_GATES.md) for primary Microsoft sources.
 
 ## Update, staged rollout and rollback
 

@@ -34,12 +34,13 @@ the [release record](releases/v0.1.3-release-notes.md).
 
 ## Next planning phase: v0.1.4
 
-v0.1.4 remains a planning phase; scope, implementation tasks, and dates are not
-approved. The detailed client-side Windows Desktop UI decisions, architecture
-boundaries, open questions, and measurable proposed gates are in the
-[Desktop UI planning document](planning/v0.1.4-desktop-ui.md). KivyMD is the
-preferred framework candidate, subject to compatibility and packaging
-feasibility. This plan does not authorize UI implementation.
+v0.1.4 is approved as Option A: a C# WPF/XAML/.NET Framework 4.8/MVVM Desktop
+Client for an already installed and provisioned Python Agent/Runtime. Full
+Service installation/provisioning, account creation, Autologon, Central
+Management and automatic updates are out of scope. The implementation-ready
+phase plan is in [docs/architecture/IMPLEMENTATION_PLAN.md](architecture/IMPLEMENTATION_PLAN.md);
+the former Kivy planning record is superseded history. This documentation does
+not itself begin application implementation.
 
 Protected stable-tag publication to GitLab and downstream GitHub Release
 synchronization now have an implementation and isolated local tests, described

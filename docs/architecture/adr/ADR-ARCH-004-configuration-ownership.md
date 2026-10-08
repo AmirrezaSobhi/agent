@@ -1,6 +1,6 @@
 # ADR-ARCH-004: Configuration Ownership and Precedence
 
-- **Status:** Proposed
+- **Status:** Accepted for ownership separation; storage/migration/precedence implementation remains Proposed
 - **Date:** 2026-10-08
 
 ## Context

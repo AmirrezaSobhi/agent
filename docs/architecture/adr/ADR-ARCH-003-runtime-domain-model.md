@@ -1,6 +1,6 @@
 # ADR-ARCH-003: Runtime and Account Domain Model
 
-- **Status:** Proposed
+- **Status:** Accepted product/domain constraints; persistence and execution implementation proposed/deferred
 - **Date:** 2026-10-08
 
 ## Context
@@ -11,9 +11,11 @@ be visible from multiple Agents without granting simultaneous write authority.
 
 ## Decision
 
-Model Tenant, User/Role/Permission, Device, Agent Instance, Terminal
+Keep Tenant, User/Role/Permission, Device, Agent Instance, Terminal
 Installation, Runtime Instance, Runtime Principal, Trading Account, Policy,
 Execution Lease, Trading Command/Result and Usage Record as distinct concepts.
+These are required domain boundaries; this ADR does not approve a storage
+schema or authorize multi-runtime execution in v0.1.4.
 Keep one active runtime today, but avoid a global-singleton model that blocks
 future explicit selection. Future multi-Agent writes require lease, fencing
 epoch, idempotency and broker reconciliation.

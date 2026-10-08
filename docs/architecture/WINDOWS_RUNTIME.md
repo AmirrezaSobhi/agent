@@ -1,8 +1,9 @@
 # Windows Service and MT5 Runtime
 
 **Status:** Existing split-session runtime is accepted and lab evidenced.
-Customer Service/UI lifecycle and startup profiles below are target/proposed
-design, not current productized behavior. See [existing runtime record](../MT5_RUNTIME_ARCHITECTURE.md)
+Option A means WPF v0.1.4 requires an already installed and provisioned Agent/
+Runtime, not a new commercial Service installer. Service/UI lifecycle details
+below are target/proposed, not current productized behavior. See [existing runtime record](../MT5_RUNTIME_ARCHITECTURE.md)
 and [accepted ADR-001](../ADR/ADR-001-unattended-mt5-runtime-hosting.md).
 
 ## Three independent processes
@@ -20,10 +21,10 @@ flowchart LR
     Worker --> Terminal
   end
   subgraph Desktop[User desktop session]
-    UI[Desktop UI and tray]
+  UI[C# WPF Desktop UI and tray]
   end
   Service <-->|authenticated Named Pipe: current runtime boundary| Worker
-  UI <-->|future authenticated local management contract| Local
+  UI <-->|proposed Management.v1 pipe| Local
 ```
 
 The Session 0 Agent does not own the GUI-dependent MT5 API connection. The
@@ -43,13 +44,19 @@ an unattended cold-boot lab topology with local Autologon plus an
 customer-ready Service installer, UI startup, RDP disconnect recovery, or
 general support matrix.
 
-**Target:** automatically starting Windows Service, independently managed UI
-and tray, profile-aware Worker supervision, bounded retry/backoff and explicit
-service-manager recovery. Runtime account can be existing customer-approved
-Windows account or installer-created dedicated account after explicit consent.
-Creating an account alone does not produce an interactive MT5 session.
-Autologon, credential storage, account rights, session bootstrap and removal
-need explicit security review and customer approval.
+**v0.1.4 Option A:** consume an already installed/provisioned Agent and
+Runtime. WPF starts independently in the interactive user's session. It may
+query SCM while Service is stopped and display stale/local diagnostics; it
+does not install or provision the Service, create runtime accounts, or set up
+Autologon. Close/crash of UI never stops Service or Worker. If an authorized
+operator restarts Service, use standard SCM/UAC; the UI must still operate when
+SCM denies access.
+
+**Future target:** automatic Service installation/recovery and profile-aware
+Worker supervision remain later work. Runtime account may be pre-existing or
+customer-approved dedicated account only in a future installer scope. Creating
+an account does not create an interactive session. Autologon, credential
+storage, account rights, bootstrap and removal require explicit security review.
 
 ## Startup profiles
 
@@ -59,12 +66,16 @@ need explicit security review and customer approval.
 | Dedicated VPS Runtime | Stable MT5 session independent of an RDP client | Supported nonzero session at boot; RDP disconnect must not be treated as logoff; validate actual Windows Server/VPS policy. |
 | Enterprise Managed | Centrally provisioned identity, update and policy | Admin-managed service/runtime principals, change windows, audit, approved recovery and support policy. |
 
-Profiles are proposals, not installer options implemented today. Installer
-must let customer choose an existing runtime account or explicitly approve a
-dedicated account. It must show session and credential implications and allow
-recovery/uninstall. Windows 10 x64 is conditional on security/support policy;
-Windows 11 x64 and selected Server x64 require compatibility validation.
-Windows 7 is legacy testing only, not a new UI target.
+Profiles describe future Agent/Runtime operations, not v0.1.4 installer options.
+The approved commercial UI matrix is exactly Windows 10 x64, Windows 11 x64,
+Windows Server 2022 x64, and Windows Server 2025 x64. On Server, require
+**Desktop Experience**; Server Core has no standard GUI desktop and is out of
+scope. All other Windows versions are unsupported for the commercial UI.
+
+Windows 10 remains in the Product Owner-approved matrix but Windows 10 22H2
+reached end of general support on 2025-10-14. Record edition/build and active
+security servicing/ESU separately at release. This lifecycle risk does not
+silently change the approved OS list. See [Quality Gates](QUALITY_GATES.md).
 
 ## Lifecycle and recovery
 
@@ -112,3 +123,11 @@ logoff, worker crash, terminal crash, IPC loss, service stop/restart and central
 loss on each supported OS/profile. Test that UI exit never affects Core/Worker,
 and UI can show service-offline diagnostics if SCM denies start. Never broadly
 terminate `terminal64.exe`; track process identity, parent/session and ownership.
+
+The Desktop Client process runs as the signed-in Windows user, not elevated by
+default. It connects only to the dedicated management pipe. The Python Agent
+Service stays under its configured Service principal; Runtime Worker/MT5 stay
+under the runtime principal in a nonzero interactive session. Multiple logged-
+on UI sessions use distinct SIDs and user preference stores. Only explicitly
+provisioned local SIDs/groups may connect to the management pipe. Session 0
+CI tests do not count as interactive UI tests.

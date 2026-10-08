@@ -1,6 +1,6 @@
 # ADR-ARCH-009: Versioned Releases and Safe Updates
 
-- **Status:** Proposed target; full auto-update deferred
+- **Status:** Accepted artifact-integrity principle; full auto-update deferred
 - **Date:** 2026-10-08
 
 ## Context

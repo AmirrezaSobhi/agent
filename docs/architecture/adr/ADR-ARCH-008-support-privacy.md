@@ -1,6 +1,6 @@
 # ADR-ARCH-008: Support Privacy and Diagnostic Bundles
 
-- **Status:** Proposed
+- **Status:** Accepted privacy workflow requirements; collection/upload implementation remains Proposed
 - **Date:** 2026-10-08
 
 ## Context

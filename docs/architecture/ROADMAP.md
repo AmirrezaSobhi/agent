@@ -7,8 +7,8 @@ numbers move.
 | Version | Proposed theme | Dependencies / gates |
 |---|---|---|
 | v0.1.3 | Interactive Runtime Foundation | Released. Session 0 Agent, interactive Worker, authenticated Named Pipe and safe read-only MT5 operations. Customer installer is not implied. |
-| v0.1.4 | Desktop Client Foundation | UI framework compatibility/accessibility spike; secure local management contract; one active Runtime; user/machine config separation; Windows UI test strategy; no real trades in validation. |
-| v0.1.5 | Installer, Recovery, Operational Hardening | v0.1.4 architecture approval; account/session consent model; tested service installation/control, supported Windows matrix, bounded recovery, logging/retention and signed packaging. |
+| v0.1.4 | WPF Desktop Client Foundation — approved Option A | C#/WPF/XAML/.NET Framework 4.8/MVVM; client for an already installed/provisioned Python Agent/Runtime; dedicated authenticated management pipe; one active Runtime; per-user preferences; reproducible build and testable user-scope package on the approved OS matrix. No commercial Service installer/provisioning. |
+| v0.1.5 | Installer, Recovery, Operational Hardening | Separate approval after v0.1.4; account/session consent model; tested Service installation/control, bounded recovery, operational retention and signed packaging. |
 | v0.2.x | Central Enrollment and Management | Tenant/Agent/device identities; key lifecycle and revocation; authenticated transport and policy revision contract; privacy/audit design. |
 | v0.3.x | Multi-Runtime and Fleet Operations | Runtime registry, account discovery/confirmation, per-account serialization, execution leases/fencing/idempotency, partition and reconciliation tests. |
 | v0.4.x+ | Commercial Platform Capabilities | Billing ledger/metering and safe exhaustion; central web management, AI orchestration, scoped support and scalable central operations. |
@@ -25,8 +25,18 @@ numbers move.
 - Billing needs immutable usage events and pricing version; wallet balance
   never becomes auth or position-protection switch.
 - New Windows UI must validate supported OS versions and packaging; Windows 7
-  remains legacy test-only.
+  is out of commercial scope. Approved v0.1.4 matrix: Windows 10 x64, Windows
+  11 x64, Windows Server 2022 x64 and Windows Server 2025 x64. Server requires
+  Desktop Experience; Windows 10 lifecycle risk is tracked separately.
 - Releases preserve Build Once → Test Same Artifact → Release Same Artifact.
+
+## v0.1.4 execution phases
+
+The implementation sequence is [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md):
+WPF foundation → secure management IPC → real Dashboard → Desktop operations →
+hardening → package/release. Each phase lists dependencies, likely modules,
+deliverables, acceptance, tests and risks. It is an execution plan, not an
+authorization to change application or CI files in this documentation task.
 
 ## Scope-change record
 

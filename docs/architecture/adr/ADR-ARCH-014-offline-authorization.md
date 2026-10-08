@@ -1,6 +1,6 @@
 # ADR-ARCH-014: Offline Authorization Behavior
 
-- **Status:** Open
+- **Status:** Deferred for v0.1.4; safety requirements accepted, future command-class policy open
 - **Date:** 2026-10-08
 
 ## Context
@@ -8,12 +8,14 @@
 Agent/runtime may remain available during central disconnection. Continuing
 some actions improves resilience, while stale authorization or risk policy can
 permit unsafe execution. Existing-position protection and new trading have
-different needs.
+different needs. In v0.1.4, central connectivity and trading capability are
+not configured or available; no offline trading authorization is implied.
 
 ## Decision
 
-Require a command-class offline policy with explicit policy freshness window,
-cached policy integrity, audit buffering limits and recovery reconciliation.
+For future authorized trading, require a command-class offline policy with
+explicit policy freshness window, cached policy integrity, audit buffering
+limits and recovery reconciliation.
 No broad offline trading grant is made in this ADR. On policy expiry or missing
 authorization, fail closed for new discretionary execution; continue only
 explicitly permitted observation/reporting/protective actions. Exact set and

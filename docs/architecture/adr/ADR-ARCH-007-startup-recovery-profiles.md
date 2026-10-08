@@ -1,6 +1,6 @@
 # ADR-ARCH-007: Startup and Recovery Profiles
 
-- **Status:** Proposed
+- **Status:** Accepted product constraints; startup and recovery mechanism remains Proposed
 - **Date:** 2026-10-08
 
 ## Context

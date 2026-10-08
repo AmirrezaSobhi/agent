@@ -1,19 +1,21 @@
 # v0.1.4 Acceptance Checklist
 
-**Status:** Proposed release acceptance criteria; none are claimed passed by
-this documentation audit. Execute only in approved test/demo accounts. No real
-trades are permitted during this mission.
+**Status:** Proposed measurable release checklist; none are claimed passed by
+this documentation update. Product Owner-approved boundary is Option A: a
+reproducible WPF Desktop Client and testable user-scope package for an already
+installed/provisioned Agent/Runtime. No real trades are permitted.
 
 ## Scope and release gates
 
-Mandatory foundation: modular UI shell/navigation, truthful real Agent/MT5
-status for one active Runtime, local setup, machine/user configuration
-separation, English/i18n foundation, independent UI lifecycle, service-offline
-guidance, tray/close behavior, safe diagnostic/log view, and minimal local
-support export. A secure local management interface and operations that require
-substantial privilege are release gates, not assumed scope. Installer account
-creation, Autologon, service recovery helper, production updater, or central
-backend require their own explicit design approval.
+Mandatory foundation: C#/WPF/XAML/.NET Framework 4.8/MVVM shell, truthful local
+status for one existing Runtime, Local Setup, per-user preferences, secure
+dedicated management IPC, English/resource localization, independent UI
+lifecycle, offline guidance, tray/close behavior, safe diagnostic/log view,
+minimal local support export, and reproducible x64 user-scope package. The
+client does not install/provision the Agent Service or Runtime. Full commercial
+installer, account creation, Autologon, custom elevated helper, central backend,
+production updater, full auto-update/rollback, multi-runtime and multi-Agent
+failover are out of scope.
 
 ## Traceable checklist
 
@@ -30,18 +32,18 @@ does not pass these criteria by implication.
 | A06 | Dashboard displays actual runtime information | Compare UI projection with live diagnostic/Worker evidence, including unavailable case | Not executed |
 | A07 | Unauthorized privileged requests are rejected | Negative tests by user/session/principal/action; audit denial and no side effect | Not executed; local API absent |
 | A08 | Machine and user settings remain isolated | Cross-user access/write test, ACL inspection, service/UI identity test | Not executed; config split absent |
-| A09 | MT5 continues in a valid interactive session | Assert principal, nonzero session, Worker/terminal identity and safe-read health | Current v0.1.3 lab evidence exists; rerun against release artifact required |
-| A10 | Windows Cold Boot behavior is tested | Boot without RDP/console login; capture Service, Worker, MT5 readiness timeline | Prior lab evidence exists; v0.1.4 profile/release artifact test not executed |
+| A09 | Existing MT5 Runtime continues in its provisioned interactive session | Assert existing principal, nonzero session, Worker/terminal identity and safe-read health; no provisioning changes | Current v0.1.3 lab evidence exists; rerun compatibility check on prepared host |
+| A10 | Existing prepared host cold-boot behavior is checked | Boot prepared host without RDP/console login; capture existing Service/Worker/MT5 timeline | Prior lab evidence exists; do not create accounts or change Autologon in v0.1.4 |
 | A11 | RDP disconnect behavior is tested | Disconnect/reconnect RDP without logoff; assert profile-specific runtime state | Not executed; compatibility gap |
-| A12 | MT5 operation concurrency remains controlled | Concurrent requests; show one serialized lane, bounded admission and no overlapping MT5 calls | Existing Worker serialization evidence; UI/API load test not executed |
-| A13 | Unknown execution outcomes are not blindly replayed | Inject timeout/disconnect after dispatch; verify outcome unknown and reconciliation before retry | No trade command exists; future command test infrastructure needed |
+| A12 | Management work is bounded and MT5 work remains serialized | Assert at most 4 accepted management requests, 16 queued, overflow returns `BUSY`, and no overlapping MT5 requests | Proposed limits in IPC contract; neither path is implemented/tested yet |
+| A13 | Unknown execution outcome is never blindly replayed | Use fake service/fake broker contract fixture to drop response after synthetic dispatch; assert `OUTCOME_UNKNOWN` and no retry without reconciliation | No live or test-account order operations; zero-trade simulation required |
 | A14 | Diagnostics do not expose secrets | Seed synthetic canary secrets; inspect UI, logs, exports and error paths | Not executed; bundle absent |
-| A15 | Support bundles require appropriate consent | Preview and cancel path; assert no transmission; explicit consent audit for any future upload | Not executed; local export design needed |
-| A16 | Installer/build output validates on supported Windows targets | Clean install/upgrade/repair/uninstall on each approved OS family; artifact evidence | Not executed; target matrix pending |
-| A17 | Windows CI tests pass | Release-candidate commit's Windows jobs, with artifact and logs | Existing runtime CI passed on prior refs; no v0.1.4 UI CI job |
+| A15 | Support export is previewable and never sent without explicit consent | Preview exact files/manifest; cancel; assert zero network transmission; if remote upload is later added, separate explicit consent/audit test | Local export only in Option A; remote support deferred |
+| A16 | WPF deployment package works on already prepared supported hosts | Extract/install user-scope package and launch on each approved OS; assert preexisting Service/config unchanged; verify package manifest/hash | No full install/upgrade/repair/uninstall acceptance; no Service provisioning |
+| A17 | Windows and desktop CI tests pass | Build/analysis/unit/contract tests on Windows build runner; UI Automation on interactive desktop runner; Python regressions unchanged | Current pipeline has no WPF/UIA/Server 2022/2025 jobs; add later in separate CI change |
 | A18 | No real trades are executed | Confirm demo/test account and inspect command logs/test harness; no order operations | Mission constraint; no trades run |
 | A19 | v0.1.3 behavior does not regress | Same-artifact regression suite plus Session 0/Worker/pipe and safe-read smoke | Not executed for v0.1.4 |
-| A20 | Build Once → Test Same Artifact → Release Same Artifact is preserved | Hash/provenance records prove tested artifact equals released artifact | Existing pipeline design/evidence; verify v0.1.4 release pipeline |
+| A20 | Build Once → Test Same Artifact → Release Same Artifact is preserved | Build manifest and SHA-256 match the exact package consumed by tests and release | Existing Python pipeline design; WPF pipeline not yet implemented |
 
 ## Cross-cutting release evidence
 
@@ -49,8 +51,9 @@ Record exact commit and artifact SHA-256; OS build/architecture; user/session
 identity without secrets; test timestamps and clock health; pipeline/job IDs;
 test account/demo status; logs; failures/retries; and reviewer. Do not mark
 acceptance passed from code inspection alone. If CI lacks UI, accessibility,
-installer or session tests, identify the infrastructure gap and name an
-approved manual gate before release.
+package or session tests, identify the infrastructure gap and name an approved
+manual gate before release. Windows Server targets mean Desktop Experience;
+Server Core is unsupported.
 
 ## Explicitly deferred
 
