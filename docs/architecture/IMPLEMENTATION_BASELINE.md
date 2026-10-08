@@ -179,7 +179,13 @@ is not a deployed Service, live Worker/MT5, or interactive desktop test.
 
 ## Phase 3 Live Dashboard and runtime integration — 2026-10-08
 
-**Status: Implemented on the Phase 3 branch; CI and Windows execution pending.**
+**Status: Implemented and CI-validated on Windows 10 x64; installed Service and
+interactive UI validation remain open.** Pipeline 43 passed on commit
+`7b64af90c460fdf17a66594c0f63110858eba0a4` ([pipeline](http://gitlab.local/root/agent/-/pipelines/43)).
+The WPF job built against the .NET Framework 4.8 reference assemblies and ran
+29/29 C# tests plus 16/16 Windows Management IPC tests. The Linux regression
+suite passed 270 tests with 36 skipped. GitLab CI Lint was valid with no
+warnings.
 The Management Pipe remains in the normal Agent hosting lifecycle and shares
 its shutdown path. The Runtime Worker adapter now marks Worker availability
 only after a validated Worker health response and clears it when IPC fails.
@@ -204,9 +210,13 @@ WPF client test artifact, starts the candidate Agent with a process-scoped
 allowlist containing only the current CI caller SID, and queries live Worker
 and MT5 status through the Management Pipe. That job uses only the existing
 safe-read integration checks; it does not execute trading operations or alter
-host identity/configuration. Neither job proves interactive WPF rendering or
-the installed Windows Service lifecycle. These and the Windows 10/11 and
-Server 2022/2025 compatibility matrix remain explicit validation gates.
+host identity/configuration. Pipeline 43 recorded `AGENT_RUNNING`,
+`WORKER_READY`, `MT5 CONNECTED`, fresh source status, and a 90 ms single
+Management IPC round trip from the Session 0 C# client. This is one sample, not
+a P95 latency measurement. The candidate Agent executable was started by CI;
+this does not prove the installed Windows Service lifecycle or interactive WPF
+rendering. Those and Windows 11/Server 2022/2025 compatibility remain explicit
+validation gates.
 
 ## Assumptions requiring validation
 

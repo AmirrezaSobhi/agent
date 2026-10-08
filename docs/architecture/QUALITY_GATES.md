@@ -96,7 +96,7 @@ remain unverified unless separately evidenced.
   P95 launch measurement, memory/CPU measurement, package test or soak test was
   collected. These gates remain open.
 
-## Phase 3 implementation — validation pending
+## Phase 3 validation — Pipeline 43 succeeded
 
 The Phase 3 branch extends `test:wpf-management` with a cross-process Windows
 Named Pipe smoke. It starts the actual Python `Agent`, `ApplicationHost`, and
@@ -104,8 +104,17 @@ Named Pipe smoke. It starts the actual Python `Agent`, `ApplicationHost`, and
 then queries it from the compiled .NET Framework WPF client. The existing
 `smoke:mt5-runtime` job also receives that WPF client and queries a candidate
 Agent connected to the configured live Worker/MT5 Runtime. Both are required
-before the package gate. These are not proof of the installed Service or
-interactive UI. The branch pipeline must pass before jobs count as validated.
-No P95 latency, idle CPU, memory, visual, DPI, accessibility or long-duration
-reconnect measurements are claimed until collected on an interactive Windows
-host.
+before the package gate. Pipeline 43 on commit
+`7b64af90c460fdf17a66594c0f63110858eba0a4` passed all 9 jobs: validation 341,
+Linux tests 342, Windows tests 343, WPF Management 344, build 345, invalid
+configuration 346, control-plane 347, live MT5 runtime 348, and package 349.
+The WPF job reported 29/29 C# tests and 16/16 Windows Management IPC tests;
+Linux regression reported 270 passed / 36 skipped. The live MT5 job reported
+Agent `AGENT_RUNNING`, Worker `WORKER_READY`, MT5 `CONNECTED`, and fresh
+Management status via the compiled .NET client in Session 0. IPC round trip
+was 90 ms for one sample only; this is not an average or P95.
+
+These results do not prove the installed Service lifecycle or interactive UI.
+No idle CPU, memory, visual, DPI, accessibility, P95, or long-duration reconnect
+measurement is claimed until collected on an interactive Windows host. No
+Windows 11 or Server 2022/2025 run was included.

@@ -60,16 +60,19 @@ that host exits. A successful `status.get` proves the Agent process responds;
 Windows Service state is currently `UNKNOWN` because no SCM observer is
 implemented. Worker availability is true only after a valid authenticated
 Worker health response and is cleared on Worker IPC failure. The Dashboard
-reports its own Management Pipe connectivity separately. CI exercises the
-actual Agent/ApplicationHost lifecycle with a deterministic Runtime adapter;
-this does not constitute deployed Service, live MT5 or interactive UI
+reports its own Management Pipe connectivity separately. Pipeline 43 passed a
+deterministic Agent lifecycle fixture and a second cross-process run through
+the candidate Agent, authenticated Worker and live MT5 read-only health path.
+The .NET client observed `AGENT_RUNNING`, `WORKER_READY`, `CONNECTED`, and
+fresh status in Session 0; IPC round-trip was 90 ms for one sample. This does
+not constitute installed Windows Service lifecycle or interactive WPF
 validation. No management IPC operation controls Service, Worker, terminal or
 trading behavior.
 
 **v0.1.4 Option A:** consume an already installed/provisioned Agent and
-Runtime. WPF starts independently in the interactive user's session. It may
-query SCM while Service is stopped and display stale/local diagnostics; it
-does not install or provision the Service, create runtime accounts, or set up
+Runtime. WPF starts independently in the interactive user's session. The
+current Dashboard displays Service state as `UNKNOWN` because SCM observation
+is not implemented; it does not install or provision the Service, create runtime accounts, or set up
 Autologon. Close/crash of UI never stops Service or Worker. If an authorized
 operator restarts Service, use standard SCM/UAC; the UI must still operate when
 SCM denies access.
