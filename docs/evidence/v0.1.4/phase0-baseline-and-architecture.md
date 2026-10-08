@@ -79,13 +79,15 @@ are used as runner identity; private IPs and tokens are intentionally omitted.
 | Runner / tag | Observed host facts | Demonstrated capability | Limitation |
 |---|---|---|---|
 | `mt5-agent-mani-pc-linux-source-unit` / `linux-source-unit` | Linux amd64; Runner 19.4.1; same Linux host as the source checkout. | Linux validation/unit tests and release Python publisher jobs. | Not a Windows/UI/MT5 runner. |
-| `mt5-agent-win10-no-mt5` / `windows-self-hosted-no-mt5` | Windows 10 Pro 22H2, build 19045, x64; Runner 19.4.0; Python 3.11.9; GitLab Runner service automatic and running in Session 0. | Windows validation, tests, isolated Agent build, smoke and packaging. CI explicitly checks that MetaTrader5/NumPy are absent from the Agent build environment. | Runner shell is service/Session 0; UI desktop rendering is not established. No-MT5 host is not for MT5 integration. |
-| `mt5-agent-win10-mt5` / `windows-self-hosted-mt5` | Windows 10 Pro 22H2, build 19045, x64; Runner 19.4.1; Python 3.11.9; GitLab Runner service automatic and running in Session 0. | Pipeline #16/#25/#30/#31/#32 MT5 smoke jobs succeed; prior accepted release evidence places Worker and MT5 terminal in interactive Session 1 and Session 0 Agent-to-Worker IPC. | UI-specific desktop smoke capability and current active interactive session were not independently enumerated in this audit. |
+| `mt5-agent-win10-no-mt5` / `windows-self-hosted-no-mt5` | Windows 10 Pro 22H2, build 19045, x64; Runner 19.4.0; Python 3.11.9; Windows PowerShell 5.1; Runner service automatic and running in Session 0. Console Session 1 was active during inspection. | Windows validation, tests, isolated Agent build, smoke and packaging. CI explicitly checks that MetaTrader5/NumPy are absent from the Agent build environment. | An active console is present, but no UI automation job/harness or desktop input/render test was verified. This host is not for MT5 integration. |
+| `mt5-agent-win10-mt5` / `windows-self-hosted-mt5` | Windows 10 Pro 22H2, build 19045, x64; Runner 19.4.1; Python 3.11.9; Windows PowerShell 5.1; Runner service automatic and running in Session 0. Console Session 1 was active during inspection. | Pipeline #16/#25/#30/#31/#32 MT5 smoke jobs succeed; prior accepted release evidence places Worker and MT5 terminal in interactive Session 1 and Session 0 Agent-to-Worker IPC. | No UI automation job/harness or desktop input/render test was verified. |
 
-Windows runners can be distinguished for no-MT5 vs MT5 tests by tag. CI has no
-dedicated UI test tag/job or demonstrated desktop automation environment.
-Interactive runtime tests use the MT5-tagged host and existing locally
-provisioned runtime/task configuration. Runner API shows all three unprotected;
+Windows runners can be distinguished for no-MT5 vs MT5 tests by tag. Both
+Windows hosts had an active console desktop session in a live read, but their
+GitLab Runner services remain in Session 0. Without a UI automation job/harness,
+desktop readiness is **PARTIAL**, not fully accepted. Interactive runtime tests
+use the MT5-tagged host and existing locally provisioned runtime/task
+configuration. Runner API shows all three unprotected;
 their unprotected status is not a reason to place secrets in test output.
 
 ## Architecture traced from source
@@ -192,21 +194,29 @@ Existing KI-009 recorded the historical approximately 10h30m disagreement.
 Pipeline #16 release evidence reports active W32Time synchronization, an
 independent UTC check and GitLab timestamp correlation. This is point-in-time
 evidence only; reboot/network-transition persistence and autonomous monitoring
-remain open. The active HTTP timestamp validator checks ISO-8601 format but
-does not implement expiry, and active named-pipe deadlines use a monotonic
-clock. No active token-expiration decision was found. KI-009 is now the formal
-v0.1.5 investigation/acceptance backlog. Current evidence does not make skew a
-v0.1.4 blocker; elevate it if an actual authentication, release, CI, replay or
-deadline decision is found to depend on cross-host wall time.
+remain open. In a live read on 2026-10-08, the no-MT5 Runner's W32Time service
+was stopped (demand-start); the MT5 Runner's service was running but
+`w32tm /query /status` reported leap indicator 3 (not synchronized), stratum 0,
+source `time.windows.com,0x9`, and last successful sync at 02:56 local. Both
+were configured for `Iran Standard Time` (+03:30). One contemporaneous sample
+put each Windows wall clock within roughly five seconds of Linux UTC; this does
+not establish a current 10h30m offset, but confirms time-source synchronization
+is not currently verified. The release-readiness record and checklist require
+clock remediation or explicit Release Owner risk acceptance before release.
+Treat this as a **potential v0.1.4 release blocker** until a pre-tag time-source
+and offset check passes or the owner records acceptance. The active HTTP
+timestamp validator checks ISO-8601 but does not implement expiry, and active
+named-pipe deadlines use a monotonic clock. No active token-expiration decision
+was found. KI-009 is the formal v0.1.5 investigation/acceptance backlog.
 
 ## Verification limits
 
 - Git refs, ancestry, GitLab project/branch/tag/release/pipeline/job/runner
   metadata, protected branch/tag rules, configured variable keys and public
   GitHub ref/release/asset metadata were read during this audit.
-- Remote Windows hosts were queried read-only for OS build, Python version,
-  Runner service state/session and shell identity. Job records corroborate
-  practical capabilities.
+- Remote Windows hosts were queried read-only for OS build, Python and
+  PowerShell versions, active session, Runner service state/session, time-zone
+  and W32Time status. Job records corroborate practical capabilities.
 - No release tag, artifact, pipeline, package, branch protection or runner
   setting was created or modified. No real trading operation was executed.
 - GitLab historical artifact identity is verified by registry/release and

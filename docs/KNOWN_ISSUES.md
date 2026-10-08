@@ -100,10 +100,17 @@ local request deadlines. Durable lifecycle contracts contain `received_at` and
 `expires_at` fields, but they are not evidence of an active remote command
 expiry policy. No active token-expiry decision was found. The successful
 Pipeline #16 time check is a point-in-time release observation, not proof that
-time synchronization survives reboot or network loss. On current evidence,
-clock skew is **not a v0.1.4 release blocker**; reopen that classification if
-any active authentication, authorization, release, CI, replay, or deadline
-decision is found to depend on cross-host wall time.
+time synchronization survives reboot or network loss. Phase 0 read-only
+inspection on 2026-10-08 found W32Time stopped on the no-MT5 Windows Runner and
+running but reporting `Leap Indicator: 3 (not synchronized)` / stratum 0 on the
+MT5 Runner. Their sampled wall clocks were within approximately five seconds
+of Linux UTC, so this does not prove a current 10h30m clock offset. The unsynced
+service state does leave future MT5-runner acceptance timestamps without
+verified synchronization. Treat KI-009 as a **potential v0.1.4 release
+blocker** until a pre-tag time-source/offset check passes or the Release Owner
+records explicit risk acceptance as required by the release checklist. Reopen
+as an immediate security blocker if active authentication, authorization,
+replay or deadline decisions are found to depend on cross-host wall time.
 
 ### Investigation plan
 
