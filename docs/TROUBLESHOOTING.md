@@ -22,6 +22,10 @@ secrets, or full account-information payloads in reports.
 | Agent degraded but HTTP server alive | Expected split-runtime behavior | `AGENT_RUNNING` is process/lifecycle state; inspect `runtime_state`, Worker availability, and MT5 connectivity separately. Agent remains alive to report runtime loss. |
 | CI candidate hash mismatch | Artifact provenance | Compare build evidence, source commit, pipeline ID, artifact filename and SHA-256 at each gate. Fail closed; do not rebuild or substitute a binary after smoke. |
 | Account read succeeds but output appears in logs | Privacy boundary | Stop sharing the evidence, remove/redact it according to incident policy, and inspect logging/evidence code. CI should record only success and limited field count. |
+| `release:github-sync` reports protected tag required | GitLab tag policy | Configure an authorized protected `v*` tag rule; do not expose the GitHub token to an unprotected tag pipeline. See the [Release sync runbook](GITHUB_RELEASE_SYNC.md). |
+| `release:github-sync` reports missing token or HTTP 401 | GitHub credential | Add/rotate the masked protected `GITHUB_RELEASE_TOKEN` with repository Contents:write. Never print the token. |
+| GitLab Release/assets not ready | Release lifecycle | Publish the authoritative GitLab Release and all Generic Package links, then retry the failed sync job in the same tag pipeline. Do not create another tag. |
+| GitHub tag target or asset checksum conflict | Mirror/data integrity | Stop; preserve both sides and investigate. The sync job will not overwrite the tag, release metadata, or conflicting asset. |
 
 ## Clock skew
 

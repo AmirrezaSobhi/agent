@@ -80,5 +80,10 @@ release provenance. The release artifact and checksum are recorded in the
 
 Any future release still requires the applicable branch review, passing target
 ref pipeline, exact package provenance, and separately authorized tag and
-publication actions. Never relabel Pipeline #11 or #17 receipts as provenance
-for the v0.1.3 release or for a future release.
+publication actions. The GitLab Release and Generic Package Registry remain
+authoritative. A final tag-pipeline stage is intended to synchronize a verified
+GitLab Release to GitHub; its credentials and protected-tag prerequisites are
+not yet configured, so GitHub synchronization is not operational. See the
+[GitHub Release sync runbook](GITHUB_RELEASE_SYNC.md). Never relabel Pipeline
+#11 or #17 receipts as provenance for the v0.1.3 release or for a future
+release.

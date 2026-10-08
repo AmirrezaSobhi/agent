@@ -11,9 +11,13 @@ provenance of the released binary. The separate
 [post-release record](evidence/v0.1.3/post-release-validation.md) documents
 Pipeline #17 and its initial MT5 smoke failure followed by a successful run.
 
-GitLab (`origin`) is the source of truth. CI validates candidate artifacts; it
-does not merge, tag, or publish a release. Existing release tags remain
-immutable.
+GitLab (`origin`) is the source of truth. Existing release tags remain
+immutable. CI does not merge or create tags. A final tag-pipeline job now
+prepares one-way GitHub Release synchronization only after a GitLab Release and
+its Package Registry assets are published; it fails closed without a protected
+tag and `GITHUB_RELEASE_TOKEN`. The current project lacks those prerequisites,
+so synchronization is not yet operational. See the
+[release synchronization runbook](GITHUB_RELEASE_SYNC.md).
 
 ## Runner responsibilities
 
@@ -105,7 +109,11 @@ Workflow rules retain the existing behavior for stable semantic-version tags,
 merge requests, manual branch pipelines, and pushes to develop/staging/main.
 An open merge request suppresses duplicate branch push pipelines. The ACL
 experiment remains source tooling but is not a mandatory release dependency.
-No CI job creates a tag or publishes a release.
+No CI job creates a tag or a GitLab Release. On stable version tag pipelines,
+`release:github-sync` runs after `package:windows`, waits up to ten minutes for
+the GitLab Release/package assets and up to one minute for the mirrored GitHub
+tag, then reconciles GitHub using the documented fail-closed rules. The GitLab
+Release itself must already be published; a tag push alone is insufficient.
 
 ## Local validation
 
@@ -151,7 +159,8 @@ human promotion review must require them explicitly.
 Every eligible ref pipeline runs its own build and validation. It is a new
 candidate with its own commit/pipeline/hash; it must not replace or be described
 as the Pipeline #11 or #16 binary. Within each pipeline no post-smoke rebuild is allowed.
-There is no `release:` job or tag/Release API invocation in CI.
+The `release:github-sync` job is the only tag/Release API integration. It does
+not create or mutate GitLab release metadata or tags.
 Build/smoke artifacts expire after 14 days; final packages after 30 days. The
 historical Pipeline #11 Job #85 package artifact was scheduled to expire on
 **2026-11-05**; it is not the published release binary. The v0.1.3 release
