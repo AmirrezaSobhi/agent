@@ -235,9 +235,10 @@ validation gates.
 
 ## Phase 4 Desktop Operations — 2026-10-08
 
-**Implementation state: implemented in the working Phase 4 branch; Windows
-build, automated regression and an interactive Windows 10 desktop session
-verified. GitLab pipeline and commercial release gates remain open.** The
+**Implementation state: implemented and committed in the Phase 4 branch;
+Windows build, automated regression, interactive Windows 10 desktop session,
+and GitLab pipeline verified. Broader compatibility and commercial release
+gates remain open.** The
 branch starts from Phase 3 commit `01d94d11958dbc74e40252c671dfe61b75a9125a`.
 
 - Clean Windows x64 Release rebuild succeeded with MSBuild `4.8.9037.0`, the
@@ -263,10 +264,10 @@ branch starts from Phase 3 commit `01d94d11958dbc74e40252c671dfe61b75a9125a`.
 - `logs.query` returns a bounded count of fixed-message in-memory Management
   events only. It does not expose file paths, file contents, credentials,
   arbitrary commands, Service controls, Worker-pipe access, or trading.
-- GitLab did not provide an independently verifiable Phase 4 pipeline result:
-  the configured API credential returned HTTP 404/invalid-token behavior. No
-  pipeline pass is asserted for this branch. The CI file and release behavior
-  were not changed. Prior Phase 3 pipeline references remain historical evidence.
+- GitLab pipeline [#45](http://gitlab.local/root/agent/-/pipelines/45) passed
+  all 9 jobs on commit `438c80f7`. The pipeline was started through the GitLab
+  web form because push pipelines are restricted by the existing workflow.
+  `.gitlab-ci.yml`, release publication behavior and tags were not changed.
 - CPU/RAM and percentile responsiveness, high-DPI, accessibility, multi-user
   and RDP behavior, installed Service lifecycle, Windows 11/Server
   2022/2025, and production-like package validation are still pending.

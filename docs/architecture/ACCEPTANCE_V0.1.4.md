@@ -57,9 +57,8 @@ Dashboard/Runtime/Logs/Diagnostics showed unavailable state when the Agent
 Management Pipe was unavailable. These results verify one Windows 10 host;
 they do not verify Windows 11/Server compatibility, scaling/accessibility,
 installed Service lifecycle, cross-user/RDP behavior, performance gates, or
-production package installation. The GitLab Phase 4 branch pipeline could not
-be independently run/read because the configured API credential was invalid.
-No Phase 4 pipeline pass is claimed. Details are recorded in the
+production package installation. GitLab [pipeline #45](http://gitlab.local/root/agent/-/pipelines/45)
+passed all 9 jobs on commit `438c80f7`. Details are recorded in the
 [Phase 4 implementation baseline](IMPLEMENTATION_BASELINE.md#phase-4-desktop-operations--2026-10-08).
 
 ## Scope and release gates

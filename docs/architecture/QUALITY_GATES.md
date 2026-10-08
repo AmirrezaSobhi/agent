@@ -135,9 +135,9 @@ Windows 11 or Server 2022/2025 run was included.
   the tray context-menu Exit. The process remained alive after minimize and
   close-to-tray, then exited through Exit. Screenshots are stored under
   `docs/evidence/v0.1.4/phase4/` and linked from the implementation baseline.
-- CPU/RAM, responsiveness percentiles, high-DPI scaling, accessibility, soak,
+- GitLab pipeline [#45](http://gitlab.local/root/agent/-/pipelines/45) passed
+  all 9 jobs against commit `438c80f7`; all phase jobs remained unchanged.
+  CPU/RAM, responsiveness percentiles, high-DPI scaling, accessibility, soak,
   multi-session/RDP, installed Service lifecycle, other supported OS versions
-  and production packaging remain unmeasured/unverified. The GitLab API token
-  configured for this host is invalid, so no Phase 4 branch pipeline could be
-  created/read through API. No pipeline success is claimed here.
+  and production packaging remain unmeasured/unverified.
 - No trading command or order operation was called.

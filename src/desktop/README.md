@@ -90,8 +90,11 @@ The Service identity is also included in the pipe DACL for server operations.
   claim rejection and LocalSystem Session 0 to interactive Session 1.
 - Cross-language Python Session 0 → C# Session 1 smoke passed with a synthetic
   status fixture. It did not query production Agent/Worker/MT5 or broker state.
-- `.gitlab-ci.yml` includes `test:wpf-management`, but no GitLab pipeline job
-  was run for this branch.
+- GitLab [pipeline #45](http://gitlab.local/root/agent/-/pipelines/45) passed
+  all 9 jobs on Phase 4 commit `438c80f7`: validation, Linux/Windows/Python and
+  WPF Management tests, Windows build, three smoke jobs, and Windows package.
+  This was the project CI pipeline; it does not close the other-OS, installed
+  Service, performance, or release-signing gates.
 
 ## Remaining limitations
 

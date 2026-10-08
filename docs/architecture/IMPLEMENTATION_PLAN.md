@@ -88,8 +88,10 @@ changed.
 
 ## Phase 4 — Desktop Operations
 
-**Status: Implemented in branch `feat/v0.1.4-phase4-desktop-operations`; CI and
-interactive Windows release validation remain pending.**
+**Status: Implemented in branch `feat/v0.1.4-phase4-desktop-operations`;
+Windows 10 build/tests, interactive desktop validation and GitLab pipeline
+validation passed. Broader compatibility and commercial release gates remain
+open.**
 
 - **Dependencies:** Phase 1 shell, Phase 2 read-only identity/authorization
   contract and Phase 3 status projection.
