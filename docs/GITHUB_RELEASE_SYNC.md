@@ -13,7 +13,7 @@ The effective write access of a pipeline `CI_JOB_TOKEN`, the installed GitLab
 CI configuration, and a complete real publication have not been verified by a
 release run. Therefore, do not describe the end-to-end publishing path as
 operational until an authorized tag pipeline completes all read-back checks.
-No real release/tag/package was created during implementation.
+No test release/tag/package was created to exercise the new publisher.
 
 ## Audited inventory (2026-10-08)
 
@@ -25,12 +25,22 @@ archives and four manually linked Generic Package files, plus a
 `175ff421e06d0c7394721dcf2aaa9509b953bc3d9c3d8d7f6fab7afb01e4ab28`; the
 read-only audit environment could not independently download its bytes.
 
-GitHub had eight published releases, `v0.0.2` through `v0.0.9`, and no
-`v0.1.3` Release. Those GitHub-only releases are retained unchanged. The
-mirrored GitHub `v0.1.3` tag resolved to the same commit as GitLab. Historical
-checksum conflicts were observed for `v0.0.2`, `v0.0.4`, and `v0.0.6`; this
-workflow does not edit or delete those releases or assets. See the
-[GitHub Releases page](https://github.com/AmirrezaSobhi/agent/releases).
+At the initial audit, GitHub had eight published releases, `v0.0.2` through
+`v0.0.9`, and no `v0.1.3` Release. Those GitHub-only releases are retained
+unchanged. Historical checksum conflicts were observed for `v0.0.2`, `v0.0.4`,
+and `v0.0.6`; this workflow does not edit or delete those releases or assets.
+See the [GitHub Releases page](https://github.com/AmirrezaSobhi/agent/releases).
+
+**Post-release reconciliation (2026-10-08):** GitLab Pipeline #29 on `main`
+at `adbc4be618db8b3f8602987408cd3a5df01a500b` was a web pipeline. Its optional
+`release:github-reconcile` Job #231 completed successfully. GitHub now has a
+published `v0.1.3` Release targeting `970c04712853295fd065094b11a2bd541b5a9db8`
+with the four official assets. GitHub asset metadata reports the executable as
+8,124,497 bytes with SHA-256
+`175ff421e06d0c7394721dcf2aaa9509b953bc3d9c3d8d7f6fab7afb01e4ab28`, matching
+GitLab's package/release metadata. Git branch refs also match. This confirms
+the manual reconciliation path for v0.1.3; it does not exercise the new
+automatic protected-tag publisher/synchronizer path.
 
 The existing GitLab push mirror to GitHub was enabled and reported its last
 observed status as `finished`. It is not changed by this workflow. No release

@@ -93,6 +93,58 @@ time polling and synchronization persistence through reboot/network transition
 remain operational follow-up; see the
 [operations plan](OPERATIONS.md#clock-skew-and-audit-correlation).
 
+**Backlog:** v0.1.5 distributed-time correctness. Phase 0 (2026-10-08) found
+the active HTTP command path validates that `timestamp` is ISO-8601 but does
+not enforce expiry; the active Windows Named Pipe uses `time.monotonic()` for
+local request deadlines. Durable lifecycle contracts contain `received_at` and
+`expires_at` fields, but they are not evidence of an active remote command
+expiry policy. No active token-expiry decision was found. The successful
+Pipeline #16 time check is a point-in-time release observation, not proof that
+time synchronization survives reboot or network loss. On current evidence,
+clock skew is **not a v0.1.4 release blocker**; reopen that classification if
+any active authentication, authorization, release, CI, replay, or deadline
+decision is found to depend on cross-host wall time.
+
+### Investigation plan
+
+- Capture Windows Time Service status, selected source, offset, last sync,
+  polling and correction behavior before and after reboot/network transition.
+- Compare UTC on the Ubuntu host, KVM/QEMU host and guest; inspect guest RTC
+  mode and Windows time zone/DST without conflating local display time with UTC.
+- Correlate GitLab server, Runner, Python, MT5 terminal, protocol and log
+  timestamps, recording their source, timezone and precision.
+- Trace each token expiration, replay check, request deadline and command
+  expiry decision to its clock source and enforcement point.
+- Test controlled offset and clock-step scenarios without trading or changing
+  production security controls.
+
+### Direction to evaluate
+
+- Use UTC-aware wall-clock timestamps for cross-host records and protocol data.
+- Use monotonic clocks for elapsed-time measurement and local timeouts.
+- Expose clock source, last synchronization, measured offset and confidence in
+  local diagnostics; define approved skew thresholds and alerts.
+- Add cross-host correlation tests and define safe behavior when skew exceeds
+  the threshold. Keep these as proposals until evidence and acceptance review.
+
+### Impact and v0.1.5 acceptance
+
+Review logs/traces, request deadlines/timeouts, token expiry, replay protection,
+audit trails, event ordering, data freshness and release evidence. Acceptance
+requires: (1) a documented UTC/monotonic clock contract for every distributed
+timestamp/deadline; (2) diagnostics report source, last sync and measured skew
+without secrets; (3) reboot and network-transition checks remain within the
+approved threshold or fail visibly; (4) controlled skew tests prove expiry,
+replay and deadline behavior fails safely; and (5) CI cross-host correlation
+tests do not use local display time. Regression tests must cover UTC offsets,
+naive/malformed timestamps, DST transitions, monotonic timeout behavior,
+forward/backward wall-clock steps, excessive skew and unavailable time source.
+
+**Risk:** medium reliability risk while synchronization persistence and
+monitoring are not proven; elevate to high/security-blocking if a security or
+release decision is shown to trust unsynchronized wall clocks. No trading
+operation is needed for investigation or acceptance.
+
 ## KI-010: Candidate retention and ref provenance
 
 Job #85's package is scheduled to expire on **2026-11-05**. Preserve it and its
