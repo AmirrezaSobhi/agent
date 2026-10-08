@@ -1,8 +1,9 @@
 # MT5Agent Architecture
 
 **Status:** Architecture Blueprint v1.0-draft; technology and Option A release
-boundary approved by Product Owner; Phase 1 WPF foundation implemented with
-build/toolchain and interactive-verification gaps recorded.
+boundary approved by Product Owner; Phase 1 WPF foundation and Phase 2
+read-only Management IPC implemented, with production provisioning, full OS
+matrix and interactive-verification gaps recorded.
 **Baseline:** `origin/develop` at `d99182211696ef877171fda287dee01ef6e3fce7` (2026-10-08).
 
 This directory is the proposed authoritative architecture reference. Existing
@@ -28,7 +29,8 @@ does not supersede historical release evidence. Status labels are normative:
 6. [WPF Solution and Design System](WPF_SOLUTION.md),
    [IPC contract](IPC_CONTRACT.md), and [quality gates](QUALITY_GATES.md).
    Phase 1 code and build/test instructions are in
-   [`src/desktop`](../../src/desktop/README.md).
+   [`src/desktop`](../../src/desktop/README.md); the Management v1 pipe is
+   read-only and its scope/evidence are recorded in the IPC contract.
 7. [Implementation plan](IMPLEMENTATION_PLAN.md), [roadmap](ROADMAP.md),
    [risks](RISK_REGISTER.md), [v0.1.4 acceptance](ACCEPTANCE_V0.1.4.md), and
    [glossary](GLOSSARY.md).

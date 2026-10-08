@@ -72,6 +72,26 @@ is absent; this is not clean-targeting-pack evidence. The Dispatcher test
 confirmed a DispatcherTimer tick while the synthetic 350 ms operation remained
 pending, but no P95 launch/click measurement was collected. No visual, DPI,
 accessibility, memory, CPU, soak, package or Server/Windows 11 test has passed.
-Python regression on Linux was 255 passed and 34 skipped; see the implementation
-evidence for runtime version and scope. All remaining quality gates remain
-unverified unless separately evidenced.
+Python regression on Linux was 255 passed and 34 skipped. This is a historical
+Phase 1 snapshot; see the Phase 2 evidence below. All remaining quality gates
+remain unverified unless separately evidenced.
+
+## Phase 2 verification — 2026-10-08
+
+- Official .NET Framework 4.8 Developer Pack installed on the Windows 10 Pro
+  22H2 x64 runner. MSBuild `4.8.9037.0` completed a clean Release x64
+  `/t:Rebuild` using the official reference assemblies and no
+  `FrameworkPathOverride`.
+- C# WPF/ViewModel/Management IPC console tests: **27 passed, 0 failed**.
+- Windows Python Management IPC contract tests: **15 passed, 0 failed**.
+- Linux Python regression: **268 passed, 36 skipped**. The selected Windows
+  integration test set ran separately on Windows. No skipped tests count as
+  passed.
+- Isolated Windows security spike proved Session 0/Session 1 Named Pipe
+  identity and DACL allow/deny. A cross-language smoke used synthetic status;
+  it did not connect to a provisioned Agent Service, MT5 terminal or broker.
+- The new GitLab `test:wpf-management` job has not yet run in a GitLab pipeline.
+  Only Windows 10 was available for this mission. No Windows 11/Server matrix,
+  interactive screenshot/UI Automation, full Python regression on Windows,
+  P95 launch measurement, memory/CPU measurement, package test or soak test was
+  collected. These gates remain open.

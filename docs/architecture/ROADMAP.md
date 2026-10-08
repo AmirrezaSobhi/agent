@@ -7,7 +7,7 @@ numbers move.
 | Version | Proposed theme | Dependencies / gates |
 |---|---|---|
 | v0.1.3 | Interactive Runtime Foundation | Released. Session 0 Agent, interactive Worker, authenticated Named Pipe and safe read-only MT5 operations. Customer installer is not implied. |
-| v0.1.4 | WPF Desktop Client Foundation — approved Option A | C#/WPF/XAML/.NET Framework 4.8/MVVM; client for an already installed/provisioned Python Agent/Runtime; dedicated authenticated management pipe; one active Runtime; per-user preferences; reproducible build and testable user-scope package on the approved OS matrix. No commercial Service installer/provisioning. |
+| v0.1.4 | WPF Desktop Client Foundation — approved Option A | C#/WPF/XAML/.NET Framework 4.8/MVVM; client for an already installed/provisioned Python Agent/Runtime; read-only authenticated management pipe v1 implemented; one active Runtime; per-user preferences; reproducible build and testable user-scope package on the approved OS matrix. Production SID provisioning, full OS validation and package/release evidence remain gates. No commercial Service installer/provisioning. |
 | v0.1.5 | Installer, Recovery, Operational Hardening | Separate approval after v0.1.4; account/session consent model; tested Service installation/control, bounded recovery, operational retention and signed packaging. |
 | v0.2.x | Central Enrollment and Management | Tenant/Agent/device identities; key lifecycle and revocation; authenticated transport and policy revision contract; privacy/audit design. |
 | v0.3.x | Multi-Runtime and Fleet Operations | Runtime registry, account discovery/confirmation, per-account serialization, execution leases/fencing/idempotency, partition and reconciliation tests. |
@@ -33,10 +33,10 @@ numbers move.
 ## v0.1.4 execution phases
 
 The implementation sequence is [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md):
-WPF foundation → secure management IPC → real Dashboard → Desktop operations →
-hardening → package/release. Each phase lists dependencies, likely modules,
-deliverables, acceptance, tests and risks. It is an execution plan, not an
-authorization to change application or CI files in this documentation task.
+WPF foundation → read-only secure management IPC → real Dashboard → Desktop
+operations → hardening → package/release. The first two phases have implementation
+evidence; remaining phases are future work. Each phase lists dependencies,
+likely modules, deliverables, acceptance, tests and risks.
 
 ## Scope-change record
 

@@ -25,7 +25,7 @@
   <data name="NotConfigured" xml:space="preserve"><value>Not configured</value></data>
   <data name="NotImplemented" xml:space="preserve"><value>Not available in this release</value></data>
   <data name="RefreshStatus" xml:space="preserve"><value>Check status</value></data>
-  <data name="NoSecureChannel" xml:space="preserve"><value>Secure local management communication is not implemented yet. No Agent, Worker, MT5, account, or trading status has been queried.</value></data>
+  <data name="NoSecureChannel" xml:space="preserve"><value>Secure local status is unavailable. The Agent may be stopped, or this Windows user may not be authorized.</value></data>
   <data name="ServiceStatus" xml:space="preserve"><value>Agent service</value></data>
   <data name="WorkerStatus" xml:space="preserve"><value>Runtime worker</value></data>
   <data name="Mt5Status" xml:space="preserve"><value>MT5 connection</value></data>
@@ -67,16 +67,33 @@
   <data name="NoLogFilesRead" xml:space="preserve"><value>No files were read and no log data is cached by this screen.</value></data>
   <data name="DiagnosticsNoCollection" xml:space="preserve"><value>Diagnostics require a bounded, authorized source. This page currently performs no collection.</value></data>
   <data name="PreferencesScope" xml:space="preserve"><value>Appearance is stored in this Windows user profile. It does not change machine or Agent configuration.</value></data>
-  <data name="ServiceUnavailableDetail" xml:space="preserve"><value>No Service query is available.</value></data>
+  <data name="ServiceUnavailableDetail" xml:space="preserve"><value>No fresh Agent Service health response is available.</value></data>
   <data name="RuntimeUnavailableDetail" xml:space="preserve"><value>No Runtime query is available.</value></data>
   <data name="Mt5UnavailableDetail" xml:space="preserve"><value>No MT5 query is available.</value></data>
   <data name="CentralLocalDetail" xml:space="preserve"><value>Local Setup mode.</value></data>
   <data name="TradingUnsupportedDetail" xml:space="preserve"><value>Trading capability is unsupported in this build.</value></data>
   <data name="StartupFailure" xml:space="preserve"><value>MT5Agent Desktop could not start. Details were omitted to protect local information.</value></data>
   <data name="OperationError" xml:space="preserve"><value>The requested operation could not be completed. No sensitive details are displayed.</value></data>
-  <data name="NoRuntimeStatusQueried" xml:space="preserve"><value>Secure management IPC is not implemented. No runtime status was queried.</value></data>
+  <data name="NoRuntimeStatusQueried" xml:space="preserve"><value>The management status channel is unavailable. No current runtime state is shown.</value></data>
   <data name="TechnologyLabel" xml:space="preserve"><value>C# · WPF · .NET Framework 4.8</value></data>
   <data name="NoDiagnosticsCollected" xml:space="preserve"><value>No data collected</value></data>
   <data name="NavPreview" xml:space="preserve"><value>Preview</value></data>
   <data name="ThemeAutomationName" xml:space="preserve"><value>Switch between dark and light theme</value></data>
+  <data name="AgentStatus" xml:space="preserve"><value>Agent</value></data>
+  <data name="AgentUnavailableDetail" xml:space="preserve"><value>No authenticated Agent response is available.</value></data>
+  <data name="ServiceRunning" xml:space="preserve"><value>Running</value></data>
+  <data name="ServiceRunningDetail" xml:space="preserve"><value>Verified by the live management pipe response.</value></data>
+  <data name="AgentResponsiveDetail" xml:space="preserve"><value>Observed from Agent health.</value></data>
+  <data name="Connected" xml:space="preserve"><value>Connected</value></data>
+  <data name="Disconnected" xml:space="preserve"><value>Disconnected</value></data>
+  <data name="Mt5ConnectedDetail" xml:space="preserve"><value>Reported by the Agent's Runtime health probe.</value></data>
+  <data name="Mt5DisconnectedDetail" xml:space="preserve"><value>The Agent did not observe an active MT5 connection.</value></data>
+  <data name="StatusCurrent" xml:space="preserve"><value>Status received from the Agent.</value></data>
+  <data name="StatusStale" xml:space="preserve"><value>Last known values are stale. Refresh to verify current state.</value></data>
+  <data name="ObservedAt" xml:space="preserve"><value>Observed {0}</value></data>
+  <data name="LastObservationStale" xml:space="preserve"><value>Last observation is stale.</value></data>
+  <data name="NoObservationYet" xml:space="preserve"><value>No authenticated status response yet.</value></data>
+  <data name="StatusErrorCode" xml:space="preserve"><value>Status unavailable ({0}). No current state is assumed.</value></data>
+  <data name="Stale" xml:space="preserve"><value>Stale</value></data>
+  <data name="Unknown" xml:space="preserve"><value>Unknown</value></data>
 </root>

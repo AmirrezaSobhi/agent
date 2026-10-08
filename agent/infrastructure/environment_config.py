@@ -1,7 +1,7 @@
 import os
 from collections.abc import Mapping
 
-from agent.contracts.configuration import AgentConfig, ConfigurationError, ConfigurationProvider, HTTPTransportConfig, LoggingConfig
+from agent.contracts.configuration import AgentConfig, ConfigurationError, ConfigurationProvider, HTTPTransportConfig, LoggingConfig, ManagementPipeConfig
 
 
 class EnvironmentConfigurationProvider(ConfigurationProvider):
@@ -16,7 +16,10 @@ class EnvironmentConfigurationProvider(ConfigurationProvider):
         max_request_bytes = self._integer("MT5_AGENT_HTTP_MAX_REQUEST_BYTES", 1024 * 1024)
         log_level = self._environ.get("MT5_AGENT_LOG_LEVEL", "INFO").strip().upper()
         log_file = self._environ.get("MT5_AGENT_LOG_FILE") or None
-        return AgentConfig(HTTPTransportConfig(host, port, max_request_bytes), LoggingConfig(log_level, log_file))
+        raw_sids = self._environ.get("MT5_AGENT_MANAGEMENT_ALLOWED_SIDS", "")
+        sids = tuple(sid.strip() for sid in raw_sids.split(",") if sid.strip())
+        return AgentConfig(HTTPTransportConfig(host, port, max_request_bytes), LoggingConfig(log_level, log_file),
+                           ManagementPipeConfig(allowed_user_sids=sids))
 
     def _integer(self, name: str, default: int) -> int:
         raw = self._environ.get(name)

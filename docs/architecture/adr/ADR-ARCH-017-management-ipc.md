@@ -1,74 +1,84 @@
 # ADR-ARCH-017: Dedicated WPF-to-Agent Management Named Pipe
 
-- **Status:** Proposed technical recommendation; requires security proof before implementation
+- **Status:** Accepted for the read-only v1 implementation slice; production
+  Service provisioning and multi-session authorization remain open
 - **Decision date:** 2026-10-08
 
 ## Context
 
 The Python Agent's current `/command` path composes
 `AllowAllAuthenticator` and `AllowAllAuthorizer` by default. The existing
-`MT5Agent.Runtime.v1` Named Pipe is a distinct Agent-to-interactive-Worker
-boundary. A WPF client needs local status, diagnostics, preferences and a
-narrow set of authorized Runtime management operations.
+`MT5Agent.Runtime.v1` Named Pipe is the distinct Agent-to-interactive-Worker
+MT5 boundary. WPF requires an authorized local status channel that does not
+reuse either boundary.
 
 ## Decision
 
-Implement a **separate Windows Named Pipe** management channel, proposed name
-`\\.\pipe\MT5Agent.Management.v1`, from the C# WPF client to the Python Agent
-Service. Use one bounded UTF-8 JSON object per message-mode pipe message, OS
-DACL restricted to explicitly provisioned local SID(s)/group, server-derived
-caller SID from the actual pipe client token's `TokenUser`, and per-operation
-application authorization. Fail closed on identity/auth/version failure. Do
-not use `/command`, do not expose the internal Worker pipe to WPF, and do not
-accept a caller-provided SID as identity. Existing Worker `peer()` maps a
-configured exclusive principal and does not establish arbitrary UI caller
-identity; it is not sufficient for this management authorization.
+Use the dedicated Windows Named Pipe `\\.\pipe\MT5Agent.Management.v1` from
+C# WPF to the Python Agent host. Use one bounded UTF-8 JSON message per pipe
+message, a 65,536-byte bound, server-derived caller SID from the actual pipe
+client token `TokenUser`, an explicit DACL and operation authorization. Fail
+closed on identity, impersonation restoration, authorization, framing or
+protocol-version failure. Do not trust caller-provided SID/PID/username/session
+claims. Do not use `/command` or expose the internal Worker pipe to WPF.
 
-Use a contract v1 with request/correlation IDs, operation, deadline, payload;
-response includes matching IDs, stable code, sanitized message, observed time
-and data. Limit message to 64 KiB, management work to 4 accepted/16 queued,
-serialize all Agent/MT5 work, return `BUSY` on overflow. Initial status polling
-is every 5 s; stale status after 15 s. Exact proposed envelope and error/status
-schema are in `IPC_CONTRACT.md`.
+The DACL allows the Agent process token SID and only user SIDs configured with
+`MT5_AGENT_MANAGEMENT_ALLOWED_SIDS`; an empty list disables the endpoint. The
+only implemented operations are read-only `protocol.negotiate` and
+`status.get`. Status reports the existing Agent health projection, Central
+`NOT_CONFIGURED`, Trading capability `UNSUPPORTED`, and authorization
+`NOT_AUTHORIZED`. It never performs order execution. The client uses async
+Named Pipe I/O, two-second timeout/cancellation, correlation IDs, bounded
+reconnect attempts and typed status mapping. Dashboard polling is every five
+seconds; data older than 15 seconds is labeled stale. One pipe instance is
+served at a time; there is no application queue.
 
-Service start/stop uses SCM ACL/UAC outside this pipe. Initial pipe operations
-are status, protocol negotiation, allowlisted diagnostics, paged logs,
-per-user UI preferences, and Runtime restart only after an explicit manage
-permission. Trading capability is `UNSUPPORTED` in v0.1.4.
+Service start/stop remains outside the pipe and governed by Windows SCM ACL and
+UAC. Diagnostics, logs, preferences, Runtime restart, and trading operations
+are not implemented. Production service identity/group provisioning is not
+resolved by this decision; current SID list configuration is a manual machine
+administration step.
 
 ## Alternatives considered
 
-- Existing HTTP Loopback `/command` — rejected: current authentication and
-  authorization defaults allow all; loopback does not identify a Windows SID.
-- New authenticated HTTP endpoint — viable future option only if a concrete
-  cross-platform/remote need appears; adds token, CSRF/Origin and local-process
-  controls that are unnecessary for this Windows desktop client.
-- Reuse existing internal Worker pipe — rejected because UI would bypass Agent
-  authorization and bind directly to the MT5 process boundary.
-- Separate Named Pipe — preferred because Windows ACL and token identity are
-  native to the client/service boundary; needs a tested Python SID/token path.
+- Existing HTTP Loopback `/command` — rejected because authentication and
+  authorization default to allow-all and loopback does not identify the Windows
+  caller SID.
+- New authenticated HTTP endpoint — deferred unless an approved remote or
+  cross-platform need appears; it adds token, CSRF/Origin and local-process
+  controls that are unnecessary for the Windows desktop client.
+- Reuse the internal Worker pipe — rejected because it bypasses Agent
+  management authorization and couples the UI to the MT5 process boundary.
+- Dedicated Named Pipe — selected for native Windows DACL and OS-token identity
+  at the local client/service boundary.
 
 ## Consequences
 
-Adds a new Python ingress/security adapter and a C# client. Protocol fixtures
-are language-neutral; C# and Python tests share vectors. Two pipes remain
-purpose-separated. Existing Worker protocol and lifecycle must not regress.
+Adds an independent Python ingress adapter and a C# IPC client. The Python
+Agent and interactive Worker remain operational foundations. Existing Worker
+protocol and `/command` implementation are unchanged. Management remains
+read-only until separate authorization decisions and tests permit more.
 
 ## Risks
 
-Pipe DACL may be overbroad; token impersonation may not work under actual
-Service identity/session; an authorized but compromised UI can request
-operations allowed to its SID; 4/16 limits may need adjustment from profiling.
-The current Service principal and installation group provisioning must be
-verified before DACL is finalized.
+The isolated security spike used a LocalSystem test service, not every
+production Agent service principal. Local SID provisioning is manual. A
+multi-user/session authorization matrix, auditable configuration lifecycle,
+GitLab job evidence and supported OS matrix remain release gates. An authorized
+compromised UI can still read the status available to its SID.
 
 ## Verification strategy
 
-Windows integration tests validate exact DACL, actual caller SID/token,
-impersonation revert, unauthorized operation denial, multiple user sessions,
-message bounds, protocol mismatch, timeout/cancel, backpressure, audit and
-sanitized output. Fake Worker/broker only; no real orders. Prove WPF never opens
-`MT5Agent.Runtime.v1` and current `/command` remains excluded.
+The Windows security spike verified actual caller `TokenUser` SID, DACL
+allow/deny, impersonation restoration and fail-closed paths, forged-claim
+rejection, and Session 0 service to interactive Session 1. Python Management
+IPC tests (15) and C# tests (included in 27) cover framing, authorization,
+version/error handling, cancellation, reconnect and synthetic status. A
+cross-language synthetic status smoke also passed. Production Service
+qualification, multi-user/multi-session testing, interactive UI automation and
+the GitLab pipeline job remain open. No real orders were sent. Confirm the WPF
+client opens only `MT5Agent.Management.v1` and the allow-all `/command` path
+remains unused for UI management.
 
 ## Related documents
 

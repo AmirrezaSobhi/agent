@@ -1,12 +1,13 @@
 # Local Management IPC and Status Contract
 
-**Status:** Proposed implementation contract for v0.1.4. It is a new,
-purpose-built management channel. No source code or existing Worker pipe is
-changed by this document.
+**Status:** Implemented, limited read-only v1 contract (2026-10-08). Only
+`protocol.negotiate` and `status.get` are supported. Diagnostics, log queries,
+preferences, and Runtime restart remain planned and unauthorized. Current
+evidence is summarized in [Implementation Baseline](IMPLEMENTATION_BASELINE.md).
 
 ## Recommendation: a separate Windows Named Pipe
 
-Use a dedicated local named pipe, proposed name
+Use a dedicated local named pipe, implemented name
 `\\.\pipe\MT5Agent.Management.v1`, hosted by the existing Python Agent
 service process. The C# WPF app is a client. Keep
 `\\.\pipe\MT5Agent.Runtime.v1` exclusively for the internal Agent↔MT5 Worker
@@ -30,51 +31,43 @@ reviewed authenticated design; it must not reuse `/command` as-is.
 
 ## Windows identity and authorization
 
-1. **Server identity:** Agent Windows Service runs under a named, least-
-   privilege service principal selected by the provisioned Agent installation.
-   The UI does not impersonate this principal and never receives its secrets.
-2. **Client identity:** caller is identified by the OS-authenticated pipe
-   client token/SID, not a SID/string supplied in JSON. The pipe DACL allows
-   only the installing user SID and/or an explicitly provisioned local group
-   with manage/read roles; never `Everyone` or generic interactive users.
-3. **Server verification:** on connection, Python must obtain the *actual
-   connecting user's* token and `TokenUser` SID using a supported Named Pipe
-   client-token API, map it to a local permission set, and always revert
-   impersonation in `finally`. `GetNamedPipeClientProcessId` alone identifies
-   a process, not its authorized user. The existing Worker pipe's `peer()`
-   reports its configured exclusive principal; it does not prove arbitrary
-   desktop callers' SIDs and must not be reused as that proof. Validate client
-   process/session where policy requires it. Failure to obtain identity denies
-   the request.
-4. **Per-operation authorization:** read status/diagnostics can be granted to
-   configured local operators; user preferences are scoped to client SID;
-   machine config and Runtime restart require an explicit local manage role.
-   Start/stop Agent Service is outside the pipe and subject to SCM ACL/UAC.
-   Trading operations are absent and return `UNSUPPORTED_CAPABILITY`.
+1. **Server identity:** the isolated proof used a LocalSystem service in
+   Session 0; production uses the already provisioned Agent process identity.
+   The UI does not impersonate the Service and receives no Service secret.
+2. **Client identity:** the pipe DACL grants access only to the Service process
+   token SID and explicitly configured user SID values. It adds no `Everyone`
+   or generic interactive-user ACE. Configure
+   `MT5_AGENT_MANAGEMENT_ALLOWED_SIDS` in the Agent Service environment with
+   comma-separated SIDs, then restart the Agent. An empty list disables the
+   endpoint.
+3. **Server verification:** Python calls `ImpersonateNamedPipeClient`, opens
+   the thread token for query, reads `TokenUser`, closes the token, then calls
+   `RevertToSelf` in `finally`. Caller-claimed SID, PID, username, and session
+   are ignored. Identity or restoration failure denies the request; restoration
+   failure stops the management listener. `GetNamedPipeClientProcessId` is not
+   authentication.
+4. **Per-operation authorization:** allowlist authorization currently covers
+   only read-only `protocol.negotiate` and `status.get`. Service start/stop is
+   outside the pipe and subject to SCM ACL/UAC. Trading, diagnostics,
+   preferences, and Runtime mutations are absent.
 5. **Multiple sessions:** each Windows user has a distinct SID and preference
    store. The Service can accept clients from approved SIDs but returns only
    permitted projections; one user's layout or credentials never leak to
    another. Worker remains under its separate runtime principal/session.
 
-The exact Windows service principal and group provisioning are technical
-choices for Phase 2. They must be verified against the existing product
-provisioning, not guessed from CI runner accounts. If existing install cannot
-safely provision a group, start with a single configured user SID and
-administrative manual provisioning.
+Product provisioning of a durable local reader group and service principal is
+unresolved. For now, a machine administrator provisions individual SID values;
+never copy an SID from an untrusted UI request.
 
 ## Protocol v1 proposal
 
 Message-mode pipe, one UTF-8 JSON object per complete Windows pipe message,
-with a maximum message size of 65,536 bytes inclusive of envelope. The Python
-Worker IPC implementation already uses message-mode named pipes and enforces
-a 65,536-byte message bound; reuse only these framing primitives if the new
-management endpoint can maintain independent identity, ACL, authorization,
-and lifecycle boundaries. Do not transmit bulk log files. The client must
-set/read message mode and detect an incomplete message correctly. Protocol
-version is negotiated with every connection; unknown major version fails
-closed. Additive optional fields are allowed only within the same major
-version. Cross-language framing and truncation behavior remain a Phase 2
-contract-test gate.
+maximum 65,536 bytes inclusive of envelope. The management listener is a
+separate endpoint and does not reuse the Worker protocol. The C# client sends
+one status request per connection; the server replies and the client sends an
+ACK before disconnect. `protocol.negotiate` is supported by the server; the
+Dashboard currently requests status and validates the version on every
+response. Unknown major versions fail closed. No bulk data is transferred.
 
 Request envelope:
 
@@ -110,38 +103,35 @@ payloads or full filesystem contents. Responses include per-status source,
 freshness and capability values. Correlation IDs join UI request, Python
 service log and diagnostics without carrying identity secrets.
 
-### Initial allowed operations
+### Implemented operations
 
-`protocol.negotiate`, `status.get`, `diagnostics.collect` (strictly allowlisted
-and bounded), `logs.query` (paged metadata/messages only), `preferences.get`,
-`preferences.update` (per-user namespace only), and `runtime.restart` only
-after explicit manage authorization and release-gate review. No generic
-`command.execute`, arbitrary path, terminal process launch/kill, central login
-credential, or trading operation. Settings that change machine/service
-configuration are not writable in the initial contract.
+`protocol.negotiate` returns supported major versions. `status.get` projects
+the existing Agent health report: Agent state, Worker availability/state,
+runtime state, MT5 connectivity, central=`NOT_CONFIGURED`, trading capability
+`UNSUPPORTED`, and authorization `NOT_AUTHORIZED`. It does not submit, modify,
+or close orders. Diagnostics, logs, preferences and Runtime/Service controls
+are not implemented. No generic `command.execute`, arbitrary path, terminal
+process launch/kill, central credential, or trading operation exists.
 
 ## Limits, concurrency, timeout, and cancellation
 
-Proposed initial measurable policy:
+Implemented v1 bounds:
 
-- Maximum frame: 64 KiB; logs page ≤200 entries and ≤48 KiB serialized.
-- One active Agent/MT5 work request at a time; at most 4 accepted management
-  requests in process and at most 16 queued. Overflow returns `BUSY` without
-  creating an unbounded thread or queue. Status requests may coalesce per SID.
-- Dashboard polls every 5 s, at most one poll in flight per UI process. Manual
-  refresh cancels/supersedes a pending read. Background diagnostics limited to
-  one active collection per client SID.
-- Connect timeout 1 s; ordinary status/log read deadline 2 s; diagnostic
-  deadline 30 s; runtime restart acknowledgement 5 s then report
-  `OUTCOME_UNKNOWN` if the Service cannot confirm state. These are proposed
-  starting thresholds to measure on supported Windows hosts.
-- Cancellation before dispatch prevents execution. After a request reaches
-  Agent/Worker, cancellation is best effort and does not prove the operation
-  stopped. Mutating operations must be idempotent or return unknown and require
-  state reconciliation. v0.1.4 carries no trading mutation.
-- Client reconnect uses exponential backoff with jitter (0.5 s, 1 s, 2 s,
-  4 s, then capped at 10 s); user can manually retry. Close/cancel tears down
-  stream, timer and event subscriptions.
+- Maximum frame: 65,536 bytes in each direction; contract tests reject
+  oversized requests/responses.
+- Exactly one pipe instance and one request are handled at a time; there is no
+  application queue. Concurrent clients wait at the OS pipe and the C# client
+  retries `PIPE_BUSY`/not-found at bounded 100/200 ms intervals (three total
+  attempts). `BUSY` is reserved but the current server does not emit it.
+- Dashboard polls every 5 s. Client request timeout is 2 s. Cancellation
+  disposes the client pipe to interrupt .NET Framework 4.8 reads. Server
+  request/ACK timeout is 2 s. A status provider already executing in
+  Agent/Worker code may outlive client cancellation; this is read-only and
+  does not prove server-side work was cancelled.
+- No operation is mutating, so no replay/idempotency promise is made. Any
+  future mutation requires reconciliation and separate authorization review.
+- Reconnection is bounded per status request; periodic Dashboard refresh tries
+  again every 5 s. Exponential backoff/jitter remains future work.
 
 ## Status schema and freshness
 
@@ -185,15 +175,19 @@ are distinct operations with distinct permission, confirmation and evidence.
 SCM start/stop is outside IPC. Runtime restart must only target the owned
 Worker and must not kill arbitrary `terminal64.exe` processes.
 
-## Contract tests
+## Current contract tests and remaining gates
 
-Share JSON fixtures for valid, malformed, oversized, old-major, missing-field,
-SID mismatch, unauthorized operation, timeout, cancellation, queue-full,
-duplicate request ID and sanitized error. Python tests verify DACL, the actual
-caller `TokenUser` SID (not merely the configured Worker principal),
-impersonation revert and authorization; C# tests verify serialization,
-correlation, timeouts and ViewModel behavior. Windows integration tests use a disposable service/pipe
-instance and synthetic data; no MT5 order or live trade is involved.
+Python tests cover malformed/oversized requests, version mismatch, unsupported
+operation, SID allowlist, ignored caller-claimed SID, safe status projection,
+and Windows live-pipe caller-token identity. C# tests cover status
+serialization/mapping, version mismatch, oversized responses,
+timeout/cancellation, unavailable Service, reconnection and concurrent reads.
+An isolated Windows security spike additionally verified DACL allow/deny,
+Session 0 service to Session 1 client, token SID extraction, impersonation
+restoration, and a forged SID claim. Full multi-user/multi-session matrix,
+production Service-account provisioning, queue-full, mutation idempotency and
+interactive Service lifecycle tests remain open. Tests use synthetic status;
+no live Agent trading operation or order is involved.
 
 ## Related documents
 

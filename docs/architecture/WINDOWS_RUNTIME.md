@@ -24,7 +24,7 @@ flowchart LR
   UI[C# WPF Desktop UI and tray]
   end
   Service <-->|authenticated Named Pipe: current runtime boundary| Worker
-  UI <-->|proposed Management.v1 pipe| Local
+  UI <-->|implemented read-only Management.v1 pipe| Local
 ```
 
 The Session 0 Agent does not own the GUI-dependent MT5 API connection. The
@@ -43,6 +43,16 @@ an unattended cold-boot lab topology with local Autologon plus an
 `AtLogOn` task. Agent can report degraded runtime. This does not prove a
 customer-ready Service installer, UI startup, RDP disconnect recovery, or
 general support matrix.
+
+**Phase 2 addition:** the Agent host now composes a separate
+`MT5Agent.Management.v1` read-only Named Pipe alongside its existing HTTP
+listener when `MT5_AGENT_MANAGEMENT_ALLOWED_SIDS` is nonempty. An empty
+allowlist disables it. It exposes protocol negotiation and verified status
+projection only; the Dashboard never connects to the Worker pipe or `/command`.
+The actual Windows token SID/DACL and Session 0 to Session 1 primitives passed
+an isolated security spike. The end-to-end C# client used a synthetic Python
+status host, not the installed product Service or live MT5. See
+[Implementation Baseline](IMPLEMENTATION_BASELINE.md).
 
 **v0.1.4 Option A:** consume an already installed/provisioned Agent and
 Runtime. WPF starts independently in the interactive user's session. It may

@@ -1,6 +1,10 @@
 using System;
 using System.ComponentModel;
 using System.IO;
+using System.IO.Pipes;
+using System.Collections.Generic;
+using System.Text;
+using System.Web.Script.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -19,8 +23,10 @@ namespace MT5Agent.Desktop.Tests
         private static int _failed;
 
         [STAThread]
-        private static int Main()
+        private static int Main(string[] args)
         {
+            if (args.Length == 2 && args[0] == "--management-ipc-smoke")
+                return ManagementPipeSmoke(args[1]);
             Run("ViewModel property notification", PropertyNotification);
             Run("English UI resource is available", EnglishResource);
             Run("Navigation changes route and disposes previous view model", NavigationLifecycle);
@@ -40,6 +46,14 @@ namespace MT5Agent.Desktop.Tests
             Run("Dashboard exposes a failed status request", DashboardErrorState);
             Run("Dashboard background request leaves Dispatcher responsive", DispatcherResponsiveness);
             Run("Application service disposal releases the active page", ApplicationServiceDisposal);
+            Run("Management IPC serializes and deserializes the v1 status contract", ManagementClientReadsTypedStatus);
+            Run("Management IPC fails closed on protocol mismatch", ManagementClientRejectsVersionMismatch);
+            Run("Management IPC rejects oversized response frames", ManagementClientRejectsOversizedFrame);
+            Run("Management IPC cancellation interrupts a pending response", ManagementClientCancellation);
+            Run("Management IPC reports service unavailable without blocking UI", ManagementClientUnavailable);
+            Run("Management IPC reconnects after service becomes available", ManagementClientReconnects);
+            Run("Management IPC handles concurrent status requests", ManagementClientConcurrentRequests);
+            Run("Dashboard presents fresh, typed management status", DashboardObservedStatus);
 
             Console.WriteLine("RESULT: {0} passed; {1} failed.", _passed, _failed);
             return _failed == 0 ? 0 : 1;
@@ -230,7 +244,7 @@ namespace MT5Agent.Desktop.Tests
             var vm = new DashboardViewModel(client, errors);
             vm.RefreshAsync(CancellationToken.None).GetAwaiter().GetResult();
             Assert(vm.Message == "No secure connection is configured.", "Dashboard did not explain missing data.");
-            Assert(vm.Cards[0].Value == "Unavailable" && vm.Cards[3].Value == "Not configured", "Dashboard fabricated an observed state.");
+            Assert(vm.Cards[0].Value == "Unavailable" && vm.Cards[4].Value == "Not configured", "Dashboard fabricated an observed state.");
             Assert(!errors.HasError && !vm.IsLoading, "Offline state should not be a thrown error.");
             vm.Dispose(); errors.Dispose();
         }
@@ -318,6 +332,225 @@ namespace MT5Agent.Desktop.Tests
             shell.Dispose();
             services.Dispose();
             Assert(activePage.IsDisposed && navigation.CurrentViewModel == null, "Shutdown did not dispose the active page.");
+        }
+
+        private static void ManagementClientReadsTypedStatus()
+        {
+            ManagementStatus result = null;
+            var server = StartMockPipe(1, request =>
+            {
+                Assert(Convert.ToInt32(request["protocol_version"]) == 1, "Request protocol version was not serialized.");
+                Assert((string)request["operation"] == "status.get", "Unexpected operation was sent.");
+                var id = (string)request["request_id"];
+                return StatusResponse(id, (string)request["correlation_id"], 1, "AGENT_RUNNING");
+            }, 0);
+            result = new NamedPipeManagementClient().GetStatusAsync(CancellationToken.None).GetAwaiter().GetResult();
+            Assert(server.Join(3000), "Mock server did not finish.");
+            Assert(result.IsObserved && result.AgentState == "AGENT_RUNNING" && result.Mt5Connected,
+                "Typed status projection was not populated from the response.");
+            Assert(result.CentralState == "NOT_CONFIGURED" && result.TradingCapability == "UNSUPPORTED",
+                "Local Setup or trading capability was falsely enabled.");
+        }
+
+        private static void ManagementClientRejectsVersionMismatch()
+        {
+            var server = StartMockPipe(1, request => StatusResponse((string)request["request_id"],
+                (string)request["correlation_id"], 77, "AGENT_RUNNING"), 0);
+            try
+            {
+                new NamedPipeManagementClient().GetStatusAsync(CancellationToken.None).GetAwaiter().GetResult();
+                throw new InvalidOperationException("Protocol mismatch was accepted.");
+            }
+            catch (ManagementIpcException ex) { Assert(ex.Code == "PROTOCOL_MISMATCH", "Wrong version error code."); }
+            Assert(server.Join(3000), "Mock server did not finish.");
+        }
+
+        private static void ManagementClientRejectsOversizedFrame()
+        {
+            var server = StartMockPipe(1, request =>
+            {
+                var oversized = StatusResponse((string)request["request_id"], (string)request["correlation_id"], 1, "AGENT_RUNNING");
+                ((Dictionary<string, object>)oversized["data"])["padding"] = new string('x', 66000);
+                return oversized;
+            }, 0);
+            try
+            {
+                new NamedPipeManagementClient().GetStatusAsync(CancellationToken.None).GetAwaiter().GetResult();
+                throw new InvalidOperationException("Oversized response was accepted.");
+            }
+            catch (ManagementIpcException ex) { Assert(ex.Code == "MESSAGE_TOO_LARGE", "Wrong oversize error code."); }
+            server.Join(3000);
+        }
+
+        private static void ManagementClientCancellation()
+        {
+            var server = StartMockPipe(1, request => StatusResponse(
+                (string)request["request_id"], (string)request["correlation_id"], 1, "AGENT_RUNNING"), 1200);
+            using (var cancellation = new CancellationTokenSource(100))
+            {
+                try
+                {
+                    new NamedPipeManagementClient().GetStatusAsync(cancellation.Token).GetAwaiter().GetResult();
+                    throw new InvalidOperationException("Cancellation was not observed.");
+                }
+                catch (OperationCanceledException) { }
+            }
+            server.Join(3000);
+        }
+
+        private static void ManagementClientUnavailable()
+        {
+            try
+            {
+                new NamedPipeManagementClient().GetStatusAsync(CancellationToken.None).GetAwaiter().GetResult();
+                throw new InvalidOperationException("Missing Agent service unexpectedly returned status.");
+            }
+            catch (ManagementIpcException ex)
+            {
+                Assert(ex.Code == "PIPE_NOT_FOUND" || ex.Code == "TIMEOUT", "Wrong service-offline error.");
+            }
+        }
+
+        private static void ManagementClientReconnects()
+        {
+            ManagementClientUnavailable();
+            var server = StartMockPipe(1, request => StatusResponse((string)request["request_id"],
+                (string)request["correlation_id"], 1, "AGENT_RUNNING"), 0);
+            var result = new NamedPipeManagementClient().GetStatusAsync(CancellationToken.None).GetAwaiter().GetResult();
+            Assert(result.IsObserved, "Client did not reconnect after the service became available.");
+            Assert(server.Join(3000), "Reconnect mock server did not finish.");
+        }
+
+        private static void ManagementClientConcurrentRequests()
+        {
+            var server = StartMockPipe(3, request => StatusResponse((string)request["request_id"],
+                (string)request["correlation_id"], 1, "AGENT_RUNNING"), 0);
+            var client = new NamedPipeManagementClient();
+            var tasks = new[] { client.GetStatusAsync(CancellationToken.None), client.GetStatusAsync(CancellationToken.None),
+                client.GetStatusAsync(CancellationToken.None) };
+            Task.WhenAll(tasks).GetAwaiter().GetResult();
+            Assert(server.Join(3000), "Mock server did not finish all concurrent requests.");
+            foreach (var task in tasks) Assert(task.Result.IsObserved, "A concurrent request failed.");
+        }
+
+        private static int ManagementPipeSmoke(string evidencePath)
+        {
+            try
+            {
+                var status = new NamedPipeManagementClient().GetStatusAsync(CancellationToken.None).GetAwaiter().GetResult();
+                Assert(status.IsObserved && status.AgentState == "AGENT_RUNNING", "Python pipe status was not observed.");
+                Assert(status.WorkerState == "READY" && status.Mt5Connected, "Python pipe runtime fields did not deserialize.");
+                var evidence = "IPC_SMOKE_PASS session=" + System.Diagnostics.Process.GetCurrentProcess().SessionId +
+                    " protocol=1 agent=AGENT_RUNNING worker=READY mt5_connected=true";
+                File.WriteAllText(evidencePath, evidence);
+                Console.WriteLine(evidence);
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                var evidence = "IPC_SMOKE_FAIL type=" + ex.GetType().Name +
+                    (ex is ManagementIpcException ? " code=" + ((ManagementIpcException)ex).Code : "");
+                File.WriteAllText(evidencePath, evidence);
+                Console.Error.WriteLine(evidence);
+                return 1;
+            }
+        }
+
+        private static void DashboardObservedStatus()
+        {
+            var client = new FakeManagementClient
+            {
+                Handler = token => Task.FromResult(new ManagementStatus
+                {
+                    IsObserved = true, AgentState = "AGENT_RUNNING", WorkerState = "READY",
+                    RuntimeState = "MT5_CONNECTED", Mt5Connected = true, CentralState = "NOT_CONFIGURED",
+                    TradingCapability = "UNSUPPORTED", TradingAuthorized = "NOT_AUTHORIZED",
+                    ObservedAtUtc = DateTime.UtcNow, IsStale = false
+                })
+            };
+            var errors = new ErrorService();
+            var vm = new DashboardViewModel(client, errors);
+            vm.RefreshAsync(CancellationToken.None).GetAwaiter().GetResult();
+            Assert(vm.Cards[0].Value == Strings.ServiceRunning && vm.Cards[1].Value == "AGENT_RUNNING" &&
+                vm.Cards[2].Value == "READY" && vm.Cards[3].Value == Strings.Connected,
+                "Dashboard did not display actual typed status fields.");
+            Assert(vm.Cards[4].Value == "NOT_CONFIGURED" && vm.Cards[5].Value == "UNSUPPORTED",
+                "Dashboard enabled central/trading capabilities without evidence.");
+            Assert(vm.FreshnessText.StartsWith("Observed ", StringComparison.Ordinal), "Freshness was not displayed.");
+            vm.Dispose(); errors.Dispose();
+        }
+
+        private static Thread StartMockPipe(int count, Func<Dictionary<string, object>, Dictionary<string, object>> responseFactory,
+            int delayBeforeResponse)
+        {
+            var thread = new Thread(new ThreadStart(delegate
+            {
+                var serializer = new JavaScriptSerializer();
+                for (var index = 0; index < count; index++)
+                {
+                    try
+                    {
+                        using (var server = new NamedPipeServerStream(NamedPipeManagementClient.PipeName,
+                            PipeDirection.InOut, 1, PipeTransmissionMode.Message, PipeOptions.Asynchronous))
+                        {
+                            server.WaitForConnection();
+                            server.ReadMode = PipeTransmissionMode.Message;
+                            var requestBytes = ReadPipeMessage(server);
+                            var request = serializer.Deserialize<Dictionary<string, object>>(Encoding.UTF8.GetString(requestBytes));
+                            if (delayBeforeResponse > 0) Thread.Sleep(delayBeforeResponse);
+                            var bytes = Encoding.UTF8.GetBytes(serializer.Serialize(responseFactory(request)));
+                            server.Write(bytes, 0, bytes.Length);
+                            server.Flush();
+                            if (bytes.Length <= NamedPipeManagementClient.MaxMessageBytes)
+                            {
+                                var acknowledgement = serializer.Deserialize<Dictionary<string, object>>(
+                                    Encoding.UTF8.GetString(ReadPipeMessage(server)));
+                                Assert((string)acknowledgement["ack"] == (string)request["request_id"],
+                                    "Client acknowledgement did not match the response request id.");
+                            }
+                        }
+                    }
+                    catch (IOException) { if (delayBeforeResponse == 0) throw; }
+                }
+            }));
+            thread.IsBackground = true;
+            thread.Start();
+            return thread;
+        }
+
+        private static byte[] ReadPipeMessage(PipeStream pipe)
+        {
+            using (var output = new MemoryStream())
+            {
+                var buffer = new byte[4096];
+                do
+                {
+                    var count = pipe.Read(buffer, 0, buffer.Length);
+                    if (count == 0) throw new EndOfStreamException();
+                    output.Write(buffer, 0, count);
+                } while (!pipe.IsMessageComplete);
+                return output.ToArray();
+            }
+        }
+
+        private static Dictionary<string, object> StatusResponse(string requestId, string correlationId,
+            int version, string agentState)
+        {
+            return new Dictionary<string, object>
+            {
+                { "protocol_version", version }, { "request_id", requestId }, { "correlation_id", correlationId },
+                { "result", "ok" }, { "code", "OK" }, { "message", "Status observed." },
+                { "observed_at_utc", DateTime.UtcNow.ToString("o") },
+                { "data", new Dictionary<string, object>
+                    {
+                        { "observed_at_utc", DateTime.UtcNow.ToString("o") }, { "service_running", true },
+                        { "agent_state", agentState }, { "worker_available", true }, { "worker_state", "READY" },
+                        { "runtime_state", "MT5_CONNECTED" }, { "mt5_connected", true },
+                        { "central_state", "NOT_CONFIGURED" }, { "trading_capability", "UNSUPPORTED" },
+                        { "trading_authorized", "NOT_AUTHORIZED" }
+                    }
+                }
+            };
         }
 
         private static void WithTempDirectory(Action<string> action)

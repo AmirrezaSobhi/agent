@@ -102,6 +102,80 @@ build/test job; they lack the Developer Pack/Visual Studio Build Tools and an
 interactive UI Automation lane. CI integration is therefore pending runner
 prerequisites and a separate validated pipeline change.
 
+## Phase 2 Management IPC and Windows build evidence — 2026-10-08
+
+**Status: Implemented (read-only v1), with production provisioning and OS
+matrix gaps.** The Python Agent now exposes `MT5Agent.Management.v1` through
+`agent/infrastructure/management_named_pipe.py`, composed into the normal Agent
+host by `agent/infrastructure/composite_host.py` and `agent/composition.py`.
+`protocol.negotiate` and `status.get` are the only accepted operations. The
+existing `/command` composition and `MT5Agent.Runtime.v1` Worker path were not
+changed. The listener is disabled when
+`MT5_AGENT_MANAGEMENT_ALLOWED_SIDS` is empty. Configure a comma-separated list
+of exact Windows user SIDs in the Agent Service environment to enable read-only
+status; no local reader group provisioning is implemented.
+
+`ManagementNamedPipeServer._caller_sid` calls
+`ImpersonateNamedPipeClient`, opens the thread token, reads `TokenUser`, closes
+the token, and always attempts `RevertToSelf`; identity/revert failures fail
+closed. The pipe DACL includes the Agent process identity and only the
+configured user SID values. JSON SID/PID/name/session are not treated as
+authentication evidence. Authorization is an explicit SID allowlist plus an
+operation allowlist; no privileged or trading operation exists. Audit records
+contain a correlation ID, operation and status code; caller SID is redacted.
+
+An isolated Windows security spike ran a disposable LocalSystem service
+(`S-1-5-18`) in Session 0 and clients in Session 1 and Session 0. It observed
+the real interactive Administrator caller `TokenUser` SID (redacted as
+`S-1-5-21-REDACTED-500`, Session 1), denied the different LocalService caller
+(`S-1-5-19`, Session 0) at pipe open, verified impersonation
+restoration after a callback exception and fail-closed behavior on injected
+identity failure, and ignored a forged JSON SID. The spike uses
+`tools/windows_security_spike/`; it is not a production Service account
+qualification or a complete multi-user matrix.
+
+Cross-language smoke connected the Python mock server in Session 0 to the C#
+client in interactive Session 1 and reported
+`IPC_SMOKE_PASS session=1 protocol=1 agent=AGENT_RUNNING worker=READY
+mt5_connected=true`. The fields came from an explicitly synthetic fixture; no
+Agent runtime, terminal, account, broker or trade was accessed. The actual
+WPF Dashboard now polls via `NamedPipeManagementClient` and shows unavailable
+until an authenticated status response arrives. Service-start controls and
+all write operations remain absent.
+
+### Official .NET Framework 4.8 build
+
+The Windows 10 Pro 22H2 x64 build runner initially lacked the .NET Framework
+4.8 Developer/Targeting Pack. The official Microsoft Developer Pack installer
+was downloaded from the [official Microsoft .NET Framework 4.8 download
+page](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48); its
+Authenticode signature was valid and signer was Microsoft Corporation. Silent
+install completed with exit code 0 and no restart. Reference assemblies are
+present under `C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8`.
+The installer SHA-256 was
+`B37882CDA5610B291B2A984E4C2270F67A448F79D6B1F78337736C95B35C5A7F`.
+
+MSBuild version `4.8.9037.0` performed a clean x64 Release rebuild without
+`FrameworkPathOverride`:
+
+```powershell
+C:\Windows\Microsoft.NET\Framework64\v4.0.30319\MSBuild.exe .\src\desktop\MT5Agent.Desktop.sln /t:Rebuild /p:Configuration=Release /p:Platform=x64 /m:1 /nologo /verbosity:minimal
+```
+
+Result: build succeeded; WPF/ViewModel/IPC console suite **27 passed, 0
+failed**. Windows Python Management IPC tests **15 passed**. Linux Python
+regression suite: **268 passed, 36 skipped** (`--ignore=tests/test_windows_worker_launcher.py`);
+the skips include platform/optional-capability cases and were not counted as
+passes. Windows cross-language smoke used a synthetic status provider. These
+results do not establish UI rendering, Windows 11, Windows Server 2022/2025,
+interactive UI automation, full Windows Python regression, or production Agent
+Service deployment. No real trades were executed.
+
+`.gitlab-ci.yml` now has a separate `test:wpf-management` job that requires
+the official reference pack and runs WPF tests plus Management IPC Python
+tests. It does not modify Python gates or release publication jobs. No GitLab
+pipeline for this feature branch was run; CI job execution remains unverified.
+
 ## Assumptions requiring validation
 
 1. v0.1.3 split-session Runtime Worker behavior remains compatible with a

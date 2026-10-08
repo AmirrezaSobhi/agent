@@ -119,11 +119,13 @@ flowchart LR
 
 The current Named Pipe secures the Session 0 Agent-to-Worker link and is not a
 UI API. The current `/command` HTTP composition is not approved for UI use: its
-default composition uses allow-all authentication/authorization. Proposed
-WPF-to-Python management IPC is a **different pipe with a separate DACL,
-identity check, and per-operation authorization**. The UI must never access
-Worker IPC. See [IPC contract](IPC_CONTRACT.md), [security](SECURITY_MODEL.md),
-and [ADR-ARCH-017](adr/ADR-ARCH-017-management-ipc.md).
+default composition uses allow-all authentication/authorization. The
+implemented read-only WPF-to-Python management channel is a **different pipe
+with a separate DACL, server-derived caller SID, and operation allowlist**.
+Only status and protocol negotiation are supported; production SID provisioning
+and the multi-session matrix remain open. The UI must never access Worker IPC.
+See [IPC contract](IPC_CONTRACT.md), [security](SECURITY_MODEL.md), and
+[ADR-ARCH-017](adr/ADR-ARCH-017-management-ipc.md).
 
 ## 5. Core architectural rules
 

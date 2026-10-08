@@ -14,6 +14,8 @@ from agent.contracts.ports import AuthenticationPort, AuthorizationPort, Hosting
 from agent.core.agent import Agent
 from agent.infrastructure.http_server_host import HTTPServerHost
 from agent.infrastructure.logging_observability import LoggingOperationalObservability
+from agent.infrastructure.composite_host import CompositeHostingPort
+from agent.infrastructure.management_named_pipe import ManagementNamedPipeServer, build_status
 
 
 @dataclass(frozen=True)
@@ -24,6 +26,7 @@ class AgentComposition:
     application: ApplicationBoundary
     http_transport: HTTPTransportAdapter
     hosting: HostingPort
+    management_pipe: ManagementNamedPipeServer
     host: ApplicationHost
 
 
@@ -54,16 +57,22 @@ def compose_agent(
 
     application = ApplicationBoundary(dispatcher, authenticator, authorizer, observability)
     transport = HTTPTransportAdapter(application, max_request_bytes=config.http.max_request_bytes)
-    concrete_hosting = hosting or HTTPServerHost(
+    http_hosting = hosting or HTTPServerHost(
         lambda: transport.create_server(config.http.host, config.http.port)
     )
+    management_pipe = ManagementNamedPipeServer(
+        lambda: build_status(agent), config.management.allowed_user_sids
+    )
+    concrete_hosting = (http_hosting if hosting is not None else
+                        CompositeHostingPort(http_hosting, management_pipe))
     host = ApplicationHost(
         agent,
         concrete_hosting,
         operational_observability=(operational_observability if operational_observability is not None
                                    else LoggingOperationalObservability()),
     )
-    return AgentComposition(config, agent, dispatcher, application, transport, concrete_hosting, host)
+    return AgentComposition(config, agent, dispatcher, application, transport, concrete_hosting,
+                            management_pipe, host)
 
 
 def _default_mt5_adapter() -> MT5Port:

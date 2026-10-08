@@ -45,8 +45,9 @@ exists. Do not put Python implementation details in C# contracts.
   interfaces (`IManagementClient`, `IClock`, `INavigationService`,
   `IUserPreferencesStore`); implementations live in Services. Services do not
   reference Views/ViewModels.
-- Python Agent remains a separate executable/repository language boundary
-  connected only by the proposed management IPC contract.
+- Python Agent remains a separate executable/language boundary connected by
+  the implemented, read-only `MT5Agent.Management.v1` contract. No other Python
+  application API is exposed to the UI.
 - Avoid service-locator, mediator, generic repository, and plugin frameworks.
 
 ## MVVM conventions

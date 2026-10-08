@@ -21,7 +21,7 @@ namespace MT5Agent.Desktop
                 themeService.Apply(initialTheme);
 
                 var errors = new ErrorService();
-                var managementClient = new UnavailableManagementClient();
+                var managementClient = new NamedPipeManagementClient();
                 var navigation = new NavigationService();
                 _services = new ApplicationServices(preferences, themeService, errors, managementClient, navigation);
                 _services.RegisterRoutes();

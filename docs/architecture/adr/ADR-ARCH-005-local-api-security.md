@@ -1,6 +1,8 @@
 # ADR-ARCH-005: Local Management API Security
 
-- **Status:** Proposed (separate SID-authorized Named Pipe recommended; exact OS identity/DACL still requires security verification)
+- **Status:** Accepted security boundary; limited read-only Named Pipe is
+  implemented and spike-verified. Production provisioning and full multi-user
+  validation remain open.
 - **Date:** 2026-10-08
 
 ## Context
@@ -14,10 +16,11 @@ authorization. The existing Named Pipe is the Agent-to-Worker boundary.
 Require a separate, versioned, authenticated, authorized, least-privilege,
 bounded, correlated and audited local interface. Do not extend permissive
 development auth to privileged UI actions or expose the Worker pipe to UI.
-Prefer a separate Windows Named Pipe management endpoint after verification of
-OS client SID/DACL behavior. Do not reuse either `/command` HTTP or the internal
-Worker pipe. Service start when stopped uses SCM/UAC permissions, not the
-Service's API. Detailed protocol proposal is ADR-ARCH-017.
+Use a separate Windows Named Pipe management endpoint. Do not reuse `/command`
+HTTP or the internal Worker pipe. The limited v1 exposes status and protocol
+negotiation only. Service start when stopped uses SCM/UAC permissions, not the
+Service API. Detailed implementation and test evidence are in ADR-ARCH-017 and
+the IPC contract.
 
 ## Alternatives considered
 
@@ -26,13 +29,14 @@ Service's API. Detailed protocol proposal is ADR-ARCH-017.
 - HTTP Loopback — not selected because it needs an additional caller identity,
   Origin/CSRF and local-process defense surface; revisit only for a real
   cross-platform or remote requirement.
-- Separate Named Pipe — preferred technical proposal; SID/ACL/token handling
-  and cross-session behavior require proof before acceptance.
+- Separate Named Pipe — selected for native DACL and caller token identity;
+  the isolated Windows spike verified SID/ACL and Session 0/1 primitives.
 
 ## Consequences
 
-Privileged UI features are gated until transport, principal mapping, operation
-matrix, request bounds and negative tests are approved.
+Privileged mutations remain gated. The current allowlist authorizes only
+read-only status; production Service identity, managed SID provisioning and
+multi-user/session negative tests remain release gates.
 
 ## Risks
 

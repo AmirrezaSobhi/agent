@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace MT5Agent.Desktop.Services
 {
-    /// <summary>Phase 1 placeholder. It does not inspect a Service, pipe, terminal or account.</summary>
+    /// <summary>Test-only client for deterministic unavailable/latency states.</summary>
     public sealed class UnavailableManagementClient : IManagementClient
     {
         public async Task<ManagementStatus> GetStatusAsync(CancellationToken cancellationToken)
@@ -11,10 +11,11 @@ namespace MT5Agent.Desktop.Services
             await Task.Delay(350, cancellationToken).ConfigureAwait(false);
             return new ManagementStatus
             {
-                AgentState = "Unavailable",
-                RuntimeState = "Unavailable",
-                Mt5State = "Unavailable",
+                AgentState = "Unavailable", WorkerState = "Unavailable", RuntimeState = "Unavailable",
+                CentralState = "NOT_CONFIGURED", TradingCapability = "UNSUPPORTED",
+                TradingAuthorized = "NOT_AUTHORIZED",
                 IsObserved = false,
+                ErrorCode = "PIPE_NOT_FOUND",
                 Reason = Resources.Strings.NoRuntimeStatusQueried
             };
         }

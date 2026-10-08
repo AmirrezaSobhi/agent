@@ -1,9 +1,8 @@
 # Local Management Interface
 
-**Status:** Proposed Windows Named Pipe management channel, separate from the
-existing Agent-to-Worker pipe. Not implemented in this documentation mission.
-The privileged management operation set remains gated by the detailed
-[IPC contract](IPC_CONTRACT.md).
+**Status:** Implemented read-only Windows Named Pipe v1 for the two allowlisted
+operations documented in the [IPC contract](IPC_CONTRACT.md). Privileged
+controls, diagnostics, logs, preferences, and Runtime restart remain absent.
 
 ## Security baseline
 
@@ -14,20 +13,21 @@ The current Python HTTP `/command` path is not the Desktop Client API.
 Loopback does not establish caller SID or operation permission. Do not expose
 this composition for privileged management or route WPF requests through it.
 
-The existing `\\.\pipe\MT5Agent.Runtime.v1` is the Agent-to-interactive-Worker
-MT5 runtime boundary. WPF must never connect to it. The proposed Desktop
-management endpoint is `\\.\pipe\MT5Agent.Management.v1`, hosted by the Agent
-Service with its own protocol, DACL, caller identity validation, and
-authorization layer.
+The existing `\\.\pipe\MT5Agent.Runtime.v1` remains the Agent-to-interactive-
+Worker MT5 runtime boundary. WPF never connects to it. The implemented Desktop
+management endpoint is `\\.\pipe\MT5Agent.Management.v1`, hosted alongside
+the existing HTTP host in the Agent lifecycle, with a separate protocol,
+DACL, caller-token SID validation, and allowlist authorization.
 
 ## Preferred transport and identity model
 
-Recommend Windows Named Pipes over HTTP Loopback for this Windows-only local
-desktop client. A pipe DACL can constrain client SIDs without a TCP listener or
-browser CSRF/Origin/token bootstrap surface. The server must also derive and
-verify client SID from the OS token, then authorize each operation; pipe access
-alone is not sufficient. The exact service account and local reader/manager
-group provisioning must be validated against the existing installation model.
+Use Windows Named Pipes for this Windows-only local desktop client. A pipe
+DACL constrains callers without a TCP listener. The server derives the SID
+from the client thread token and also checks an explicit per-process-operation
+allowlist; pipe access alone is not sufficient. Set the service process
+environment variable `MT5_AGENT_MANAGEMENT_ALLOWED_SIDS` to a comma-separated
+list of user SIDs and restart Agent. An empty list disables the pipe. Production
+service-account/group provisioning is still an operational deployment gap.
 
 HTTP Loopback is not selected. It remains a future alternative only if an
 approved non-Windows client or remote management need appears, with explicit
@@ -36,12 +36,11 @@ and a dedicated route. The present `/command` implementation is not reused.
 
 ## Scope and operation permissions
 
-Initial v0.1.4 contract operations are protocol negotiation, read-only status,
-bounded diagnostics, paged log query, per-user preferences read/write, and
-Runtime restart only if its permission gate passes. Machine/service config
-writes are excluded from the first contract. Service start/stop uses Windows
-SCM permissions and UAC, not this pipe. No trading endpoint exists; capability
-reports `UNSUPPORTED`.
+Implemented operations are `protocol.negotiate` and read-only `status.get`.
+The only authorization class today is the configured SID allowlist; there are
+no role distinctions because no mutating operation exists. Service start/stop
+uses Windows SCM permissions and UAC, not this pipe. Diagnostics, paged log
+query, preferences, Runtime restart, and trading endpoint are absent.
 
 Resolve operation permission from server-derived caller SID, operation and
 resource scope. Never trust a client-supplied username/SID. Fail closed if
@@ -50,11 +49,13 @@ diagnostics return allowlisted sanitized fields only.
 
 ## Protocol and reliability
 
-See [IPC_CONTRACT.md](IPC_CONTRACT.md) for proposed v1 request/response JSON,
-correlation IDs, 64 KiB frame limit, 4 active/16 queued request bounds, timeout,
-cancellation, retry, stale status, freshness, error taxonomy, reconnection and
-contract tests. Use error codes stable across C# and Python; never send raw
-exceptions, credentials, rejected secret values or MT5 Worker protocol data.
+See [IPC_CONTRACT.md](IPC_CONTRACT.md) for the implemented v1 JSON framing,
+correlation IDs, 64 KiB frame limit, single-instance serialized service,
+two-second client/server bounds, cancellation, retry, stale status, error
+taxonomy and remaining tests. Error responses are sanitized; raw exceptions,
+credentials, rejected secret values and MT5 Worker protocol data are not sent.
+Requests that the Windows DACL denies never reach Agent-level audit logging;
+system-level denied-access auditing is not configured by this change.
 
 ## Independent Service recovery
 

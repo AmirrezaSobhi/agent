@@ -13,6 +13,7 @@
             <TextBlock Text="{x:Static res:Strings.DashboardTitle}" Style="{StaticResource PageTitle}" VerticalAlignment="Center" />
         </DockPanel>
         <TextBlock Text="{x:Static res:Strings.DashboardDescription}" Style="{StaticResource BodyText}" Margin="0,0,0,24" />
+        <TextBlock Text="{Binding FreshnessText}" Style="{StaticResource EyebrowText}" Margin="0,0,0,8" />
 
         <Border Style="{StaticResource CardBorder}" Margin="0,0,0,20" Padding="18,16">
             <Grid>

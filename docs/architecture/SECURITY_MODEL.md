@@ -1,8 +1,9 @@
 # Security Model
 
-**Status:** Proposed target controls plus current boundary evidence in
-[Implementation Baseline](IMPLEMENTATION_BASELINE.md). This document is not a
-security certification.
+**Status:** Implemented read-only Management IPC controls with remaining
+provisioning and multi-session gates. This document is not a security
+certification. Evidence and boundaries are recorded in
+[Implementation Baseline](IMPLEMENTATION_BASELINE.md).
 
 **Approved client stack:** C# WPF/XAML/.NET Framework 4.8/MVVM. The UI is an
 untrusted local caller relative to the Python Agent Service. The selected
@@ -28,14 +29,15 @@ flowchart TD
   Other[Other local process]
   UI[Desktop UI]
   Service[Agent Service and authorization boundary]
-  Pipe[Worker IPC boundary]
+  Management[Management.v1 read-only pipe]
+  Pipe[Runtime.v1 Worker IPC boundary]
   Worker[Interactive Worker principal]
   Terminal[MT5 terminal]
   Remote[Central platform]
   Human --> UI
   Other --> UI
-  UI -->|OS identity plus app authorization| Service
-  Service -->|pipe ACL, peer identity, versioned bounded protocol| Pipe
+  UI -->|Windows caller token + allowlist| Management --> Service
+  Service -->|Worker pipe ACL, peer identity, protocol| Pipe
   Pipe --> Worker --> Terminal
   Remote -->|authenticated transport and scoped command| Service
 ```
@@ -47,18 +49,22 @@ flowchart TD
 - Authorize every operation by principal, resource, action and policy revision;
   default deny, including unknown commands and schema versions.
 - Keep Worker pipe ACL/identity checks separate from UI local API. Existing
-  Named Pipe supports the Session 0 Agent/Worker boundary only.
-- For the management pipe, ACL the endpoint to an explicitly provisioned local
-  SID/group, derive client SID from the kernel pipe client token, and perform
-  per-operation authorization in the Agent. Reject missing/unreadable SID and
-  revert any impersonation in `finally`. JSON caller identity is not trusted.
+  `MT5Agent.Runtime.v1` remains the Session 0 Agent/Worker boundary; WPF opens
+  only `MT5Agent.Management.v1`.
+- The management pipe DACL allows the Service process token SID and explicitly
+  configured user SID(s). Python derives caller SID from the connected pipe
+  token with `ImpersonateNamedPipeClient` and `TokenUser`, then calls
+  `RevertToSelf` in `finally`. Implemented operations are read-only
+  `protocol.negotiate` and `status.get`; all other operations are denied.
+  Caller JSON identity claims are ignored. Empty
+  `MT5_AGENT_MANAGEMENT_ALLOWED_SIDS` disables the listener.
 - Keep WPF running as the interactive user; do not elevate the whole UI to
   communicate with Service. Windows SCM ACL/UAC remains the separate recovery
   path for Service start/stop.
 - Bind local management to loopback or OS IPC, but do not treat loopback as
   authentication. For HTTP, define CSRF/origin protections, random/session
   credentials, replay protections and safe browser-origin behavior. Prefer a
-  Windows-native identity-bound IPC design only after compatibility review.
+  Windows-native identity-bound IPC design for any future alternate transport.
 - Never extend current permissive development auth (`AllowAllAuthenticator`,
   `AllowAllAuthorizer`) to privileged UI actions. Do not expose existing
   `/command` beyond its development purpose.

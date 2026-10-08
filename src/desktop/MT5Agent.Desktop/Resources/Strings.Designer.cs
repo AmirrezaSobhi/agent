@@ -90,5 +90,22 @@ namespace MT5Agent.Desktop.Resources
         public static string NoDiagnosticsCollected { get { return Get("NoDiagnosticsCollected"); } }
         public static string NavPreview { get { return Get("NavPreview"); } }
         public static string ThemeAutomationName { get { return Get("ThemeAutomationName"); } }
+        public static string AgentStatus { get { return Get("AgentStatus"); } }
+        public static string AgentUnavailableDetail { get { return Get("AgentUnavailableDetail"); } }
+        public static string ServiceRunning { get { return Get("ServiceRunning"); } }
+        public static string ServiceRunningDetail { get { return Get("ServiceRunningDetail"); } }
+        public static string AgentResponsiveDetail { get { return Get("AgentResponsiveDetail"); } }
+        public static string Connected { get { return Get("Connected"); } }
+        public static string Disconnected { get { return Get("Disconnected"); } }
+        public static string Mt5ConnectedDetail { get { return Get("Mt5ConnectedDetail"); } }
+        public static string Mt5DisconnectedDetail { get { return Get("Mt5DisconnectedDetail"); } }
+        public static string StatusCurrent { get { return Get("StatusCurrent"); } }
+        public static string StatusStale { get { return Get("StatusStale"); } }
+        public static string ObservedAt { get { return Get("ObservedAt"); } }
+        public static string LastObservationStale { get { return Get("LastObservationStale"); } }
+        public static string NoObservationYet { get { return Get("NoObservationYet"); } }
+        public static string StatusErrorCode { get { return Get("StatusErrorCode"); } }
+        public static string Stale { get { return Get("Stale"); } }
+        public static string Unknown { get { return Get("Unknown"); } }
     }
 }

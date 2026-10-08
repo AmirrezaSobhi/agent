@@ -2,9 +2,10 @@
 
 **Status:** C# WPF/XAML on .NET Framework 4.8 with MVVM is approved by the
 Product Owner. **Option A** is approved: this is a client for an already
-installed/provisioned Agent and Runtime. The WPF Phase 1 shell and test
-executable now exist under [`src/desktop`](../../src/desktop/README.md); tray,
-secure IPC and live Agent/Runtime status are not implemented. The earlier Kivy
+installed/provisioned Agent and Runtime. The WPF shell, tests, read-only
+Management IPC and observed Agent/Runtime status integration now exist under
+[`src/desktop`](../../src/desktop/README.md); tray and operational pages are
+not implemented. The earlier Kivy
 planning note is retained as superseded history at
 [planning/v0.1.4-desktop-ui.md](../planning/v0.1.4-desktop-ui.md).
 
@@ -32,7 +33,7 @@ flowchart LR
   Service <--> Worker
 ```
 
-The only UI-to-Core path is the proposed separate, authorized management pipe
+The only UI-to-Core path is the separate, authorized management pipe
 defined in [IPC_CONTRACT.md](IPC_CONTRACT.md).
 The UI must not connect directly to the internal Worker pipe. When the Service
 is stopped or unavailable, UI still opens and displays current inability to
@@ -45,11 +46,12 @@ service. Single instance versus controlled multi-window behavior is Open.
 Dimensions: `SERVICE_RUNNING`, `LOCAL_AGENT_RESPONSIVE`, `WORKER_READY`,
 `MT5_CONNECTED`, `CENTRAL_CONNECTED`, `TRADING_CAPABILITY`,
 `TRADING_AUTHORIZED`. Each observation includes source, UTC observation time,
-age, reason, and correlation ID. States include Ready, Degraded, Disconnected,
+age and reason; the response envelope carries a correlation ID. States include Ready, Degraded, Disconnected,
 Stale, Unknown, Unsupported, Not Configured, and Not Authorized. Local Setup
 shows central connectivity as `NOT_CONFIGURED`; v0.1.4 trading capability is
 `UNSUPPORTED`, not a fake toggle. See [IPC_CONTRACT.md](IPC_CONTRACT.md) for
-proposed freshness limits. Cached state is labeled stale, never current.
+implemented 5 s polling and 15 s stale threshold. Cached state is labeled
+stale, never current. The current UI's provenance details remain limited.
 Dashboard cards are modular; each user's ordering/visibility is a per-user
 preference seeded from machine defaults. Future central sync is deferred.
 Presentation never changes permissions.
@@ -90,8 +92,8 @@ Agent/Runtime status, Local Setup, per-user preferences, service-independent UI
 startup, offline diagnostics/guidance, tray, close behavior, basic notices,
 and the dedicated secure management pipe. No commercial installer or automatic
 Service provisioning is required. WPF technology is approved; remaining gates
-are UIA/accessibility, package validation, Named Pipe identity/authorization,
-and Windows matrix evidence. Full account execution is unsupported.
+are production Service identity/SID provisioning, UIA/accessibility, package
+validation, and Windows matrix evidence. Full account execution is unsupported.
 
 ## Related implementation references
 

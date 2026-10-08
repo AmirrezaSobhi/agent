@@ -1,8 +1,7 @@
 # v0.1.4 WPF Implementation Plan
 
-**Status:** Phase 1 foundation implemented; Phases 2–6 remain planned. This
-document tracks the implementation sequence and does not authorize work beyond
-the separately approved mission. Python Core remains Python.
+**Status:** Phase 1 foundation and read-only slice of Phase 2 are implemented;
+remaining Phase 2 gates and Phases 3–6 remain open. Python Core remains Python.
 
 ## Approved release boundary — Option A
 
@@ -22,7 +21,7 @@ approved need. See [ADR-ARCH-016](adr/ADR-ARCH-016-release-boundary-option-a.md)
 
 **Implementation state:** Implemented with known verification limits. The
 two-project shell, MVVM/navigation, themes, per-user theme preference, English
-resources, unavailable-only Dashboard, and 19-test executable are present.
+resources, Management IPC-backed Dashboard, and 27-test executable are present.
 Windows build and test evidence plus targeting-pack and interactive-UI gaps are
 recorded in [`src/desktop/README.md`](../../src/desktop/README.md). CI was not
 changed.
@@ -44,26 +43,30 @@ changed.
 - **Risks:** framework/IDE targeting pack drift; XAML style leakage; Win32 tray
   behavior must not be pulled into shell before its separate test.
 
-## Phase 2 — Secure Local Communication
+## Phase 2 — Secure Local Communication (implemented read-only slice)
 
-- **Dependencies:** Service principal/SID and local roles approved; dedicated
-  pipe name and permission matrix; operational provisioning method agreed.
-- **Likely files/modules:** new Python management adapter/authorization under
-  `agent/application` and `agent/infrastructure`; new .NET
-  `Services/Management/NamedPipeManagementClient`; JSON contract fixtures;
-  tests near existing `tests/test_windows_named_pipe*.py` and WPF Tests.
-- **Deliverables:** separate management pipe, independent from
-  `MT5Agent.Runtime.v1`; OS DACL + server-derived client SID + per-operation
-  authz; v1 bounded JSON contract, correlation/errors, timeout and backpressure.
-- **Acceptance:** unknown SID/operation/version denied; no `Everyone` DACL;
-  64 KiB limit; request/response correlation; 4 active/16 queued admission
-  limits under proposed policy; `BUSY` on overflow; current `/command` remains
-  unmodified and is not used by the UI.
-- **Tests:** Python ACL/token/authorization negatives; C# protocol serializer,
-  timeout/cancel/reconnect; shared malformed/oversized/versioned fixtures;
-  cross-user Windows integration test.
-- **Risks:** Python Named Pipe peer-token/impersonation behavior must be proven;
-  current Service identity may not be provisioned for cross-SID pipe access.
+- **Status:** Implemented read-only `protocol.negotiate` and `status.get`.
+- **Dependencies satisfied for this slice:** separate pipe, 64 KiB limit,
+  explicit SID list, OS-token caller identity, fail-closed authorization,
+  correlatable JSON responses, 2 s client/server timeout and testable fake
+  status host. SID environment must be configured by a machine administrator.
+- **Likely files/modules:** `agent/infrastructure/management_named_pipe.py`,
+  `agent/infrastructure/composite_host.py`, `agent/composition.py`, C#
+  `Services/Management/NamedPipeManagementClient`, and management contract
+  tests.
+- **Deliverables:** separate `MT5Agent.Management.v1` endpoint. Existing
+  `MT5Agent.Runtime.v1` and `/command` were not repurposed. Service start/stop,
+  diagnostics, logs, preferences, Runtime restart and trading remain absent.
+- **Verified:** security spike proved token SID/DACL and Session 0 ↔ Session 1
+  primitives; Python management pipe tests 15/15, C# suite 27/27, synthetic
+  cross-language status smoke passed. No production Service or trade was used.
+- **Not complete:** Windows multi-user/multi-session matrix, production
+  Service-account/group provisioning, Windows 11/Server coverage, active
+  GitLab job evidence and UI automation.
+- **Remaining risks:** server status-provider work can outlive client
+  cancellation; active concurrency is one instance with no application queue;
+  provisioned allowlist management requires an administrator; error/log
+  telemetry for DACL-denied clients is not observable by the Agent.
 
 ## Phase 3 — Real Dashboard
 
@@ -139,9 +142,10 @@ changed.
 
 ## Future GitLab CI design (not applied here)
 
-1. `desktop:restore-build` on Windows x64 runner with pinned Visual Studio
-   Build Tools, .NET Framework 4.8 Developer Pack and NuGet restore; emits one
-   immutable WPF artifact and build manifest.
+1. `test:wpf-management` now runs on the existing Windows no-MT5 runner. It
+   requires the official .NET Framework 4.8 Developer/Targeting Pack, performs
+   a clean x64 Release rebuild, runs the WPF test executable and management
+   pipe Python contract tests. It does not alter Python regression gates.
 2. `desktop:analyzers` and `desktop:unit-tests` consume same commit/source and
    report TRX; parallel Python Linux/Windows regression jobs remain intact.
 3. `desktop:ipc-contract` runs Python/C# golden JSON and fake-pipe tests on a
@@ -156,9 +160,9 @@ changed.
    remains distinct from UIA.
 6. `desktop:package-validate` consumes the same build output, verifies file
    manifest/SHA and starts app on prepared target VMs.
-7. Release publication promotes the exact tested package; no rebuild between
-   test and release. Keep current `.gitlab-ci.yml` unchanged until a separate
-   implementation task authorizes CI work.
+7. Release publication continues promoting the existing Python package and
+   was not changed. WPF same-artifact packaging/promotion is future work; this
+   job's artifacts are test outputs, not a commercial deployment package.
 
 Minimum additional infrastructure: Windows 11 x64 interactive UIA VM with
 fixed display resolution/scale and resettable snapshot; build runner with
