@@ -1,4 +1,9 @@
-"""Disposable Windows Session 0 fixture for the Python-to-WPF pipe contract test."""
+"""Cross-process Windows fixture: Agent lifecycle -> Management Pipe -> WPF client.
+
+The Runtime adapter is deterministic test data. This verifies real Agent and
+ApplicationHost lifecycle code and the OS Named Pipe, but does not claim that a
+deployed Worker or MT5 terminal was present.
+"""
 
 from __future__ import annotations
 
@@ -6,7 +11,6 @@ import os
 import sys
 import threading
 import time
-from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
@@ -17,7 +21,10 @@ import win32api
 import win32con
 import win32security
 
-from agent.infrastructure.management_named_pipe import ManagementNamedPipeServer
+from agent.core.agent import Agent
+from agent.application.host import ApplicationHost
+from agent.infrastructure.composite_host import CompositeHostingPort
+from agent.infrastructure.management_named_pipe import ManagementNamedPipeServer, build_status
 
 
 def current_sid() -> str:
@@ -28,34 +35,50 @@ def current_sid() -> str:
         win32api.CloseHandle(token)
 
 
-def main() -> int:
-    if len(sys.argv) != 3:
-        return 2
-    ready_path, stop_path = sys.argv[1:]
-    status = {
-        "service_running": True,
-        "agent_state": "AGENT_RUNNING",
+class TestRuntimeAdapter:
+    runtime_state = "MT5_CONNECTED"
+    health_details = {
         "worker_available": True,
         "worker_state": "READY",
         "runtime_state": "MT5_CONNECTED",
         "mt5_connected": True,
-        "central_state": "NOT_CONFIGURED",
-        "trading_capability": "UNSUPPORTED",
-        "trading_authorized": "NOT_AUTHORIZED",
-        "observed_at_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
     }
-    host = ManagementNamedPipeServer(lambda: dict(status), (current_sid(),))
-    worker = threading.Thread(target=host.serve, name="interop pipe fixture", daemon=True)
-    worker.start()
-    time.sleep(0.25)
-    with open(ready_path, "w", encoding="ascii") as stream:
-        stream.write("READY")
-    deadline = time.monotonic() + 30
-    while not os.path.exists(stop_path) and time.monotonic() < deadline:
-        time.sleep(0.05)
-    host.shutdown()
-    worker.join(3)
-    return 0 if not worker.is_alive() else 1
+
+    def connect(self) -> bool:
+        return True
+
+    def is_connected(self) -> bool:
+        return True
+
+    def disconnect(self) -> bool:
+        return True
+
+
+class BlockingTestHost:
+    def __init__(self, ready_path: str, stop_path: str) -> None:
+        self._ready_path = ready_path
+        self._stop_path = stop_path
+        self._stopping = threading.Event()
+
+    def serve(self) -> None:
+        with open(self._ready_path, "w", encoding="ascii") as stream:
+            stream.write("AGENT_RUNNING")
+        while not self._stopping.is_set() and not os.path.exists(self._stop_path):
+            self._stopping.wait(0.05)
+
+    def shutdown(self) -> None:
+        self._stopping.set()
+
+
+def main() -> int:
+    if len(sys.argv) != 3:
+        return 2
+    ready_path, stop_path = sys.argv[1:]
+    agent = Agent(TestRuntimeAdapter())
+    management = ManagementNamedPipeServer(lambda: build_status(agent), (current_sid(),))
+    host = CompositeHostingPort(BlockingTestHost(ready_path, stop_path), management)
+    status = ApplicationHost(agent, host).run()
+    return 0 if status.ok and agent.state.value == "stopped" else 1
 
 
 if __name__ == "__main__":

@@ -89,13 +89,34 @@ def test_management_status_does_not_infer_worker_or_trading_readiness():
         runtime = {"worker_available": False, "mt5_connected": False}
 
     status = build_status(type("Agent", (), {"health": lambda self: Health()})())
-    assert status["service_running"] is True
+    assert status["service_state"] == "UNKNOWN"
     assert status["agent_state"] == "AGENT_RUNNING"
+    assert status["agent_lifecycle_state"] == "RUNNING"
     assert status["worker_available"] is False
+    assert status["worker_state"] == "DISCONNECTED"
     assert status["mt5_connected"] is False
+    assert status["mt5_state"] == "DISCONNECTED"
     assert status["central_state"] == "NOT_CONFIGURED"
     assert status["trading_capability"] == "UNSUPPORTED"
-    assert status["trading_authorized"] == "NOT_AUTHORIZED"
+    assert status["trading_authorized"] == "UNKNOWN"
+    assert status["trading_readiness"] == "UNAVAILABLE"
+    assert status["source_identity"] == "MT5Agent.AgentCore"
+    assert status["freshness"] == "FRESH"
+    assert status["observed_at_utc"].endswith("Z")
+
+
+def test_management_status_does_not_fabricate_worker_or_mt5_when_health_is_missing():
+    class Health:
+        state = type("State", (), {"value": "starting"})()
+        runtime_state = "INITIALIZING"
+        runtime = None
+
+    status = build_status(type("Agent", (), {"health": lambda self: Health()})())
+    assert status["agent_state"] == "AGENT_STARTING"
+    assert status["worker_available"] is None
+    assert status["worker_state"] == "UNKNOWN"
+    assert status["mt5_connected"] is None
+    assert status["mt5_state"] == "INITIALIZING"
 
 
 def test_management_allowlist_is_explicit_and_validated():

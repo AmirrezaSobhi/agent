@@ -152,6 +152,9 @@ class RuntimeWorkerMT5Adapter:
     def _health_request(self) -> dict[str, object]:
         message = self._request("health")
         health = self._safe_health(message["worker"], message["result"])
+        # A valid health response was received from the authenticated Worker.
+        # This is distinct from MT5 connectivity, which the Worker reports.
+        health["worker_available"] = True
         if self._require_session_zero:
             health["control_session_id"] = self._control_session_id()
         self._health = health
@@ -244,6 +247,7 @@ class RuntimeWorkerMT5Adapter:
                 "RUNTIME_CONFIGURATION_UNAVAILABLE",
             ) else "MT5_ERROR"
             self._health = {
+                "worker_available": False,
                 "runtime_state": self._runtime_state,
                 "mt5_initialized": False,
                 "mt5_connected": False,
@@ -283,7 +287,7 @@ class RuntimeWorkerMT5Adapter:
                 except RuntimeWorkerError as exc:
                     self._last_error = exc.code
                     self._runtime_state = "RUNTIME_UNAVAILABLE"
-                    self._health.update({"runtime_state": self._runtime_state, "mt5_connected": False,
+                    self._health.update({"worker_available": False, "runtime_state": self._runtime_state, "mt5_connected": False,
                                          "last_error_code": exc.code})
                     self._next_retry_at = self._clock() + self._retry_backoff_seconds
                     return False

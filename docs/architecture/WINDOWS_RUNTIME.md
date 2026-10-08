@@ -54,6 +54,18 @@ an isolated security spike. The end-to-end C# client used a synthetic Python
 status host, not the installed product Service or live MT5. See
 [Implementation Baseline](IMPLEMENTATION_BASELINE.md).
 
+**Phase 3 integration:** the Management Pipe remains hosted by the same
+`CompositeHostingPort` lifecycle as the Agent HTTP host and is shut down when
+that host exits. A successful `status.get` proves the Agent process responds;
+Windows Service state is currently `UNKNOWN` because no SCM observer is
+implemented. Worker availability is true only after a valid authenticated
+Worker health response and is cleared on Worker IPC failure. The Dashboard
+reports its own Management Pipe connectivity separately. CI exercises the
+actual Agent/ApplicationHost lifecycle with a deterministic Runtime adapter;
+this does not constitute deployed Service, live MT5 or interactive UI
+validation. No management IPC operation controls Service, Worker, terminal or
+trading behavior.
+
 **v0.1.4 Option A:** consume an already installed/provisioned Agent and
 Runtime. WPF starts independently in the interactive user's session. It may
 query SCM while Service is stopped and display stale/local diagnostics; it

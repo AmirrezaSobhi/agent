@@ -95,3 +95,17 @@ remain unverified unless separately evidenced.
   interactive screenshot/UI Automation, full Python regression on Windows,
   P95 launch measurement, memory/CPU measurement, package test or soak test was
   collected. These gates remain open.
+
+## Phase 3 implementation — validation pending
+
+The Phase 3 branch extends `test:wpf-management` with a cross-process Windows
+Named Pipe smoke. It starts the actual Python `Agent`, `ApplicationHost`, and
+`CompositeHostingPort` lifecycle with a deterministic test Runtime adapter,
+then queries it from the compiled .NET Framework WPF client. The existing
+`smoke:mt5-runtime` job also receives that WPF client and queries a candidate
+Agent connected to the configured live Worker/MT5 Runtime. Both are required
+before the package gate. These are not proof of the installed Service or
+interactive UI. The branch pipeline must pass before jobs count as validated.
+No P95 latency, idle CPU, memory, visual, DPI, accessibility or long-duration
+reconnect measurements are claimed until collected on an interactive Windows
+host.

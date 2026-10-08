@@ -106,9 +106,13 @@ service log and diagnostics without carrying identity secrets.
 ### Implemented operations
 
 `protocol.negotiate` returns supported major versions. `status.get` projects
-the existing Agent health report: Agent state, Worker availability/state,
-runtime state, MT5 connectivity, central=`NOT_CONFIGURED`, trading capability
-`UNSUPPORTED`, and authorization `NOT_AUTHORIZED`. It does not submit, modify,
+the existing Agent health report: Agent lifecycle/responsiveness, Worker
+availability/state, runtime and MT5 state, source identity, UTC observation
+time, freshness and bounded error code. The response echoes the request
+correlation ID. Windows Service state is `UNKNOWN` because Agent Core does not
+query SCM. Central management is `NOT_CONFIGURED`; trading capability is
+`UNSUPPORTED`, authorization is `UNKNOWN`, and readiness is `UNAVAILABLE`.
+The Agent cannot prove user trading authorization. It does not submit, modify,
 or close orders. Diagnostics, logs, preferences and Runtime/Service controls
 are not implemented. No generic `command.execute`, arbitrary path, terminal
 process launch/kill, central credential, or trading operation exists.
@@ -135,33 +139,37 @@ Implemented v1 bounds:
 
 ## Status schema and freshness
 
-Every status includes `state`, `observed_at_utc`, `source`, `age_ms`, and
-`reason_code`. State vocabulary: `READY`, `DEGRADED`, `DISCONNECTED`,
-`STALE`, `UNKNOWN`, `UNSUPPORTED`, `NOT_CONFIGURED`, `NOT_AUTHORIZED`.
-`CENTRAL_CONNECTED` in Local Setup is `NOT_CONFIGURED`, never false-ready.
-`TRADING_CAPABILITY` is `UNSUPPORTED` in v0.1.4; `TRADING_AUTHORIZED` is
-`NOT_AUTHORIZED` or `UNSUPPORTED` depending on capability, never `READY`.
+Every `status.get` response includes `observed_at_utc`, `source_identity`,
+`freshness`, `error_code`, and the envelope `correlation_id`, with per-domain
+state values. The client calculates age from the UTC observation timestamp:
+older than 15 seconds or more than two minutes in the future is STALE. Missing
+state is UNKNOWN. A failed request is OFFLINE; it does not replace cached
+values with a current state. The Dashboard refreshes every five seconds while
+loaded, bounds each IPC call to two seconds, suppresses overlapping refreshes,
+and cancels pending work on navigation/unload.
 
 | Dimension | Source | Stale/unknown rule |
 |---|---|---|
-| `SERVICE_RUNNING` | SCM query by UI; monotonic process observation | Probe within 2 s; beyond 10 s without a fresh successful probe show UNKNOWN, not cached running. |
-| `LOCAL_AGENT_RESPONSIVE` | successful management-pipe status response | Response ≤5 s is current; age >15 s is STALE; pipe failure is DISCONNECTED with last-known timestamp. |
-| `WORKER_READY` | Agent authenticated health projection of Worker/session identity | Only current Agent response plus live Worker evidence is READY; >15 s is STALE. |
-| `MT5_CONNECTED` | Agent/Worker safe health read | >15 s is STALE; missing terminal/broker observation is UNKNOWN/DISCONNECTED with reason. |
+| `SERVICE_STATE` | Not currently queried by Agent or Desktop | UNKNOWN; no running state is inferred from Agent responsiveness. |
+| `LOCAL_MANAGEMENT` | successful authenticated Management Pipe response | Connected for the response; a failed request shows Offline; last runtime observation is Stale. |
+| `LOCAL_AGENT_RESPONSIVE` | successful management-pipe status response | Current response proves Agent process responsiveness. Source timestamp >15 s is STALE. |
+| `WORKER_READY` | Agent's authenticated Worker health projection | READY only after a valid Worker response; IPC/auth/configuration failure is disconnected/error, missing evidence is UNKNOWN; >15 s is STALE. |
+| `MT5_CONNECTED` | Agent/Worker safe health read | Explicit connected/disconnected/initializing/error; absent observation is UNKNOWN; >15 s is STALE. |
 | `CENTRAL_CONNECTED` | verified central endpoint only | Local Setup = NOT_CONFIGURED; no central endpoint is invented in v0.1.4. |
 | `TRADING_CAPABILITY` | versioned Agent capability registry | v0.1.4 = UNSUPPORTED; no enable toggle. |
-| `TRADING_AUTHORIZED` | explicit central/local policy and capability | If no capability or policy source, = UNSUPPORTED/NOT_AUTHORIZED, never inferred from account visibility or credit. |
+| `TRADING_AUTHORIZED` | explicit central/local policy and capability | UNKNOWN and readiness UNAVAILABLE when no policy source exists; never inferred from MT5 connectivity, account visibility or credit. |
 
-Use UTC server timestamps and monotonic local age. Reject timestamps >5 minutes
-in the future as `CLOCK_SKEW`; do not present them as current. Cache only
+Use UTC Agent timestamps and compute age with the Desktop's UTC clock.
+Timestamps more than two minutes in the future are STALE and are never
+presented as current. Cache only
 sanitized status for the current Windows user. Persist offline UI event history
 as a bounded per-user file: maximum 1 MiB or 7 days, whichever comes first;
 mark each record as cached/local and do not merge it into security audit.
 
 ## Error taxonomy and recovery
 
-`PIPE_NOT_FOUND` → Service stopped/unavailable; show SCM status and recovery
-guidance. `ACCESS_DENIED` → explain current SID lacks operation permission;
+`PIPE_NOT_FOUND` → Management Pipe unavailable; Service state remains UNKNOWN
+until a separate SCM query exists. `ACCESS_DENIED` → explain current SID lacks operation permission;
 do not prompt for or store admin credentials. `PROTOCOL_MISMATCH` → stop
 requests and show installed version mismatch. `BUSY` → short retry suggestion.
 `TIMEOUT` → label outcome unknown for a mutating management operation; status

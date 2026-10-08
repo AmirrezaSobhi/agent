@@ -155,17 +155,33 @@ namespace MT5Agent.Desktop.Services
             var observed = ParseTimestamp(Text(data, "observed_at_utc") ?? Text(envelope, "observed_at_utc"));
             if (!observed.HasValue) throw new ManagementIpcException("INVALID_RESPONSE");
             var age = DateTime.UtcNow - observed.Value;
+            var stale = age > TimeSpan.FromSeconds(15) || age < TimeSpan.FromMinutes(-2);
+            var source = Text(data, "source_identity") ?? "UNKNOWN";
+            if (source.Length > 96)
+                throw new ManagementIpcException("INVALID_RESPONSE");
+            var mt5State = Text(data, "mt5_state");
+            var legacyMt5Connected = BoolValue(data, "mt5_connected");
+            if (String.IsNullOrWhiteSpace(mt5State))
+                mt5State = data.ContainsKey("mt5_connected") ? (legacyMt5Connected ? "CONNECTED" : "DISCONNECTED") : "UNKNOWN";
             return new ManagementStatus
             {
+                ServiceState = Text(data, "service_state") ?? "UNKNOWN",
                 AgentState = Text(data, "agent_state") ?? "UNKNOWN",
+                AgentLifecycleState = Text(data, "agent_lifecycle_state") ?? "UNKNOWN",
+                ManagementState = "CONNECTED",
                 WorkerState = Text(data, "worker_state") ?? "UNKNOWN",
                 RuntimeState = Text(data, "runtime_state") ?? "UNKNOWN",
-                Mt5Connected = BoolValue(data, "mt5_connected"),
+                Mt5State = mt5State,
+                Mt5Connected = String.Equals(mt5State, "CONNECTED", StringComparison.Ordinal),
                 CentralState = Text(data, "central_state") ?? "NOT_CONFIGURED",
                 TradingCapability = Text(data, "trading_capability") ?? "UNSUPPORTED",
-                TradingAuthorized = Text(data, "trading_authorized") ?? "NOT_AUTHORIZED",
-                IsObserved = true, IsStale = age > TimeSpan.FromSeconds(15) || age < TimeSpan.FromMinutes(-5),
-                ObservedAtUtc = observed, ErrorCode = "OK", Reason = Text(envelope, "message")
+                TradingAuthorized = Text(data, "trading_authorized") ?? "UNKNOWN",
+                TradingReadiness = Text(data, "trading_readiness") ?? "UNAVAILABLE",
+                SourceIdentity = source,
+                CorrelationId = Text(envelope, "correlation_id"),
+                Freshness = stale ? "STALE" : (Text(data, "freshness") ?? "FRESH"),
+                IsObserved = true, IsStale = stale || String.Equals(Text(data, "freshness"), "STALE", StringComparison.Ordinal),
+                ObservedAtUtc = observed, ErrorCode = Text(data, "error_code") ?? "OK", Reason = Text(envelope, "message")
             };
         }
 

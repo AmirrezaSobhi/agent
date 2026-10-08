@@ -25,8 +25,9 @@ namespace MT5Agent.Desktop.Tests
         [STAThread]
         private static int Main(string[] args)
         {
-            if (args.Length == 2 && args[0] == "--management-ipc-smoke")
-                return ManagementPipeSmoke(args[1]);
+            if ((args.Length == 2 || args.Length == 3) && args[0] == "--management-ipc-smoke")
+                return ManagementPipeSmoke(args[1], args.Length == 3 && args[2] == "live-runtime"
+                    ? "live-mt5-runner" : "deterministic-runtime-adapter");
             Run("ViewModel property notification", PropertyNotification);
             Run("English UI resource is available", EnglishResource);
             Run("Navigation changes route and disposes previous view model", NavigationLifecycle);
@@ -44,6 +45,7 @@ namespace MT5Agent.Desktop.Tests
             Run("Settings command persists and applies theme", SettingsCommandPersistsTheme);
             Run("Dashboard keeps unobserved runtime data unavailable", DashboardOfflineState);
             Run("Dashboard exposes a failed status request", DashboardErrorState);
+            Run("Dashboard distinguishes stale status from a live response", DashboardStaleStatus);
             Run("Dashboard background request leaves Dispatcher responsive", DispatcherResponsiveness);
             Run("Application service disposal releases the active page", ApplicationServiceDisposal);
             Run("Management IPC serializes and deserializes the v1 status contract", ManagementClientReadsTypedStatus);
@@ -53,6 +55,7 @@ namespace MT5Agent.Desktop.Tests
             Run("Management IPC reports service unavailable without blocking UI", ManagementClientUnavailable);
             Run("Management IPC reconnects after service becomes available", ManagementClientReconnects);
             Run("Management IPC handles concurrent status requests", ManagementClientConcurrentRequests);
+            Run("Management IPC marks delayed and clock-skewed observations stale", ManagementClientMarksStaleData);
             Run("Dashboard presents fresh, typed management status", DashboardObservedStatus);
 
             Console.WriteLine("RESULT: {0} passed; {1} failed.", _passed, _failed);
@@ -244,7 +247,8 @@ namespace MT5Agent.Desktop.Tests
             var vm = new DashboardViewModel(client, errors);
             vm.RefreshAsync(CancellationToken.None).GetAwaiter().GetResult();
             Assert(vm.Message == "No secure connection is configured.", "Dashboard did not explain missing data.");
-            Assert(vm.Cards[0].Value == "Unavailable" && vm.Cards[4].Value == "Not configured", "Dashboard fabricated an observed state.");
+            Assert(vm.Cards[0].Value == "Unknown" && vm.Cards[4].Value == "Disconnected" &&
+                vm.Cards[5].Value == "Not configured", "Dashboard fabricated an observed state.");
             Assert(!errors.HasError && !vm.IsLoading, "Offline state should not be a thrown error.");
             vm.Dispose(); errors.Dispose();
         }
@@ -348,6 +352,8 @@ namespace MT5Agent.Desktop.Tests
             Assert(server.Join(3000), "Mock server did not finish.");
             Assert(result.IsObserved && result.AgentState == "AGENT_RUNNING" && result.Mt5Connected,
                 "Typed status projection was not populated from the response.");
+            Assert(result.ServiceState == "UNKNOWN" && result.ManagementState == "CONNECTED" &&
+                result.SourceIdentity == "MT5Agent.AgentCore", "Status provenance or unknown service state was lost.");
             Assert(result.CentralState == "NOT_CONFIGURED" && result.TradingCapability == "UNSUPPORTED",
                 "Local Setup or trading capability was falsely enabled.");
         }
@@ -433,7 +439,22 @@ namespace MT5Agent.Desktop.Tests
             foreach (var task in tasks) Assert(task.Result.IsObserved, "A concurrent request failed.");
         }
 
-        private static int ManagementPipeSmoke(string evidencePath)
+        private static void ManagementClientMarksStaleData()
+        {
+            var oldServer = StartMockPipe(1, request => StatusResponse((string)request["request_id"],
+                (string)request["correlation_id"], 1, "AGENT_RUNNING", DateTime.UtcNow.AddSeconds(-20)), 0);
+            var oldStatus = new NamedPipeManagementClient().GetStatusAsync(CancellationToken.None).GetAwaiter().GetResult();
+            Assert(oldStatus.IsStale && oldStatus.Freshness == "STALE", "Old observation timestamp was shown as fresh.");
+            Assert(oldServer.Join(3000), "Delayed observation server did not finish.");
+
+            var futureServer = StartMockPipe(1, request => StatusResponse((string)request["request_id"],
+                (string)request["correlation_id"], 1, "AGENT_RUNNING", DateTime.UtcNow.AddMinutes(5)), 0);
+            var futureStatus = new NamedPipeManagementClient().GetStatusAsync(CancellationToken.None).GetAwaiter().GetResult();
+            Assert(futureStatus.IsStale && futureStatus.Freshness == "STALE", "Clock-skewed future timestamp was shown as fresh.");
+            Assert(futureServer.Join(3000), "Clock-skewed observation server did not finish.");
+        }
+
+        private static int ManagementPipeSmoke(string evidencePath, string runtimeEvidence)
         {
             try
             {
@@ -441,7 +462,7 @@ namespace MT5Agent.Desktop.Tests
                 Assert(status.IsObserved && status.AgentState == "AGENT_RUNNING", "Python pipe status was not observed.");
                 Assert(status.WorkerState == "READY" && status.Mt5Connected, "Python pipe runtime fields did not deserialize.");
                 var evidence = "IPC_SMOKE_PASS session=" + System.Diagnostics.Process.GetCurrentProcess().SessionId +
-                    " protocol=1 agent=AGENT_RUNNING worker=READY mt5_connected=true";
+                    " protocol=1 agent=AGENT_RUNNING worker=READY mt5_connected=true runtime_evidence=" + runtimeEvidence;
                 File.WriteAllText(evidencePath, evidence);
                 Console.WriteLine(evidence);
                 return 0;
@@ -471,12 +492,35 @@ namespace MT5Agent.Desktop.Tests
             var errors = new ErrorService();
             var vm = new DashboardViewModel(client, errors);
             vm.RefreshAsync(CancellationToken.None).GetAwaiter().GetResult();
-            Assert(vm.Cards[0].Value == Strings.ServiceRunning && vm.Cards[1].Value == "AGENT_RUNNING" &&
+            Assert(vm.Cards[0].Value == Strings.Unknown && vm.Cards[1].Value == Strings.Responsive &&
                 vm.Cards[2].Value == "READY" && vm.Cards[3].Value == Strings.Connected,
-                "Dashboard did not display actual typed status fields.");
-            Assert(vm.Cards[4].Value == "NOT_CONFIGURED" && vm.Cards[5].Value == "UNSUPPORTED",
+                "Dashboard did not display actual typed status fields without inferring Service state.");
+            Assert(vm.Cards[4].Value == Strings.Connected && vm.Cards[5].Value == Strings.NotConfigured &&
+                vm.Cards[6].Value == "UNSUPPORTED",
                 "Dashboard enabled central/trading capabilities without evidence.");
             Assert(vm.FreshnessText.StartsWith("Observed ", StringComparison.Ordinal), "Freshness was not displayed.");
+            vm.Dispose(); errors.Dispose();
+        }
+
+        private static void DashboardStaleStatus()
+        {
+            var client = new FakeManagementClient
+            {
+                Handler = token => Task.FromResult(new ManagementStatus
+                {
+                    IsObserved = true, IsStale = true, ServiceState = "UNKNOWN", AgentState = "RESPONSIVE",
+                    WorkerState = "READY", Mt5State = "CONNECTED", ManagementState = "CONNECTED",
+                    CentralState = "NOT_CONFIGURED", TradingCapability = "UNSUPPORTED",
+                    TradingAuthorized = "UNKNOWN", TradingReadiness = "UNAVAILABLE",
+                    SourceIdentity = "MT5Agent.AgentCore", ObservedAtUtc = DateTime.UtcNow.AddMinutes(-1)
+                })
+            };
+            var errors = new ErrorService();
+            var vm = new DashboardViewModel(client, errors);
+            vm.RefreshAsync(CancellationToken.None).GetAwaiter().GetResult();
+            Assert(vm.Message == Strings.StatusStale && vm.Cards[1].Value == Strings.Stale,
+                "Stale source data was displayed as current.");
+            Assert(vm.Cards[4].Value == Strings.Connected, "Fresh IPC delivery should remain distinct from stale source data.");
             vm.Dispose(); errors.Dispose();
         }
 
@@ -534,20 +578,23 @@ namespace MT5Agent.Desktop.Tests
         }
 
         private static Dictionary<string, object> StatusResponse(string requestId, string correlationId,
-            int version, string agentState)
+            int version, string agentState, DateTime? observedAtUtc = null)
         {
+            var observed = observedAtUtc ?? DateTime.UtcNow;
             return new Dictionary<string, object>
             {
                 { "protocol_version", version }, { "request_id", requestId }, { "correlation_id", correlationId },
                 { "result", "ok" }, { "code", "OK" }, { "message", "Status observed." },
-                { "observed_at_utc", DateTime.UtcNow.ToString("o") },
+                { "observed_at_utc", observed.ToString("o") },
                 { "data", new Dictionary<string, object>
                     {
-                        { "observed_at_utc", DateTime.UtcNow.ToString("o") }, { "service_running", true },
+                        { "observed_at_utc", observed.ToString("o") }, { "service_state", "UNKNOWN" },
+                        { "source_identity", "MT5Agent.AgentCore" }, { "freshness", "FRESH" },
                         { "agent_state", agentState }, { "worker_available", true }, { "worker_state", "READY" },
-                        { "runtime_state", "MT5_CONNECTED" }, { "mt5_connected", true },
+                        { "agent_lifecycle_state", "RUNNING" }, { "runtime_state", "MT5_CONNECTED" },
+                        { "mt5_state", "CONNECTED" }, { "mt5_connected", true },
                         { "central_state", "NOT_CONFIGURED" }, { "trading_capability", "UNSUPPORTED" },
-                        { "trading_authorized", "NOT_AUTHORIZED" }
+                        { "trading_authorized", "UNKNOWN" }, { "trading_readiness", "UNAVAILABLE" }
                     }
                 }
             };

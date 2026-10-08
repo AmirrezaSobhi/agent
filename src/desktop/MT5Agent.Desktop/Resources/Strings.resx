@@ -27,6 +27,7 @@
   <data name="RefreshStatus" xml:space="preserve"><value>Check status</value></data>
   <data name="NoSecureChannel" xml:space="preserve"><value>Secure local status is unavailable. The Agent may be stopped, or this Windows user may not be authorized.</value></data>
   <data name="ServiceStatus" xml:space="preserve"><value>Agent service</value></data>
+  <data name="ManagementStatus" xml:space="preserve"><value>Local management</value></data>
   <data name="WorkerStatus" xml:space="preserve"><value>Runtime worker</value></data>
   <data name="Mt5Status" xml:space="preserve"><value>MT5 connection</value></data>
   <data name="CentralStatus" xml:space="preserve"><value>Central platform</value></data>
@@ -83,15 +84,29 @@
   <data name="AgentUnavailableDetail" xml:space="preserve"><value>No authenticated Agent response is available.</value></data>
   <data name="ServiceRunning" xml:space="preserve"><value>Running</value></data>
   <data name="ServiceRunningDetail" xml:space="preserve"><value>Verified by the live management pipe response.</value></data>
+  <data name="ServiceStopped" xml:space="preserve"><value>Stopped</value></data>
+  <data name="Starting" xml:space="preserve"><value>Starting</value></data>
+  <data name="Stopping" xml:space="preserve"><value>Stopping</value></data>
+  <data name="AccessDenied" xml:space="preserve"><value>Access denied</value></data>
+  <data name="Responsive" xml:space="preserve"><value>Responsive</value></data>
   <data name="AgentResponsiveDetail" xml:space="preserve"><value>Observed from Agent health.</value></data>
+  <data name="Mt5StatusDetail" xml:space="preserve"><value>Reported by the Agent's Runtime health probe.</value></data>
+  <data name="ManagementConnectedDetail" xml:space="preserve"><value>Authenticated status response from {0}.</value></data>
+  <data name="ManagementUnavailableDetail" xml:space="preserve"><value>Pipe unavailable or this Windows user is not authorized.</value></data>
+  <data name="TradingAuthorizationDetail" xml:space="preserve"><value>Authorization: {0}; readiness: {1}. Trading is not exposed by this client.</value></data>
+  <data name="ObservedAtWithSource" xml:space="preserve"><value>Observed {0} · source {1}</value></data>
   <data name="Connected" xml:space="preserve"><value>Connected</value></data>
   <data name="Disconnected" xml:space="preserve"><value>Disconnected</value></data>
   <data name="Mt5ConnectedDetail" xml:space="preserve"><value>Reported by the Agent's Runtime health probe.</value></data>
   <data name="Mt5DisconnectedDetail" xml:space="preserve"><value>The Agent did not observe an active MT5 connection.</value></data>
   <data name="StatusCurrent" xml:space="preserve"><value>Status received from the Agent.</value></data>
   <data name="StatusStale" xml:space="preserve"><value>Last known values are stale. Refresh to verify current state.</value></data>
+  <data name="StatusOffline" xml:space="preserve"><value>Agent connection is offline; displayed runtime values are stale.</value></data>
   <data name="ObservedAt" xml:space="preserve"><value>Observed {0}</value></data>
   <data name="LastObservationStale" xml:space="preserve"><value>Last observation is stale.</value></data>
+  <data name="LastObservationOffline" xml:space="preserve"><value>Last successful observation is shown as stale; the local pipe is offline.</value></data>
+  <data name="ObservedStale" xml:space="preserve"><value>{0} · stale</value></data>
+  <data name="ObservedOffline" xml:space="preserve"><value>{0} · offline; runtime values are stale</value></data>
   <data name="NoObservationYet" xml:space="preserve"><value>No authenticated status response yet.</value></data>
   <data name="StatusErrorCode" xml:space="preserve"><value>Status unavailable ({0}). No current state is assumed.</value></data>
   <data name="Stale" xml:space="preserve"><value>Stale</value></data>

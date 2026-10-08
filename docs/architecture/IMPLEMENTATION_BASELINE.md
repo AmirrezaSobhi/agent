@@ -171,10 +171,42 @@ results do not establish UI rendering, Windows 11, Windows Server 2022/2025,
 interactive UI automation, full Windows Python regression, or production Agent
 Service deployment. No real trades were executed.
 
-`.gitlab-ci.yml` now has a separate `test:wpf-management` job that requires
-the official reference pack and runs WPF tests plus Management IPC Python
-tests. It does not modify Python gates or release publication jobs. No GitLab
-pipeline for this feature branch was run; CI job execution remains unverified.
+`.gitlab-ci.yml` has a separate `test:wpf-management` job that requires the
+official reference pack and runs WPF tests, Management IPC Python tests, and a
+cross-process Windows Named Pipe smoke. This CI job evidence validates the real
+Agent/ApplicationHost lifecycle with a deterministic Runtime test adapter; it
+is not a deployed Service, live Worker/MT5, or interactive desktop test.
+
+## Phase 3 Live Dashboard and runtime integration — 2026-10-08
+
+**Status: Implemented on the Phase 3 branch; CI and Windows execution pending.**
+The Management Pipe remains in the normal Agent hosting lifecycle and shares
+its shutdown path. The Runtime Worker adapter now marks Worker availability
+only after a validated Worker health response and clears it when IPC fails.
+Service state is `UNKNOWN` because the Agent currently has no SCM query; a
+successful pipe response proves Agent responsiveness and local IPC connectivity
+only. The status projection does not infer trading authorization.
+
+The Dashboard displays Windows Service, Agent, Runtime Worker, MT5, local
+Management IPC, central-management, and trading-capability states. It polls
+every five seconds while visible, prevents overlapping refreshes, cancels
+pending work when leaving the view, reports unavailable/error states, and
+labels source observations older than 15 seconds or more than two minutes in
+the future as stale. A pipe failure is shown as offline while prior runtime
+values are marked stale. Each status response carries UTC observation time,
+source identity, freshness, error code, and the request correlation ID.
+
+The Phase 3 `test:wpf-management` fixture runs the actual Agent and
+ApplicationHost/CompositeHostingPort lifecycle with a deterministic test
+Runtime adapter, then connects the .NET Framework client through a Windows
+Named Pipe. The existing `smoke:mt5-runtime` job now also receives the compiled
+WPF client test artifact, starts the candidate Agent with a process-scoped
+allowlist containing only the current CI caller SID, and queries live Worker
+and MT5 status through the Management Pipe. That job uses only the existing
+safe-read integration checks; it does not execute trading operations or alter
+host identity/configuration. Neither job proves interactive WPF rendering or
+the installed Windows Service lifecycle. These and the Windows 10/11 and
+Server 2022/2025 compatibility matrix remain explicit validation gates.
 
 ## Assumptions requiring validation
 

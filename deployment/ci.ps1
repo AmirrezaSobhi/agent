@@ -183,14 +183,16 @@ function Get-ProcessEvidence {
 }
 
 function Start-CandidateAgent {
-    param([int]$Port)
-    $names = @('MT5_AGENT_HTTP_HOST', 'MT5_AGENT_HTTP_PORT', 'MT5_AGENT_HTTP_MAX_REQUEST_BYTES', 'MT5_AGENT_LOG_LEVEL')
+    param([int]$Port, [string]$ManagementAllowedSid = '')
+    $names = @('MT5_AGENT_HTTP_HOST', 'MT5_AGENT_HTTP_PORT', 'MT5_AGENT_HTTP_MAX_REQUEST_BYTES',
+        'MT5_AGENT_LOG_LEVEL', 'MT5_AGENT_MANAGEMENT_ALLOWED_SIDS')
     $previous = @{}
     foreach ($name in $names) { $previous[$name] = [Environment]::GetEnvironmentVariable($name, 'Process') }
     $env:MT5_AGENT_HTTP_HOST = '127.0.0.1'
     $env:MT5_AGENT_HTTP_PORT = [string]$Port
     $env:MT5_AGENT_HTTP_MAX_REQUEST_BYTES = '1048576'
     $env:MT5_AGENT_LOG_LEVEL = 'WARNING'
+    $env:MT5_AGENT_MANAGEMENT_ALLOWED_SIDS = $ManagementAllowedSid
     $stdout = Join-Path $reportRoot 'candidate-agent.stdout.log'
     $stderr = Join-Path $reportRoot 'candidate-agent.stderr.log'
     try {
@@ -437,9 +439,10 @@ try {
             $inspection = Test-CandidateCLI
             $preflight = Assert-WorkerTaskAndPreflight -RuntimeConfiguration $runtimeConfiguration -Inspection $inspection
             $port = Get-FreeLoopbackPort
+            $managementSid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value
             $script:CandidateProcess = $null
             try {
-                $script:CandidateProcess = Start-CandidateAgent -Port $port
+                $script:CandidateProcess = Start-CandidateAgent -Port $port -ManagementAllowedSid $managementSid
                 $agentEvidence = Get-ProcessEvidence -ProcessId $script:CandidateProcess.Id
                 if ($agentEvidence.session_id -ne 0 -or $agentEvidence.principal -ine $preflight.Caller) {
                     throw 'Candidate Agent process identity/session differs from the Session 0 control caller'
@@ -454,6 +457,10 @@ try {
                     $worker.session_id -ne $runtime.terminal_session_id -or $runtime.mt5_connected -ne $true) {
                     throw 'Live Worker and terminal health identity/session validation failed'
                 }
+                $managementEvidencePath = Join-Path $reportRoot 'management-ipc-live-smoke.txt'
+                & './src/desktop/MT5Agent.Desktop.Tests/bin/Release/MT5Agent.Desktop.Tests.exe' `
+                    '--management-ipc-smoke' $managementEvidencePath 'live-runtime'
+                if ($LASTEXITCODE -ne 0) { throw 'WPF client to live Agent/Worker/MT5 Management Pipe smoke failed' }
                 $terminal = Get-ProcessEvidence -ProcessId ([int]$runtime.terminal_pid)
                 if ($terminal.principal -ine $preflight.RuntimePrincipal -or $terminal.sid -ine $worker.sid -or
                     $terminal.session_id -ne $worker.session_id -or
@@ -510,7 +517,8 @@ try {
                     account_information_success = $true; account_information_field_count = $accountFieldCount
                     final_health = 'AGENT_RUNNING + MT5_CONNECTED'
                 })
-                Write-Output "Runtime integration passed; Worker=$($worker.account) session=$($worker.session_id); terminal_pid=$($terminal.pid); symbols_total=$($symbols.data.result); terminal_build=$terminalBuild; account fields=$accountFieldCount; SHA256=$afterHash"
+                Write-Output (Get-Content -LiteralPath $managementEvidencePath -Raw)
+                Write-Output "Runtime integration passed; Worker and terminal identity/session verified; MT5 safe-read checks passed; SHA256=$afterHash"
             }
             finally { Stop-CandidateAgent -Process $script:CandidateProcess; $script:CandidateProcess = $null }
         }

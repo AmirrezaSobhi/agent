@@ -99,20 +99,54 @@ def error_response(request_id: str = "", correlation_id: str = "", code: str = "
 
 
 def build_status(agent) -> dict[str, object]:
-    """Project only health fields observed by existing Agent and Worker code."""
+    """Project only health fields observed by the Agent and its Worker adapter.
+
+    The Agent cannot independently query the Windows Service Control Manager,
+    so service state is deliberately UNKNOWN. A successful response proves the
+    Agent process is responsive, but does not prove the service registration
+    or the caller's trading authorization.
+    """
     health = agent.health()
     runtime = health.runtime if isinstance(health.runtime, dict) else {}
     lifecycle = getattr(health.state, "value", str(health.state)).upper()
+    runtime_state = health.runtime_state if isinstance(health.runtime_state, str) else "UNKNOWN"
+    worker_available = runtime.get("worker_available")
+    if worker_available is True:
+        worker_state = runtime.get("worker_state") if isinstance(runtime.get("worker_state"), str) else "READY"
+    elif worker_available is False:
+        worker_state = "DISCONNECTED"
+    else:
+        worker_state = "UNKNOWN"
+    mt5_connected = runtime.get("mt5_connected")
+    if mt5_connected is True:
+        mt5_state = "CONNECTED"
+    elif runtime_state in ("MT5_INITIALIZING", "MT5_RECONNECTING", "INITIALIZING", "RECONNECTING"):
+        mt5_state = "INITIALIZING"
+    elif runtime_state in ("MT5_ERROR", "RUNTIME_CONFIGURATION_UNAVAILABLE", "RUNTIME_PROTOCOL_MISMATCH"):
+        mt5_state = "ERROR"
+    elif mt5_connected is False:
+        mt5_state = "DISCONNECTED"
+    else:
+        mt5_state = "UNKNOWN"
+    last_error = runtime.get("last_error_code")
+    if not isinstance(last_error, str) or len(last_error) > 96:
+        last_error = None
     return {
-        "service_running": True,
+        "service_state": "UNKNOWN",
         "agent_state": "AGENT_RUNNING" if lifecycle == "RUNNING" else "AGENT_" + lifecycle,
-        "worker_available": runtime.get("worker_available") is True,
-        "worker_state": runtime.get("worker_state") if isinstance(runtime.get("worker_state"), str) else "UNKNOWN",
-        "runtime_state": health.runtime_state if isinstance(health.runtime_state, str) else "UNKNOWN",
-        "mt5_connected": runtime.get("mt5_connected") is True,
+        "agent_lifecycle_state": lifecycle,
+        "worker_available": worker_available if isinstance(worker_available, bool) else None,
+        "worker_state": worker_state,
+        "runtime_state": runtime_state,
+        "mt5_state": mt5_state,
+        "mt5_connected": mt5_connected if isinstance(mt5_connected, bool) else None,
         "central_state": "NOT_CONFIGURED",
         "trading_capability": "UNSUPPORTED",
-        "trading_authorized": "NOT_AUTHORIZED",
+        "trading_authorized": "UNKNOWN",
+        "trading_readiness": "UNAVAILABLE",
+        "source_identity": "MT5Agent.AgentCore",
+        "freshness": "FRESH",
+        "error_code": last_error,
         "observed_at_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
     }
 

@@ -25,6 +25,21 @@ interactive UI rendering or production Service provisioning. Windows 11/Server
 2022/2025, UI Automation/DPI, packaging, tray, and a deployed Agent integration
 remain unverified.
 
+## Phase 3 implementation snapshot
+
+The Phase 3 branch fixes Worker-availability reporting after successful
+authenticated Worker health probes, keeps SCM state explicitly Unknown, adds
+separate local Management Pipe connectivity and freshness-aware Dashboard
+cards, and extends `test:wpf-management` with a Windows cross-process
+Agent/ApplicationHost-to-WPF smoke using a deterministic Runtime adapter. The
+actual `smoke:mt5-runtime` job also runs the compiled .NET client against the
+candidate Agent and the configured live Worker/MT5 path; it receives only a
+process-scoped allowlist for the CI caller. Both jobs are required before
+package publication. The GitLab branch pipeline and resulting runtime
+observations remain pending. These tests do not verify the installed Service
+or interactive WPF rendering; screenshots and performance measurements remain
+open until an interactive Windows session produces evidence.
+
 ## Scope and release gates
 
 Mandatory foundation: C#/WPF/XAML/.NET Framework 4.8/MVVM shell, truthful local
@@ -48,8 +63,8 @@ does not pass these criteria by implication.
 | A02 | UI crash does not terminate Agent or Worker | Fault-inject UI exit; assert Service/Worker PID and health remain | Not executed; UI harness absent |
 | A03 | Agent remains operational when UI closes | Close/exit UI; poll Agent and Worker health independently | Not executed |
 | A04 | Service-offline UI opens successfully | Stop Service; launch UI; inspect recovery guidance without crash/hang | Partial: no Service dependency in startup; visual/offline launch not run interactively |
-| A05 | Cached state is clearly labeled stale | Disconnect probe source; assert observation age/source and stale label | Partial: 15-second freshness rule and stale/error ViewModel path implemented; prolonged stale-age UI and visual verification remain |
-| A06 | Dashboard displays actual runtime information | Compare UI projection with live diagnostic/Worker evidence, including unavailable case | Partial: Management v1 safely projects Agent health; Python↔C# synthetic status passed; production Service/MT5 host verification remains |
+| A05 | Cached state is clearly labeled stale | Disconnect probe source; assert observation age/source and stale label | Partial: stale on >15-second source age or >2-minute future clock skew; offline last values are labeled stale. Windows CI and visual verification pending |
+| A06 | Dashboard displays actual runtime information | Compare UI projection with live diagnostic/Worker evidence, including unavailable case | Partial: Agent/Worker status projection corrected; Windows cross-process Agent lifecycle CI smoke pending; installed Service/live MT5 verification remains |
 | A07 | Unauthorized privileged requests are rejected | Negative tests by user/session/principal/action; audit denial and no side effect | Partial: real Windows DACL denied another SID; token SID extraction and allowlist verified. No privileged mutations exist; full multi-user matrix remains |
 | A08 | Machine and user settings remain isolated | Cross-user access/write test, ACL inspection, service/UI identity test | Partial: theme preference is per-user LocalAppData; no machine writes; cross-user ACL test pending |
 | A09 | Existing MT5 Runtime continues in its provisioned interactive session | Assert existing principal, nonzero session, Worker/terminal identity and safe-read health; no provisioning changes | Current v0.1.3 lab evidence exists; rerun compatibility check on prepared host |
@@ -60,7 +75,7 @@ does not pass these criteria by implication.
 | A14 | Diagnostics do not expose secrets | Seed synthetic canary secrets; inspect UI, logs, exports and error paths | Not executed; bundle absent |
 | A15 | Support export is previewable and never sent without explicit consent | Preview exact files/manifest; cancel; assert zero network transmission; if remote upload is later added, separate explicit consent/audit test | Local export only in Option A; remote support deferred |
 | A16 | WPF deployment package works on already prepared supported hosts | Extract/install user-scope package and launch on each approved OS; assert preexisting Service/config unchanged; verify package manifest/hash | No full install/upgrade/repair/uninstall acceptance; no Service provisioning |
-| A17 | Windows and desktop CI tests pass | Build/analysis/unit/contract tests on Windows build runner; UI Automation on interactive desktop runner; Python regressions unchanged | Manual Windows 10 net48 build passed; C# 27/27 and Windows Python IPC 15/15 passed. `test:wpf-management` added but not run in GitLab; UIA and other OS jobs remain gaps |
+| A17 | Windows and desktop CI tests pass | Build/analysis/unit/contract tests on Windows build runner; UI Automation on interactive desktop runner; Python regressions unchanged | Previous Windows 10 net48 build and unit tests passed. Phase 3 `test:wpf-management` now gates package; its branch pipeline is pending. UIA and other OS jobs remain gaps |
 | A18 | No real trades are executed | Confirm demo/test account and inspect command logs/test harness; no order operations | Mission constraint; no trades run |
 | A19 | v0.1.3 behavior does not regress | Same-artifact regression suite plus Session 0/Worker/pipe and safe-read smoke | Linux Python suite 268 passed/36 skipped; Windows IPC tests passed. Existing production MT5 Runtime/Worker smoke was not rerun |
 | A20 | Build Once → Test Same Artifact → Release Same Artifact is preserved | Build manifest and SHA-256 match the exact package consumed by tests and release | Existing Python pipeline remains unchanged; WPF build job emits test artifacts, but same-artifact deployment packaging/release is not implemented |
