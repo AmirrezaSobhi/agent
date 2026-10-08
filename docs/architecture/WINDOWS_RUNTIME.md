@@ -189,17 +189,35 @@ CI tests do not count as interactive UI tests.
 
 ## Phase 5 runtime validation — 2026-10-08
 
-**Status: pending for installed-Service and multi-session acceptance.** The
-authorized Runner inventory contains two Windows 10 Pro 22H2 x64 hosts. A
-read-only service inventory found no MT5Agent Agent Service on either host.
-The MT5 Runner has Python and `terminal64` processes in Session 1, but that does
-not establish service registration, service startup, Management Pipe ownership,
-or recovery behavior. No process was stopped, restarted or reconfigured.
+**Windows 10 result: PARTIAL.** The repository has no productized Service
+installer or SCM adapter. After explicit Product Owner authorization, a
+temporary demand-start `MT5AgentPhase5Test` SCM service was installed using a
+test-only .NET Framework `ServiceBase` host. It ran the real Python Agent Core
+as a Session 0 child with the Management pipe enabled and a configuration-
+disabled Runtime Worker adapter; no HTTP listener, Worker, terminal, account,
+or trading authorization was configured. The temporary service returned
+read-only status and fixed `logs.query` events to the signed-in Administrator
+SID. SCM stop removed the Python child and pipe; restart created a new child
+and an authorized client reconnected. WPF remained usable with the service
+absent; after WPF closed during live service operation, the SCM service was
+still RUNNING. The screenshots and process/SID/pipe records are in
+[`../evidence/v0.1.4/phase5/windows10-19045/`](../evidence/v0.1.4/phase5/windows10-19045/).
+This verifies the exercised Agent/SCM/Management boundary, not a product
+installer, actual Worker/MT5 lifecycle, or cross-user UI sessions.
 
-Therefore Phase 5 has not validated Service start/stop, Worker independence
-under an installed Service, Windows restart, RDP disconnect/reconnect, logoff,
-multi-user behavior, or runtime failover. These remain release-blocking
-acceptance items. The complete authorized-host inventory and OS gaps are in the
-[Windows compatibility matrix](WINDOWS_COMPATIBILITY.md). The Phase 4
-interactive session evidence remains historical and must not be represented as
-a Phase 5 revalidation.
+The two fail-closed Worker ACL experiments executed under LocalSystem in
+Session 0 and targeted the active local `Administrator` principal in Session 1.
+The controlled worker fixture ran in a nonzero session; duplicate launch was
+rejected; cleanup succeeded; the Window Station/Desktop DACL was restored and
+its serialized hash matched the captured post-transaction value. Raw evidence
+and SIDs are in [`../evidence/v0.1.4/phase5/windows10-19045/`](../evidence/v0.1.4/phase5/windows10-19045/).
+This is not an MT5 Runtime test and does not prove installed-Service startup.
+
+RDP disconnect/reconnect, logoff/login, Windows restart and production Worker
+recovery were not executed: only the shared local console session was active,
+and stopping or rebooting it could affect the Runner. The NetworkService pipe
+ACL negative task returned `0x80070005` before producing execution evidence;
+runtime DACL denial by a non-allowlisted user remains open. Windows 11, Server
+2022 and Server 2025 remain `DEFERRED — PRODUCT OWNER VALIDATION`; their absence
+is not a Phase 5 blocker. The temporary service and generated service-host
+artifacts were stopped, deregistered and removed. No trade was run.

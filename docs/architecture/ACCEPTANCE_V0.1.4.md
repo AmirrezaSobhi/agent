@@ -59,7 +59,7 @@ they do not verify Windows 11/Server compatibility, scaling/accessibility,
 installed Service lifecycle, cross-user/RDP behavior, performance gates, or
 production package installation. GitLab [pipeline #45](http://gitlab.local/root/agent/-/pipelines/45)
 passed all 9 jobs on commit `438c80f7`. Details are recorded in the
-[Phase 4 implementation baseline](IMPLEMENTATION_BASELINE.md#phase-4-desktop-operations-2026-10-08).
+[Phase 4 implementation baseline](IMPLEMENTATION_BASELINE.md).
 
 ## Scope and release gates
 
@@ -80,13 +80,13 @@ does not pass these criteria by implication.
 
 | ID | Acceptance criterion | Verification evidence required | Initial status / gap (see Phase 4 snapshot above for newer evidence) |
 |---|---|---|---|
-| A01 | UI runs independently from Agent Service | Windows test starts UI with Service running/stopped; UI process and service state evidence | Partial: UI was launched without Agent/Management Pipe in interactive Windows Session 1; installed-Service running/stopped matrix remains unverified |
-| A02 | UI crash does not terminate Agent or Worker | Fault-inject UI exit; assert Service/Worker PID and health remain | Not executed; UI harness absent |
-| A03 | Agent remains operational when UI closes | Close/exit UI; poll Agent and Worker health independently | Not executed |
-| A04 | Service-offline UI opens successfully | Stop Service; launch UI; inspect recovery guidance without crash/hang | Partial: offline Management Pipe UI opened and displayed unavailable state interactively; installed Service stop test remains pending |
+| A01 | UI runs independently from Agent Service | Windows test starts UI with Service running/stopped; UI process and service state evidence | Partial: interactive UI opened offline; live test-SCM Service responded to UI; after UI exit SCM Service remained RUNNING. UI was not kept open through the later stop action. No Worker existed. |
+| A02 | UI crash does not terminate Agent or Worker | Fault-inject UI exit; assert Service/Worker PID and health remain | Partial: UI test process exited while temporary SCM Service remained RUNNING and Python Agent child remained. No Worker was provisioned, so Worker independence is not live-verified. |
+| A03 | Agent remains operational when UI closes | Close/exit UI; poll Agent and Worker health independently | Partial: management Service stayed RUNNING after UI exit; a later Admin status probe returned AGENT_RUNNING. Worker/MT5 unavailable by test design. |
+| A04 | Service-offline UI opens successfully | Stop Service; launch UI; inspect recovery guidance without crash/hang | Partial: WPF launched with no Service and showed explicit offline/unavailable state; stopping temporary service removed the pipe and authorized probe returned Win32 2. UI was not opened while that temporary Service stop was in progress. |
 | A05 | Cached state is clearly labeled stale | Disconnect probe source; assert observation age/source and stale label | Partial: stale on >15-second source age or >2-minute future clock skew; offline last values are labeled stale. Windows CI and visual verification pending |
 | A06 | Dashboard displays actual runtime information | Compare UI projection with live diagnostic/Worker evidence, including unavailable case | Partial: Windows CI queried the candidate Agent through the WPF client and observed live Worker/MT5 state; installed Service and interactive UI verification remain |
-| A07 | Unauthorized privileged requests are rejected | Negative tests by user/session/principal/action; audit denial and no side effect | Partial: real Windows DACL denied another SID; token SID extraction and allowlist verified. No privileged mutations exist; full multi-user matrix remains |
+| A07 | Unauthorized privileged requests are rejected | Negative tests by user/session/principal/action; audit denial and no side effect | Partial: actual LocalSystem caller token SID was extracted and status/log operations received `UNAUTHORIZED`; no mutation exists. NetworkService DACL task failed before execution (`0x80070005`), so runtime ACL denial by an unallowlisted SID remains open. |
 | A08 | Machine and user settings remain isolated | Cross-user access/write test, ACL inspection, service/UI identity test | Partial: theme preference is per-user LocalAppData; no machine writes; cross-user ACL test pending |
 | A09 | Existing MT5 Runtime continues in its provisioned interactive session | Assert existing principal, nonzero session, Worker/terminal identity and safe-read health; no provisioning changes | Current v0.1.3 lab evidence exists; rerun compatibility check on prepared host |
 | A10 | Existing prepared host cold-boot behavior is checked | Boot prepared host without RDP/console login; capture existing Service/Worker/MT5 timeline | Prior lab evidence exists; do not create accounts or change Autologon in v0.1.4 |
@@ -95,8 +95,8 @@ does not pass these criteria by implication.
 | A13 | Unknown execution outcome is never blindly replayed | Use fake service/fake broker contract fixture to drop response after synthetic dispatch; assert `OUTCOME_UNKNOWN` and no retry without reconciliation | No live or test-account order operations; zero-trade simulation required |
 | A14 | Diagnostics do not expose secrets | Seed synthetic canary secrets; inspect UI, logs, exports and error paths | Not executed; bundle absent |
 | A15 | Support export is previewable and never sent without explicit consent | Preview exact files/manifest; cancel; assert zero network transmission; if remote upload is later added, separate explicit consent/audit test | Local export only in Option A; remote support deferred |
-| A16 | WPF deployment package works on already prepared supported hosts | Extract/install user-scope package and launch on each approved OS; assert preexisting Service/config unchanged; verify package manifest/hash | No full install/upgrade/repair/uninstall acceptance; no Service provisioning |
-| A17 | Windows and desktop CI tests pass | Build/analysis/unit/contract tests on Windows build runner; UI Automation on interactive desktop runner; Python regressions unchanged | Phase 4 Windows build and local C# 40/40, Windows Python 317 passed/2 skipped, IPC 23/23, and interactive UIA passed on Windows 10. Phase 4 GitLab pipeline unavailable; other OS jobs remain gaps |
+| A16 | Reproducible WPF build and minimal deployment package work on a prepared host | Build, hash and test the exact artifact; validate user-scope extraction on the required Phase 5 OS | Windows 10 WPF build and executable hash recorded; no package/extraction test or same-artifact pipeline yet. Windows 11/Server rows are `DEFERRED — PRODUCT OWNER VALIDATION`, outside Phase 5 OS test scope. |
+| A17 | Windows and desktop CI tests pass | Build/analysis/unit/contract tests on Windows build runner; UI Automation on interactive desktop runner; Python regressions unchanged | Phase 5 Windows 10 clean x64 build, C# 41/41, Python 318 passed/2 gated skips (then ACL experiments 2/2 separately), Linux 276/36, and interactive UIA passed. Phase 5 branch pipeline still pending. |
 | A18 | No real trades are executed | Confirm demo/test account and inspect command logs/test harness; no order operations | Mission constraint; no trades run |
 | A19 | v0.1.3 behavior does not regress | Same-artifact regression suite plus Session 0/Worker/pipe and safe-read smoke | Linux Python suite 268 passed/36 skipped; Windows IPC tests passed. Existing production MT5 Runtime/Worker smoke was not rerun |
 | A20 | Build Once → Test Same Artifact → Release Same Artifact is preserved | Build manifest and SHA-256 match the exact package consumed by tests and release | Existing Python pipeline remains unchanged; WPF build job emits test artifacts, but same-artifact deployment packaging/release is not implemented |
@@ -120,18 +120,31 @@ failover. No criterion in this list authorizes those features for v0.1.4.
 
 ## Phase 5 hardening status — 2026-10-08
 
-Phase 5 has not passed its release gates. The two authorized Windows hosts are
-Windows 10 Pro build 19045 x64; no Windows 11 or supported Windows Server test
-host was found. No installed MT5Agent Agent Service was found on either host,
-so Service startup/restart, pipe recovery, Worker independence and RDP/session
-lifecycle scenarios were not executed. No Phase 5 interactive UI capture, DPI
-or accessibility measurement, performance sample, or soak result exists.
+**Phase 5 OS scope:** Windows 10 x64 only. Windows 11 x64, Server 2022 Desktop
+Experience, and Server 2025 Desktop Experience are `DEFERRED — PRODUCT OWNER
+VALIDATION`. They are not Phase 5 blockers and are not marked passed.
 
-The two Runtime Worker ACL experiment tests remain pending and must not be
-counted among the previously reported two skips. Their fail-closed test requires
-an explicit dedicated flag and local worker principal. No real trades were run.
-The Linux authoring host could not run pytest (`No module named pytest`). See
-[Phase 5 implementation baseline](IMPLEMENTATION_BASELINE.md#phase-5-verification-snapshot-2026-10-08),
-[Quality Gates](QUALITY_GATES.md), and the [Windows compatibility matrix](WINDOWS_COMPATIBILITY.md)
-for evidence and remaining blockers. Phase 4 pipeline #45 is historical and
-was not run against Phase 5 documentation.
+### Phase 5 current acceptance evidence
+
+| Acceptance area | Windows 10 Phase 5 result | Evidence / limitation |
+|---|---|---|
+| Interactive WPF | **PASS for executed flow.** App launched in console Session 1 with Agent absent; UIA navigated Dashboard, Runtime, Settings, Logs, Diagnostics and About; themes switched; keyboard focus, resize, minimize/restore, close-to-tray and tray restore exercised. | Screenshots and automation report in [`../evidence/v0.1.4/phase5/windows10-19045/`](../evidence/v0.1.4/phase5/windows10-19045/). Tray context Exit was not exposed in the Phase 5 UIA attempt; historical Phase 4 Exit evidence exists but Phase 5 Exit is not re-verified. |
+| Offline behavior | **PASS.** UI starts with no Agent Service; Dashboard, Runtime, Logs and Diagnostics show unavailable/timeout without fabricating runtime data. | Offline screenshots and C# tests. |
+| Build/regression | **PASS.** Official .NET Framework 4.8 targeting pack; MSBuild `4.8.9037.0`; clean x64 rebuild without `FrameworkPathOverride`; C# 41/41; Windows Python 318 passed/2 skipped; Linux 276/36. | Two ACL skips are not counted as passes; isolated Session 0 tests separately passed 2/2 with exact DACL rollback. |
+| Visual/accessibility | **PARTIAL.** Both themes, 1280×800, WPF window 1180×760 and resized 1050×680; keyboard focus and named UIA controls verified. | 96 DPI only; 125/150/200%, contrast instrument, and screen reader untested. |
+| SCM/Agent Service lifecycle | **PASS for the isolated integration harness; product Service remains unimplemented.** Temporary demand-start `MT5AgentPhase5Test` (.NET Framework `ServiceBase`) ran the real Python Agent Core as a Session 0 child, with the production Management Named Pipe and a deliberately disabled Runtime adapter. SCM start, running, stop, restart and pipe recovery were observed. The test Service and generated artifacts were rolled back. | Reproducible evidence and harness are linked below. This does not verify a productized Python Service installer or customer configuration. No Worker/MT5 process existed and none was started. |
+| Management IPC security | **PARTIAL.** Administrator SID `S-1-5-21-950479549-2068523145-3370569714-500` received read-only `status.get` and bounded `logs.query`; a LocalSystem caller (`S-1-5-18`) connected but received `UNAUTHORIZED` for both. The Worker ACL tests passed 2/2. | NetworkService DACL-negative Scheduled Task ended with `0x80070005` before producing process identity/output; no runtime DACL denial is claimed. Pipe ACL creation and default-deny allowlist were source-reviewed. No privileged operation or trade exists. |
+| UI/Agent lifecycle | **PASS for tested cases.** WPF launched offline with Service stopped; WPF navigated against live read-only status while test Service was running; explicit UI process exit left SCM Service RUNNING. Service stop removed its Python child and pipe; restart restored authenticated status. | UI screenshot and SCM/process/pipe evidence below. No Worker was provisioned; Worker independence is verified by existing code/tests, not a live lifecycle run. |
+| Worker lifecycle/security | **PASS for the Worker ACL fixture only.** Session 0 LocalSystem launched a controlled test Worker into interactive Session 1; designated-user identity and duplicate launch rejection passed; Window Station/Desktop DACL restored and hash-verified. | This is not an installed MT5 Runtime/Worker test; no trade. |
+| RDP/multi-session/reboot | **PENDING.** Console Session 1 and Session 0 Service were exercised; no RDP user session was active. | Shared Runner was not disconnected, logged off, or rebooted. Release impact: RDP reconnect/logoff and boot recovery remain unverified; assess on an isolated interactive host before commercial deployment. |
+| Performance | **PARTIAL.** Existing startup N=5 median 152.7ms/P95(max) 198.0ms; idle 20s CPU 0.155%, private bytes median 55.7MiB/max 58.4MiB; offline refresh N=10 median 2018.1ms/P95(max) 2099.4ms; navigation during refresh N=10 median 27.9ms/P95(max) 51.1ms. Against the test Service: read-only status IPC N=30 median 0.32ms/P95 32.89ms/max 33.15ms; bounded `logs.query` N=10, up to 10 events, median 0.30ms/P95 31.57ms. | Small test Service and process-level probe; no successful UI refresh latency percentile, reconnect timing, 5-minute CPU, 10-minute memory, 8-hour soak, or production load. |
+| GitLab | **PENDING.** No Phase 5 pipeline ID yet. | Phase 4 pipeline #45 is historical and does not satisfy this gate. |
+| Trading | **PASS.** No real trade or order command executed. | Only safe status and controlled Worker ACL fixture. |
+
+The temporary SCM harness closes the Windows 10 Agent/Service/Management-pipe
+integration test for the exercised configuration, but does not supply a
+product Service installer or provisioned Worker. Keep the NetworkService DACL
+negative, RDP/session matrix and Phase 5 pipeline gates open until evidence is
+available. The three deferred OS tests do not prevent Phase 5 completion.
+Commercial release remains a separate decision and is not automatically
+authorized by this phase.

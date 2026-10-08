@@ -1,0 +1,13 @@
+{
+  "after": {
+    "default": "55420c40016be19f4cf8e4c1802cebe760c160b372e021cd562e7383b719ba6f",
+    "winsta0": "6e3ea8bcfd425cb23d8d7a67634a9f105d551990cfb49f74fdf7caf1be3bc9e7"
+  },
+  "before": {
+    "default": "535f7853718cbdd79375d93c502e54c6e4d460808f8f81543ca7eb9be8e947ac",
+    "winsta0": "76cc424ac1c0467e1998ece905ae898c689937e314476757245a4a58f931917b"
+  },
+  "mutated": true,
+  "rollback_verified": true,
+  "session_id": 1
+}

@@ -35,6 +35,7 @@ namespace MT5Agent.Desktop.Tests
             Run("Theme preference persists per user path", ThemePreferencePersistence);
             Run("Theme dictionaries switch without restart", ThemeDictionarySwitch);
             Run("Shell XAML lays out all registered routes", ShellXamlLayoutsAllRoutes);
+            Run("Dashboard status values and details wrap within cards", DashboardStatusTextWrapping);
             Run("Invalid preference falls back to dark", InvalidPreferenceFallback);
             Run("RelayCommand executes action", RelayCommandExecutes);
             Run("AsyncCommand executes and resets running state", AsyncCommandExecutes);
@@ -465,6 +466,50 @@ namespace MT5Agent.Desktop.Tests
             shell.Dispose();
             services.Dispose();
             window.Close();
+        }
+
+        private static void DashboardStatusTextWrapping()
+        {
+            EnsureApplication();
+            var errors = new ErrorService();
+            var view = new DashboardView
+            {
+                DataContext = new DashboardViewModel(new UnavailableManagementClient(), errors)
+            };
+            view.Measure(new Size(900, 760));
+            view.Arrange(new Rect(0, 0, 900, 760));
+            view.UpdateLayout();
+
+            var foundValue = false;
+            var foundDetail = false;
+            AssertDashboardCardTextWrapping(view, ref foundValue, ref foundDetail);
+            Assert(foundValue && foundDetail, "Dashboard status card text did not wrap inside its columns.");
+            errors.Dispose();
+        }
+
+        private static void AssertDashboardCardTextWrapping(DependencyObject parent, ref bool foundValue, ref bool foundDetail)
+        {
+            var text = parent as System.Windows.Controls.TextBlock;
+            if (text != null)
+            {
+                var binding = System.Windows.Data.BindingOperations.GetBinding(text, System.Windows.Controls.TextBlock.TextProperty);
+                if (binding != null && binding.Path != null)
+                {
+                    if (binding.Path.Path == "Value")
+                    {
+                        foundValue = true;
+                        Assert(text.TextWrapping == System.Windows.TextWrapping.Wrap, "Dashboard status value must wrap.");
+                    }
+                    else if (binding.Path.Path == "Detail")
+                    {
+                        foundDetail = true;
+                        Assert(text.TextWrapping == System.Windows.TextWrapping.Wrap, "Dashboard status detail must wrap.");
+                    }
+                }
+            }
+
+            for (var index = 0; index < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); index++)
+                AssertDashboardCardTextWrapping(System.Windows.Media.VisualTreeHelper.GetChild(parent, index), ref foundValue, ref foundDetail);
         }
 
         private static Application EnsureApplication()

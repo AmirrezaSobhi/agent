@@ -117,33 +117,44 @@ replay, policy revision, execution lease, and ambiguous-outcome reconciliation.
 
 ## Phase 5 focused implementation review — 2026-10-08
 
-Source review of `agent/infrastructure/management_named_pipe.py` confirmed the
-management listener requires an explicit SID allowlist; its pipe DACL grants
-its Service process rights and only bounded read/write client rights to listed
-SIDs. `_caller_sid` extracts `TokenUser` only after
-`ImpersonateNamedPipeClient`, closes the thread token, and calls `RevertToSelf`
-in `finally`; a revert failure sets a fatal flag and stops the listener.
-`_handle` rejects callers outside the SID allowlist before dispatch. Supported
-operations remain read-only: `protocol.negotiate`, `status.get`, and
-`logs.query`.
+The Windows 10 source/test run exercised the current Management IPC contract and
+regression suite. The full Windows Python suite reported **318 passed, 2
+skipped**; those two were the fail-closed Worker Window Station/Desktop ACL
+experiments, not passed by the general suite. They were then run separately in
+a one-shot Session 0 LocalSystem task with explicit test-only variables and
+passed **2/2**. Caller token evidence was `NT AUTHORITY\SYSTEM`, SID
+`S-1-5-18`, Session 0. The expected interactive principal was
+`WINDOW10-TEST\Administrator`, SID
+`S-1-5-21-950479549-2068523145-3370569714-500`, Session 1. DACL experiment
+proved additive grant and exact rollback; before/after hashes and cleanup result
+are in the linked evidence bundle.
 
-`logs.query` is not a filesystem API: callers cannot supply paths, filters are
-a fixed severity enum, retention is a 200-entry in-memory deque, and a response
-returns no more than 100 entries. Request and response messages are bounded by
-64 KiB. These properties were code-reviewed, not newly exercised on Windows in
-this phase. Existing Phase 4 IPC tests remain the latest execution evidence.
+This is Worker Window Station/Desktop ACL evidence. A separate isolated
+`MT5AgentPhase5Test` SCM harness was later installed with explicit approval. A
+temporary .NET `ServiceBase` host ran the real Python Agent Core child in
+Session 0 with the real Management Pipe and a Runtime adapter configured
+unconditionally unavailable. The pipe served a read-only status response and
+bounded fixed-message `logs.query` events to the explicitly allowed local
+Administrator SID. A LocalSystem client connected but received `UNAUTHORIZED`
+for both operations, confirming the operation allowlist; the exact response
+and service process SID/session are in the Phase 5 evidence bundle. The Service
+and test host were stopped and removed after validation.
 
-The two dedicated Runtime Worker Window Station/Desktop DACL tests remain
-**not executed** in the current evidence snapshot: both require an explicit
-`MT5_AGENT_ACL_EXPERIMENT=1` gate, while the Runner config contains neither
-that flag nor `MT5_AGENT_WORKER_PRINCIPAL`. Do not count the Phase 4 skips as
-passes. The test harness is designed to add one session logon-SID ACE and
-restore/verify the exact original DACL in `finally`, but the test's rollback
-claim is unverified until executed in its fail-closed authorized Session 0
-context. See the Windows Runner inventory and status in
-[Implementation Baseline](IMPLEMENTATION_BASELINE.md#phase-5-verification-snapshot-2026-10-08).
+The NetworkService negative DACL probe did not execute: Task Scheduler returned
+`0x80070005` before a caller SID or probe result was written. No runtime DACL
+denial is claimed for that SID. Source review confirms the Management pipe DACL
+is built with only the Agent process token SID plus explicitly configured
+client SID(s), and no broad SID; revalidate the runtime ACL under the eventual
+product Service identity. `logs.query` remains bounded to 100 items from a
+200-event in-memory ring, fixed severities/messages, and accepts no path or
+caller-supplied content. RDP/multi-session behavior and a diagnostic
+secret-canary scan remain open.
 
-No source security defect was confirmed in this focused review. This is not a
-full security certification; production Service identity, cross-user/session
-negative tests, the two Worker ACL tests, and real installed-Service pipe ACL
-verification remain release-blocking.
+The test harness required one correction: its interactive helper previously
+called `WTSQueryUserToken`, which requires LocalSystem/SeTcbPrivilege. It now
+verifies its own process session and `TokenUser` principal, then reads the
+logon-SID group from that process token. The Session 0 parent remains the only
+component that selects the WTS session and starts the helper. The positive
+identity test and both end-to-end ACL experiments passed without weakening
+DACL assertions. This is a test-harness fix, not a product Service security
+certification.

@@ -41,8 +41,8 @@
                     <Border Style="{StaticResource CardBorder}" Margin="{DynamicResource StatusCardMargin}" MinHeight="142">
                         <StackPanel>
                             <TextBlock Text="{Binding Title}" Style="{StaticResource CardTitle}" />
-                            <TextBlock Text="{Binding Value}" FontSize="21" FontWeight="SemiBold" Margin="0,18,0,8" />
-                            <TextBlock Text="{Binding Detail}" Style="{StaticResource BodyText}" FontSize="12" />
+                            <TextBlock Text="{Binding Value}" FontSize="21" FontWeight="SemiBold" Margin="0,18,0,8" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding Detail}" Style="{StaticResource BodyText}" FontSize="12" TextWrapping="Wrap" />
                         </StackPanel>
                     </Border>
                 </DataTemplate>

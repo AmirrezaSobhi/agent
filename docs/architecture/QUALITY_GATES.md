@@ -23,7 +23,7 @@ no live trading.
 | 9 | Maintainability | No project reference cycles; no new UI framework dependency; zero high-severity analyzer findings; ViewModel/IPC critical-path branch coverage ≥80% | Build/analyzer report, graph check, coverage report | Yes for cycles/security findings; otherwise release gate |
 | 10 | Scalability | 10,000 synthetic log rows remain virtualized; first page ≤1 s P95; retained UI memory increase ≤50 MiB | UI Automation data load, ETW and memory counters | Yes |
 | 11 | Testability | All seven status dimensions, each error code and all permission-denial operations have deterministic automated tests; Windows integration contract suite passes | Test inventory mapped to contracts; JUnit/TRX reports | Yes |
-| 12 | Windows Compatibility | Package launches on Windows 10 x64, 11 x64, Server 2022 x64 Desktop Experience, Server 2025 x64 Desktop Experience; no support claim for other Windows versions | Clean prepared VMs; capture OS build, .NET release key, launch/status/package evidence | Yes |
+| 12 | Windows Compatibility | Phase 5 validates Windows 10 x64 only. Windows 11/Server 2022/Server 2025 remain approved product targets but are `DEFERRED — PRODUCT OWNER VALIDATION`; they are not Phase 5 blockers and are not marked passed. Full release matrix remains a release gate. | Phase 5 Windows 10 evidence bundle; later PO evidence for each deferred row | Yes for commercial release; deferred OS rows excluded from Phase 5 completion |
 | 13 | Installation Experience | On a pre-provisioned supported host, documented user-scope package placement and first launch ≤5 min; Service state not changed by package install | Fresh prepared VM, timed operator walkthrough, before/after SCM snapshot | Yes |
 | 14 | Update Reliability | No auto-update in v0.1.4; package manifest identifies version/commit and SHA-256; deployed file hash equals tested artifact | Extract package, verify manifest/hash and same-artifact pipeline provenance | Yes |
 | 15 | Accessibility | 100% interactive controls keyboard reachable with visible focus and UI Automation name/role; text contrast ≥4.5:1 and non-text controls ≥3:1 | UIA tree audit, keyboard-only run, contrast measurements and screen-reader smoke | Yes |
@@ -144,24 +144,50 @@ Windows 11 or Server 2022/2025 run was included.
 
 ## Phase 5 measurement and evidence status — 2026-10-08
 
-The thresholds above remain the release targets. Phase 5 did not collect new
-interactive application measurements. Startup time, idle CPU, private bytes,
-refresh/IPC latency distributions, log-view performance, reconnection time,
-navigation soak, high-DPI layout, UI Automation/accessibility, or stability
-soak are **not measured**. The Phase 4 one-sample IPC time must not be reported
-as a Phase 5 percentile.
+**Phase 5 scope decision:** Windows 10 x64 is the sole Phase 5 OS execution
+requirement. Windows 11 x64, Server 2022 Desktop Experience and Server 2025
+Desktop Experience are `DEFERRED — PRODUCT OWNER VALIDATION`; this explicit
+deferral does not block Phase 5. It does not establish commercial compatibility.
 
-The current authorized host inventory contains Windows 10 Pro build 19045 x64
-runners only. No Windows 11, Windows Server 2022 Desktop Experience, or Windows
-Server 2025 Desktop Experience compatibility result exists. No installed
-MT5Agent Windows Service was found; accordingly Service lifecycle gates remain
-blocked on a prepared host. The Phase 4 Session 1 screenshots are historical,
-not Phase 5 verification. See the [Windows compatibility matrix](WINDOWS_COMPATIBILITY.md)
-and the [Phase 5 baseline snapshot](IMPLEMENTATION_BASELINE.md#phase-5-verification-snapshot-2026-10-08).
+### Windows 10 measurements and gate results
 
-No new test suite executed from the Linux authoring host because its system
-Python has no `pytest` module. Do not install dependencies into the host to
-mask this limitation; run regression through the repository's Windows/Linux
-GitLab jobs and retain exact commit/job reports. Existing `test:windows` ACL
-cases remain skipped unless the dedicated environment gate and principal are
-provided; skipped cases are unresolved, not passed.
+| Gate | Metric / target | Test and evidence | Result | Remaining blocker |
+|---|---|---|---|---|
+| Visual design | Both themes; no clipped status text at tested layout; 100/150/200% target scales | UIA screenshots at 1280×800, WPF window 1180×760; [Dashboard, Settings, pages](../evidence/v0.1.4/phase5/windows10-19045/) | **PARTIAL.** Light/Dark rendered; a long Dashboard card value was made wrapping and regression-tested. | Only 96 DPI/100% tested; other scales pending; contrast not instrument-measured. |
+| UX/offline | Clear cause and available next action in ≤2 interactions | Service absent/pipe timeout pages and UIA navigation | **PASS for offline display.** Agent/Worker data is explicitly unavailable; no state was fabricated. | Real Service recovery guidance remains unverified. |
+| Startup | Main window visible ≤2.5s P95; target N=30 | Five interactive Windows 10 launches; measurement record | **PASS at measured sample.** N=5 median 152.7ms, P95(max) 198.0ms. | Below target sample count; this is not a 30-run release result. |
+| Refresh / IPC | Healthy Agent response ≤2s P95; timeout bounded; UI responsive | Offline UIA run plus 30 status and 10 `logs.query` round trips against the temporary SCM Agent harness; raw JSON in `management-performance-probe.json` | **PASS for bounded test-harness IPC.** Status N=30 median 0.32ms/P95 32.89ms/max 33.15ms; `logs.query` N=10 (up to 10 events) median 0.30ms/P95 31.57ms. Offline timeout N=10 median 2018.1ms/P95(max) 2099.4ms; concurrent navigation median 27.9ms/P95(max) 51.1ms. | No packaged/product Service UI refresh percentile or production load. |
+| Memory | ≤200 MiB after 10 min idle; ≤10% growth over 100 navigations | Private bytes sampled once/sec for 20 samples after 5s warmup | **PARTIAL.** Median 55.7 MiB, max 58.4 MiB. | 10-minute/100-navigation soak not run. |
+| CPU | ≤2% average over 5 min idle | 20s interactive process CPU sample | **PARTIAL.** 0.155% of total reported processor capacity during sample. | 5-minute sample not run; temporary Agent harness does not change this short sample. |
+| Stability | 8h soak and 100 Service reconnect cycles | UIA navigation/refresh run; temporary SCM Service stop/start; read-only Pipe probe | **PARTIAL.** No crash in the interactive flow; actual Service stop removed the Agent child/Pipe, restart restored status. | One restart only; no 8h soak/100 cycles or production Worker. |
+| Security | OS DACL default-deny; caller TokenUser SID; per-operation allowlist; no secret/path disclosure | Actual Session 0 test Agent Pipe; authorized local Admin status/log query; LocalSystem negative operations; `logs.query` UI screenshot; Worker ACL tests | **PARTIAL.** Caller extraction/allowlist behaved correctly; LocalSystem received `UNAUTHORIZED`; bounded log projection returned fixed events. Existing Windows suite 318 passed/2 gated skips, then Worker ACL experiments separately passed 2/2 with DACL rollback. | NetworkService negative Scheduled Task returned `0x80070005` before process evidence; no runtime DACL denial is claimed. Revalidate against product Service deployment identity. |
+| Maintainability | Clean x64 rebuild, no project cycles, analyzer zero high findings | Official .NET Framework targeting pack, MSBuild rebuild, 41 C# tests | **PARTIAL.** Build and tests pass. | Static analyzer/coverage reports not collected. |
+| Scalability | 10,000 log rows virtualized; first page ≤1s | Existing bounded filtering tests | **PENDING.** | No 10k-row UI run and no real log records. |
+| Testability | Deterministic tests, no hidden skips counted as pass | Windows/Linux test logs and JUnit | **PARTIAL.** Windows C# 41/41; Windows Python 318/2 skipped; Linux 276/36 skipped; ACL tests separately 2/2. | Phase 5 GitLab pipeline not yet verified. |
+| Compatibility | Windows 10 test; other product rows deferred | Build, UIA, 96 DPI and test evidence | **PARTIAL for Windows 10; other three DEFERRED — PRODUCT OWNER VALIDATION.** | RDP/multi-session, additional DPI and actual product Service deployment remain unverified. No other OS test is required in Phase 5. |
+| Installation/update | Option A, already-provisioned Agent; package/build integrity | WPF executable hash recorded; no commercial package created | **PENDING.** | Minimal deployable package and same-artifact CI provenance remain for later release gate. |
+| Accessibility | Keyboard reachable, visible focus, Automation names/roles | UIA keyboard Tab/focus and named navigation/buttons | **PARTIAL.** | Screen-reader and contrast-tool checks absent. |
+| Observability/fault | Status source/age/reason; bounded error state; offline UI stable | Offline and live Service UIA screenshots; status/log IPC probes; SCM stop/restart and pipe disconnect/reconnect | **PASS for the tested test-harness flow.** Dashboard showed responsive Agent, disconnected Worker/MT5 and explicit runtime error; offline screen showed no stale status as current. | No real Worker/MT5; no reboot, RDP recovery, or product-Service recovery policy. |
+| Commercial readiness | All P0 gates, product deployment path and approved release evidence | This Phase 5 evidence set | **BLOCKED.** | Product SCM wrapper/provisioning, runtime DACL-negative, package/signing, same-artifact pipeline, RDP/lifecycle evidence, and later Product Owner validation for the three deferred OS rows. |
+
+Performance evidence is specific to `window10-test`, Windows 10 Pro build
+19045.6466, interactive Session 1, 96 DPI, and the Phase 5 WPF binary. The
+successful IPC sample used a temporary, demand-start .NET SCM harness hosting
+the real Python Agent Core in Session 0 with Worker access disabled; it is not
+a product Service. Sample sizes and limits are in the evidence files. No
+successful WPF refresh percentile, full log-volume stress, multi-cycle
+reconnect, RDP recovery, or long soak was measured.
+
+The Windows 10 suite ran from the Phase 5 source bundle (SHA-256
+`ee4417298240cfa8cb555b7f66cf774e76f66e9be3c040ac1d71e82f3d80778f`), based
+on commit `9286e4f5640c979ccaf345b7fdf64a962d7e77bc` plus the documented Phase 5
+working-tree changes. The clean x64 command used the official framework
+reference assemblies and no `FrameworkPathOverride`. Raw tests, hashes, UIA
+screenshots, and measurements are linked from the [evidence bundle](../evidence/v0.1.4/phase5/windows10-19045/).
+
+The repository still has no productized Agent Service installer/adapter. The
+approved temporary SCM integration harness has been removed after its tests;
+its limited evidence is not commercial deployment evidence. RDP/logoff/reboot
+were not run on the shared console host. No Windows 11 or Server test was
+attempted. No real trade was executed. GitLab Phase 5 pipeline evidence is
+pending.

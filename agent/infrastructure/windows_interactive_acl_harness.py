@@ -66,10 +66,35 @@ class DescriptorSnapshot:
         )
 
 
-def selected_logon_sid(session_id: int):
-    """Return only the exact logon SID for the selected WTS session token."""
-    token = win32ts.WTSQueryUserToken(session_id)
+def _process_session_id(process_id: int) -> int:
+    import ctypes
+
+    session = ctypes.c_uint32()
+    if not ctypes.windll.kernel32.ProcessIdToSessionId(process_id, ctypes.byref(session)):
+        raise RuntimeError("PROCESS_SESSION_UNAVAILABLE")
+    return int(session.value)
+
+
+def selected_logon_sid(session_id: int, expected_principal: str):
+    """Read the logon SID from this helper's own Windows token.
+
+    The helper runs as the target interactive user, which cannot call
+    WTSQueryUserToken (that API requires LocalSystem/SeTcbPrivilege). The
+    Session 0 parent already selected the session and created this process
+    from its WTS token; here we verify the process session and account, then
+    read the token's logon SID directly.
+    """
+    if _process_session_id(os.getpid()) != session_id:
+        raise RuntimeError("ACL_HELPER_SESSION_MISMATCH")
+    token = win32security.OpenProcessToken(
+        win32api.GetCurrentProcess(), win32con.TOKEN_QUERY
+    )
     try:
+        user_sid = win32security.GetTokenInformation(token, win32security.TokenUser)[0]
+        username, domain, _ = win32security.LookupAccountSid(None, user_sid)
+        principal = f"{domain}\\{username}" if domain else username
+        if principal.casefold() != expected_principal.casefold():
+            raise RuntimeError("ACL_HELPER_PRINCIPAL_MISMATCH")
         for sid, attributes in win32security.GetTokenInformation(token, win32security.TokenGroups):
             if attributes & _LOGON_SID == _LOGON_SID:
                 return sid
@@ -195,7 +220,7 @@ def _run_helper(evidence_path: Path, control: Path, ready: Path, expected_sessio
     policy = WorkerSessionPolicy.from_environment()
     if select_worker_session(policy, discover_sessions()).session_id != expected_session:
         raise RuntimeError("ACL_HELPER_POLICY_SESSION_MISMATCH")
-    sid = selected_logon_sid(expected_session)
+    sid = selected_logon_sid(expected_session, policy.principal)
     winsta = win32service.OpenWindowStation("winsta0", False, win32con.READ_CONTROL | win32con.WRITE_DAC)
     desktop = win32service.OpenDesktop("default", 0, False, win32con.READ_CONTROL | win32con.WRITE_DAC | win32con.DESKTOP_READOBJECTS | win32con.DESKTOP_WRITEOBJECTS)
     originals: list[tuple[Any, DescriptorSnapshot]] = []

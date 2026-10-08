@@ -282,26 +282,37 @@ acceptance checklist is [v0.1.4 acceptance](ACCEPTANCE_V0.1.4.md).
 
 ## Phase 5 verification snapshot — 2026-10-08
 
-**Assessment: no application source defect was confirmed or changed in this
-snapshot.** The branch starts at Phase 4 evidence commit
-`59a6b7c97326f0ac22ba26f5243117972b623ade`; pipeline #45 tested the parent
-implementation commit `438c80f7de350351a7767db573ab9ce5c76a885f`, not the
-evidence-only commit. Phase 5 worktree was clean before documentation edits.
+**Status:** Windows 10 source/build/tests, interactive UI, and a reversible SCM
+integration harness were executed. Product Service packaging, one low-privilege
+pipe-DACL negative, lifecycle scenarios, and branch CI remain pending. This is
+not release readiness.
 
-| Area | Phase 5 result | Evidence / limitation |
+The branch baseline was `9286e4f5640c979ccaf345b7fdf64a962d7e77bc` on
+`feat/v0.1.4-phase5-hardening`. The tested source bundle includes that commit
+plus the Phase 5 working-tree changes and has SHA-256
+`ee4417298240cfa8cb555b7f66cf774e76f66e9be3c040ac1d71e82f3d80778f`.
+
+| Area | Actual result | Evidence / limitation |
 |---|---|---|
-| Windows inventory | Two Windows 10 Pro build 19045 x64 Runner hosts identified | [Compatibility matrix](WINDOWS_COMPATIBILITY.md); no Windows 11/Server 2022/2025 host identified |
-| Installed Agent Service | Not found by service name/display-name matching MT5/Agent on either host | No Service stop/start or installed-Service integration was attempted; service-backed validation is blocked by unavailable provisioned Agent Service |
-| Runtime processes | `win10-mt5-runner` has Python and `terminal64` processes in interactive Session 1 | Read-only inventory only; no identity/config/credentials were read and processes were not touched. This is not proof of the installed Agent Service or session recovery |
-| Runner identity | `win10-runner` GitLab Runner is Running/Automatic as LocalSystem; `win10-mt5-runner` Runner is Running as `.\Administrator` | Session 0 ACL experiment prerequisites partly exist on `window10-test`; runtime-principal and ACL flag are absent from Runner config. The dedicated tests were not executed in this snapshot |
-| Security review | Management v1 remains SID-allowlisted, DACL-protected, default-deny, read-only; `logs.query` returns fixed-message in-memory records, max 100 per query/200 retained | `agent/infrastructure/management_named_pipe.py` (`_caller_sid`, `_handle`, `_query_events`, `_security_attributes`); no new Windows negative-test run in this snapshot |
-| Interactive WPF / DPI / accessibility | Phase 4 screenshots and UI Automation remain the latest evidence | `docs/evidence/v0.1.4/phase4/`; no Phase 5 interactive launch, screenshot, scale or accessibility run |
-| Performance / stability | Not measured in Phase 5 | No startup, CPU, memory, refresh latency, soak, or restart-recovery metrics collected |
-| Regression / CI | Pending Phase 5 branch pipeline | Historical Phase 4 pipeline #45 passed all 9 jobs against implementation commit `438c80f7`; it is not evidence for Phase 5 changes |
+| Windows environment | Windows 10 Pro x64 22H2, build 19045.6466, host `WINDOW10-TEST`; .NET Framework 4.8.09037/release 533325; official v4.8 targeting assemblies; MSBuild 4.8.9037.0 | [`WINDOWS_COMPATIBILITY.md`](WINDOWS_COMPATIBILITY.md); full details in [`phase5/windows10-19045`](../evidence/v0.1.4/phase5/windows10-19045/). |
+| WPF build | Clean x64 Release `/t:Rebuild` succeeded without `FrameworkPathOverride`; app SHA-256 `3471c491722cc1b947f05e0caaff732764851e830c5f9de721c840a32a00a714`; C# test executable SHA-256 `aec6ac6b5db2aed8608b037e61d863e30a4dc468e67bf253e699afac78b6c050` | Build command/transcript and test count in evidence bundle. |
+| C# tests | **41 passed, 0 failed**, including regression asserting Dashboard status card text wraps. | Build transcript and `MT5Agent.Desktop.Tests.exe` output. |
+| Python Windows | **318 passed, 2 skipped**, 0 failed. Two skips were the dedicated fail-closed Worker ACL experiments. | `windows-python.log` and JUnit. Both skips were separately executed and passed 2/2. |
+| Python Linux | **276 passed, 36 skipped**, 0 failed (`tests/test_windows_worker_launcher.py` excluded on Linux). | Executed with isolated target dependencies; system Python was not modified. |
+| Worker ACL security experiment | **2 passed, 6 deselected** in Session 0 LocalSystem; interactive worker fixture Session 1; duplicate rejected; cleanup true; exact DACL rollback true. | Caller SID `S-1-5-18`; target local Administrator SID `S-1-5-21-950479549-2068523145-3370569714-500`; raw identity/log/hash evidence in bundle. |
+| Interactive WPF | UIA launched the rebuilt Phase 5 app in console Session 1 without Agent Service; navigated all six implemented pages; both themes; keyboard focus; resize; minimize/restore; close-to-tray and tray restore. | Screenshots and automation log in bundle. Tray Exit menu item was not exposed to UI Automation in this run; not reported as passed. |
+| Offline / runtime status | Dashboard, Runtime, Logs and Diagnostics correctly showed unavailable/timeout with no fabricated Agent/Worker/MT5 values. | Offline screenshots; no Agent Service/MT5 process was present on selected host. |
+| DPI/accessibility | WPF window reported 96 DPI (100% scale), screen 1280×800; keyboard Tab focus and UIA names exercised. | 125/150/200% scaling, screen reader and instrumented contrast remain untested. |
+| Performance | Startup N=5 median 152.7ms/P95(max) 198.0ms; idle N=20 for 20.2s CPU 0.155% total processor capacity, private bytes median 55.7MiB/max 58.4MiB; offline refresh completion N=10 median 2018.1ms/P95(max) 2099.4ms; navigation during refresh N=10 median 27.9ms/P95(max) 51.1ms; read-only test-Service status IPC N=30 median 0.32ms/P95 32.89ms/max 33.15ms; `logs.query` N=10 median 0.30ms/P95 31.57ms. | Raw method/sample evidence in `performance-measurements.txt` and `management-performance-probe.json`. Test Service did not include a Worker; no reconnect-time percentile or production load. |
+| Installed Agent Service | **Test harness verified; product installer absent.** With explicit Product Owner authorization, a demand-start `MT5AgentPhase5Test` Service was installed on `window10-test`. A temporary .NET Framework `ServiceBase` wrapper ran the real Python Agent Core child in Session 0; the Runtime adapter was configuration-disabled; the Management pipe served authenticated read-only status/logs. SCM start/stop/restart and pipe disconnect/reconnect were observed; test Service/artifacts were removed. | [`service-lifecycle.txt`](../evidence/v0.1.4/phase5/windows10-19045/service-lifecycle.txt), live screenshot and JSON probes. Not a productized Service wrapper/installer; no Worker/MT5. |
+| Management IPC authorization | **PASS for allowed Admin and default-deny operation behavior; DACL negative partial.** Allowed interactive Admin SID returned status/logs. LocalSystem SID `S-1-5-18` connected due service-process ACE but received `UNAUTHORIZED` for both operations. Code review confirms pipe DACL has the Agent service token SID plus configured client SID(s), no broad SID. | [`management-performance-probe.json`](../evidence/v0.1.4/phase5/windows10-19045/management-performance-probe.json), [`management-probe-system.json`](../evidence/v0.1.4/phase5/windows10-19045/management-probe-system.json), [`management-probe-networkservice.txt`](../evidence/v0.1.4/phase5/windows10-19045/management-probe-networkservice.txt). NetworkService task failed before producing caller/pipe test output (`0x80070005`); runtime DACL-negative result remains unverified. |
+| RDP/session lifecycle | Session 0→Session 1 worker ACL fixture passed; only console Session 1 active. RDP disconnect/reconnect, logoff/login and reboot not run. | Do not infer an installed Service or production Worker lifecycle from the ACL fixture. |
+| OS compatibility | Windows 10 evidence only. | Windows 11, Server 2022 and Server 2025 are exactly `DEFERRED — PRODUCT OWNER VALIDATION`; no tests were attempted and their deferral is not a Phase 5 blocker. |
+| GitLab CI | Phase 5 branch pipeline not yet verified. | Phase 4 pipeline #45 is historical, not Phase 5 evidence. |
+| Trading | No real trade or order command executed. | Only status/diagnostic and controlled Worker sleeper fixture. |
 
-No real trade was run. No Service, Worker, Windows account, security policy,
-VM, disk or snapshot was modified. `python3 -m pytest -q` could not start on the
-Linux authoring host because `/usr/bin/python3` has no `pytest` module; Windows
-CI is the available regression path. See [Quality Gates](QUALITY_GATES.md) for
-the release blockers and [Windows Compatibility Matrix](WINDOWS_COMPATIBILITY.md)
-for exact host inventory.
+A confirmed visual defect (long Dashboard status value clipped at tested width)
+was fixed by enabling wrapping and adding the WPF regression test. The ACL test
+harness defect (interactive helper calling privileged `WTSQueryUserToken`) was
+fixed to verify the helper's own session and token identity before reading its
+logon SID. No application security privilege was added.

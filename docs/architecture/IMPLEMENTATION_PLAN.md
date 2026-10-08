@@ -1,7 +1,8 @@
 # v0.1.4 WPF Implementation Plan
 
-**Status:** Phase 1 foundation and read-only slice of Phase 2 are implemented;
-remaining Phase 2 gates and Phases 3–6 remain open. Python Core remains Python.
+**Status:** Phases 1–4 are implemented. Phase 5 Windows 10 build/tests and
+interactive UI validation have been executed; installed-Service lifecycle and
+GitLab pipeline evidence remain pending. Python Core remains Python.
 
 ## Approved release boundary — Option A
 
@@ -123,19 +124,23 @@ open.**
 
 ## Phase 5 — Hardening
 
-- **Dependencies:** feature-complete candidate and interactive UI runner.
-- **Likely files/modules:** all WPF project tests, packaging manifest, test
-  harnesses, non-destructive CI job additions in a separately authorized change.
-- **Deliverables:** four-OS compatibility evidence, UI automation, performance,
-  accessibility, cross-user session tests, crash/pipe failure handling, Python
-  regression proof.
-- **Acceptance:** pass applicable [20 quality gates](QUALITY_GATES.md); no
-  functional regressions in Python Agent, Worker, Named Pipe or safe reads.
-- **Tests:** automated tests in CI; Windows UIA on interactive runner; Service
-  Session 0 and MT5 Runtime tests remain separate jobs/hosts.
-- **Risks:** CI Session 0 cannot exercise an interactive WPF desktop; Server
-  editions and Windows 10 lifecycle servicing availability require prepared
-  VMs and customer-facing support policy.
+- **Scope decision:** Windows 10 x64 is the only OS required in Phase 5.
+  Windows 11, Server 2022 Desktop Experience, and Server 2025 Desktop Experience
+  are `DEFERRED — PRODUCT OWNER VALIDATION`, and are not Phase 5 blockers.
+- **Dependencies:** Phase 4 candidate and existing interactive Windows 10
+  console runner; no new VM provisioning was requested or performed.
+- **Completed:** Windows 10 clean x64 rebuild and tests, interactive WPF/UIA,
+  two dedicated Worker ACL tests, offline/live status and bounded log view,
+  allowed-SID/LocalSystem authorization checks, reversible SCM integration
+  harness with the real Python Agent Core in Session 0, stop/restart/pipe
+  reconnection, IPC measurements, and Dashboard text wrapping correction.
+- **Still required:** runtime DACL-negative test under an unallowlisted user,
+  RDP/session scenarios where safe, remaining available DPI/accessibility
+  checks, Phase 5 GitLab branch pipeline, and production packaging/signing.
+- **Risks:** repository still has no productized SCM Service wrapper/installer;
+  the temporary .NET ServiceBase wrapper is test evidence only. Shared console
+  reboot/RDP interruption was avoided. Other OS tests belong to the Product
+  Owner and are explicitly deferred for this phase.
 
 ## Phase 6 — Packaging and Release
 
@@ -180,12 +185,13 @@ open.**
    was not changed. WPF same-artifact packaging/promotion is future work; this
    job's artifacts are test outputs, not a commercial deployment package.
 
-Minimum additional infrastructure: Windows 11 x64 interactive UIA VM with
-fixed display resolution/scale and resettable snapshot; build runner with
-Visual Studio/MSBuild; prepared Desktop Experience validation VMs for Server
-2022 and 2025. Existing Windows 10 Session 0 runners cannot substitute for
-interactive UI testing; current runner inventory has no Server 2022/2025 or
-verified UI automation lane.
+Phase 5 required no additional operating-system infrastructure beyond the
+existing Windows 10 host; Windows 11 and Server 2022/2025 tests are deferred to
+Product Owner validation and must not be provisioned for this phase. For later
+Product Owner compatibility validation, use authorized prepared Desktop
+Experience systems and record separate OS evidence. Interactive tests must run
+in a logged-on desktop session; a Session 0 build runner is not an interactive
+UI lane. The existing Windows 10 console was used for this Phase 5 run.
 
 ## Related documents
 
@@ -195,17 +201,19 @@ verified UI automation lane.
 
 ### Phase 5 execution result — 2026-10-08
 
-The Phase 5 worktree was created at the verified Phase 4 final commit
-`59a6b7c97326f0ac22ba26f5243117972b623ade`. Inventory found Windows 10 Pro
-build 19045 x64 runners only and no installed MT5Agent Agent Service. The
-execution environment could not attach to the remote interactive desktop for
-WPF UI Automation or screenshots. No permitted source defect was confirmed;
-therefore no application implementation was changed in this evidence update.
+Phase 5 continues from Phase 4 final commit `59a6b7c97326f0ac22ba26f5243117972b623ade`;
+the Phase 5 baseline is `9286e4f5640c979ccaf345b7fdf64a962d7e77bc`. Windows 10
+validation completed on `window10-test` (build 19045.6466): official net48
+clean x64 build, C# 41/41, Windows Python 318 passed/2 gated skips, isolated
+Worker ACL experiment 2/2, Linux Python 276/36, interactive screenshots,
+temporary SCM integration with real Agent Core, read-only Management status/log
+requests, and IPC performance samples. See [Implementation Baseline](IMPLEMENTATION_BASELINE.md)
+and [Windows Compatibility Matrix](WINDOWS_COMPATIBILITY.md).
 
-Blocked/pending deliverables: actual installed-Service lifecycle; two gated
-Worker ACL tests; RDP/logoff/reboot and multi-session validation; Windows 11,
-Server 2022 Desktop Experience, Server 2025 Desktop Experience; interactive
-visual/DPI/accessibility checks; repeatable CPU/memory/latency/soak data; and
-Phase 5 CI pipeline evidence. See the [Phase 5 baseline](IMPLEMENTATION_BASELINE.md#phase-5-verification-snapshot-2026-10-08)
-and [compatibility matrix](WINDOWS_COMPATIBILITY.md). Do not mark Phase 5 or
-commercial readiness complete until required blockers are cleared.
+The repository still has no productized SCM Service adapter/installer; the
+temporary .NET ServiceBase test host was removed after isolated SCM
+start/stop/restart and pipe-reconnection tests. RDP/logoff/reboot remain
+unexecuted on the shared console host. Windows 11, Server 2022 and Server 2025
+are `DEFERRED — PRODUCT OWNER VALIDATION`, not Phase 5 blockers. The
+NetworkService runtime DACL-negative and Phase 5 GitLab pipeline remain open.
+Do not claim commercial readiness.

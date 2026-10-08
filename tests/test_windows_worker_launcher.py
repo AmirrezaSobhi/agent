@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 import win32api
+import win32con
 import win32security
 import win32ts
 
@@ -25,6 +26,7 @@ from agent.infrastructure.windows_interactive_acl_harness import (
     append_allow_ace,
     restore_exact,
     run_acl_launch_experiment,
+    selected_logon_sid,
 )
 
 
@@ -82,6 +84,33 @@ def test_restore_exact_verifies_the_captured_descriptor(monkeypatch):
     monkeypatch.setattr("agent.infrastructure.windows_interactive_acl_harness.DescriptorSnapshot.capture", lambda *_: DescriptorSnapshot("default", "D:(A;;0x2;;;S-1-5-21-1)", "other"))
     with pytest.raises(RollbackVerificationError, match="ROLLBACK"):
         restore_exact(object(), snapshot)
+
+
+def test_selected_logon_sid_uses_verified_interactive_process_token(monkeypatch):
+    expected_sid = object()
+    token = type("Token", (), {"Close": lambda self: None})()
+    monkeypatch.setattr(
+        "agent.infrastructure.windows_interactive_acl_harness._process_session_id",
+        lambda _pid: 7,
+    )
+    monkeypatch.setattr(win32api, "GetCurrentProcess", lambda: 123)
+    monkeypatch.setattr(win32security, "OpenProcessToken", lambda *_: token)
+    monkeypatch.setattr(
+        win32security,
+        "GetTokenInformation",
+        lambda _token, token_class: (
+            ("user-sid",)
+            if token_class == win32security.TokenUser
+            else (("ordinary-group", 0), (expected_sid, win32con.SE_GROUP_LOGON_ID))
+        ),
+    )
+    monkeypatch.setattr(
+        win32security,
+        "LookupAccountSid",
+        lambda *_: ("Administrator", "window10-test", 0),
+    )
+
+    assert selected_logon_sid(7, "window10-test\\Administrator") is expected_sid
 
 
 def _runner_service_identity() -> str:

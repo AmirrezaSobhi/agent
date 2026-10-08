@@ -17,12 +17,12 @@ must be reassessed as evidence changes.
 | AR-09 | Credential storage is bound to wrong Windows identity | Runtime cannot use or leaks secret | Validate access identity, rotation, backup and recovery before selection | Open |
 | AR-10 | Support bundle includes broker or customer secrets | Privacy/financial harm | Allowlist collection, redaction, manifest, preview, consent, secret scan | v0.1.4 gate |
 | AR-11 | Installer/update migration fails during active runtime | Downtime or incompatible state | Signed artifacts, safe install windows, staged update and tested rollback | Deferred; release gates needed |
-| AR-12 | WPF build/deployment package not yet proven on net48 matrix | v0.1.4 infeasible or poor UX | Official-pack clean build on Windows 10 passed; package and remaining OS matrix required | Open |
-| AR-13 | Windows interactive UI test infrastructure absent | Acceptance claims unverified | Add Windows 11 interactive UIA runner; keep Session 0 build/runtime jobs separate | Infrastructure gap |
+| AR-12 | WPF package/runtime behavior is not fully verified across the approved OS matrix | Installation/UX regressions | Windows 10 Phase 5 build and interactive evidence; Windows 11/Server rows deferred by PO; validate before commercial release | Open release gate; deferred OS tests do not block Phase 5 |
+| AR-13 | Interactive desktop evidence is limited to one Windows 10 display/session | DPI, session and accessibility regressions | Windows 10 Session 1 UIA/screenshots completed; test other DPI and required lifecycle when safe | Partially mitigated; 96 DPI only |
 | AR-14 | Billing exhaustion disables protective operation | Existing exposure unmanaged | Separate new-order authorization from position protection; explicit offline policy | Open business/security policy |
 | AR-15 | Release publisher not exercised over required TLS/token path | Failed or unsafe publication | Recheck HTTPS trust, scoped write access, owner approval, read-back | Open release readiness item |
 | AR-16 | Clock drift breaks expiry, audit ordering or release evidence | Incorrect authorization/time windows | Verify synchronized clocks, monotonic local deadlines, bounded skew policy | Open compatibility/release gate |
-| AR-17 | Management pipe caller identity/DACL or SID provisioning does not hold on production Service | Cross-user data leak or unauthorized Runtime control | Isolated spike verified token SID and DACL; verify production Service principal, SID provisioning and full cross-session matrix | Implementation spike passed; P0 production release gate |
+| AR-17 | Management pipe caller identity/DACL or SID provisioning differs under the installed Agent Service | Cross-user data leak or unauthorized Runtime control | Worker ACL DACL rollback passed; temporary SCM harness verified the real Agent Core token, allowed Administrator access and LocalSystem operation denial; execute an unallowlisted non-admin DACL-negative test and validate the eventual product Service identity | P0 release gate remains open; NetworkService probe did not execute |
 | AR-18 | Windows 10 commercial support outlives Microsoft security servicing | Customer UI runs on an exposed OS | Disclose lifecycle; define edition/build and current ESU/security update condition; review per release | Accepted OS with active lifecycle risk |
 | AR-19 | v0.1.4 package accidentally provisions or changes Agent Service | Unplanned privileged changes/regression | User-scope package; before/after SCM/config invariant tests; no installer/service edits in Option A | Release blocker |
 
@@ -33,12 +33,15 @@ architectural failure modes and missing verification evidence.
 
 | ID | Updated Phase 5 evidence / treatment |
 |---|---|
-| AR-04 | Still Open: two Windows 10 runner hosts do not establish RDP/logoff/reboot behavior; no Phase 5 lifecycle run was performed. |
-| AR-07 | Still Open: Phase 4 stale/offline behavior evidence exists; no Phase 5 visual/freshness revalidation. |
-| AR-12 | Still Open: Windows 10 clean build is evidenced historically; Windows 11/Server matrix and Phase 5 artifact validation are absent. |
-| AR-13 | Infrastructure gap remains: no UI automation/display-capture connection available to this execution and no Server/Windows 11 environment identified. |
-| AR-17 | P0 remains Open: no installed Agent Service was present; Worker ACL experiment gates remain unexecuted; production identity/ACL evidence is absent. |
-| AR-20 | New — Phase 5 validation environment lacks supported OS coverage and installed Service; effect is v0.1.4 release readiness cannot be asserted; mitigation is prepare authorized hosts and collect same-artifact OS/Service evidence; state: Infrastructure blocker. |
+| AR-04 | Open: console Session 1 UI and Worker fixture were tested. RDP disconnect/reconnect, logoff/login and reboot were not run on the shared Runner. |
+| AR-07 | Partially mitigated: Phase 5 screens show explicit offline/unavailable/timeout states; C# stale-status tests passed. Live Service timestamps remain unavailable. |
+| AR-12 | Open for commercial release: official net48 clean build and Windows 10 interactive UI passed; no deployable package was validated. Windows 11/Server OS tests are `DEFERRED — PRODUCT OWNER VALIDATION`, not a Phase 5 blocker. |
+| AR-13 | Partially mitigated: Windows 10 interactive UIA and evidence screenshots captured at 96 DPI. Other DPI scales and assistive technology remain pending. |
+| AR-17 | P0 partially mitigated: Worker ACL tests passed 2/2; temporary SCM harness verified real Agent Core in Session 0 and allowed Admin status/logs, while LocalSystem requests received `UNAUTHORIZED`. NetworkService task failed before execution; unallowlisted-client DACL denial and product Service identity remain unverified. |
+| AR-20 | Revised: Windows 11/Server 2022/2025 tests are explicitly deferred to Product Owner validation and are excluded from Phase 5 completion. The three OS rows are not an infrastructure blocker. |
+| AR-21 | New — no productized SCM Service wrapper/installer exists. A temporary SCM harness was explicitly authorized, exercised and rolled back on `window10-test`; it hosted the real Python Agent Core in Session 0 with Runtime disabled. Customer-ready SCM provisioning, recovery policy and live Worker session remain unverified. |
+| AR-22 | New — Phase 5 GitLab branch pipeline is not yet evidenced. Push/API authorization and pipeline status must be verified before delivery. |
 
-These updates do not change product scope or downgrade the existing security,
-compatibility, or release gates. See [Windows Compatibility Matrix](WINDOWS_COMPATIBILITY.md).
+No real trade was executed. No Windows 11 or Server environment was provisioned or
+accessed. The Windows 10 test reports and screenshots are in the [Phase 5
+evidence bundle](../evidence/v0.1.4/phase5/windows10-19045/).
