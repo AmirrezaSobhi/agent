@@ -41,12 +41,14 @@ boundaries, open questions, and measurable proposed gates are in the
 preferred framework candidate, subject to compatibility and packaging
 feasibility. This plan does not authorize UI implementation.
 
-One-way GitLab-to-GitHub Release synchronization has a CI implementation
-proposal and focused local tests, documented in the
-[Release sync runbook](GITHUB_RELEASE_SYNC.md). It is **not operational** until
-an administrator protects release tags, configures the scoped GitHub write
-token, and a real existing Release passes end-to-end verification. No historic
-GitHub-only release or conflicting asset has been modified.
+Protected stable-tag publication to GitLab and downstream GitHub Release
+synchronization now have an implementation and isolated local tests, described
+in the [Release sync runbook](GITHUB_RELEASE_SYNC.md). The protected `v*` tag
+rule and protected GitHub credential were observed in project settings. The
+GitLab API is still configured for HTTP while the publisher fails closed on
+HTTP; protected Release Owner identity/approval review and effective
+`CI_JOB_TOKEN` write permissions also remain prerequisites. No release, tag,
+or historical artifact was modified while implementing this workflow.
 
 Other v0.1.4 evaluation topics remain:
 

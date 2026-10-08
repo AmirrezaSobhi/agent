@@ -159,10 +159,40 @@ class ReleaseSyncTests(unittest.TestCase):
 
         env = {"CI_COMMIT_TAG": "v0.1.3", "CI_COMMIT_SHA": "a" * 40,
                "CI_COMMIT_REF_PROTECTED": "true", "CI_JOB_TOKEN": "job-token",
-               "CI_API_V4_URL": "https://gitlab.example/api/v4", "CI_PROJECT_ID": "1"}
+               "CI_API_V4_URL": "https://gitlab.local/api/v4", "CI_PROJECT_ID": "1",
+               "CI_PROJECT_PATH": "root/agent", "CI_PIPELINE_SOURCE": "push"}
         with patch.dict("os.environ", env, clear=True):
             with self.assertRaisesRegex(SyncError, "GITHUB_RELEASE_TOKEN"):
                 run_from_environment()
+
+    def test_gitlab_sync_requires_https(self):
+        from tools.release_sync.github_release_sync import GitLabAPI
+
+        with self.assertRaisesRegex(SyncError, "HTTPS"):
+            GitLabAPI("http://gitlab.local/api/v4", "1", "test-token")
+
+    def test_automatic_sync_rejects_non_push_and_unexpected_project(self):
+        from tools.release_sync.github_release_sync import run_from_environment
+
+        with patch.dict("os.environ", {"CI_PIPELINE_SOURCE": "web"}, clear=True):
+            with self.assertRaisesRegex(SyncError, "tag push pipeline"):
+                run_from_environment()
+        with patch.dict("os.environ", {"CI_PIPELINE_SOURCE": "push", "CI_PROJECT_ID": "2",
+                                        "CI_PROJECT_PATH": "other/project"}, clear=True):
+            with self.assertRaisesRegex(SyncError, "root/agent"):
+                run_from_environment()
+
+    def test_gitlab_sync_strips_credentials_on_scheme_downgrade(self):
+        from tools.release_sync.github_release_sync import _StripSensitiveRedirectHeaders
+        from urllib.request import Request
+
+        handler = _StripSensitiveRedirectHeaders()
+        request = Request("https://gitlab.local/api/v4/packages", headers={"JOB-TOKEN": "secret"})
+        redirected = handler.redirect_request(request, None, 302, "Found", {},
+                                               "http://gitlab.local/api/v4/packages/file")
+        self.assertIsNotNone(redirected)
+        self.assertFalse(any(key.lower() == "job-token" for key in redirected.headers))
+        self.assertFalse(any(key.lower() == "job-token" for key in redirected.unredirected_hdrs))
 
     def test_historical_tag_override_requires_exact_pair_and_protected_ref(self):
         from tools.release_sync.github_release_sync import run_from_environment

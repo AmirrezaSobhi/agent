@@ -48,8 +48,9 @@ requirement. Only the real-MT5 gate consumes the persistent Worker and terminal.
    exact candidate SHA before/after the runtime gate.
 8. Pass the package evidence gate without rebuilding.
 9. Review the generated evidence and the [release checklist](../deployment/RELEASE_CHECKLIST.md).
-10. Obtain separate authorization for branch promotion, tag creation, and
-    publication. Those actions are outside an ordinary CI run.
+10. Merge the versioned release notes and authorization record to protected
+    `main`, then have an authorized Maintainer create the protected stable
+    version tag. That protected tag push is the explicit publication trigger.
 
 There is no production trading test in the release gate. The historical ACL
 experiment is not a mandatory release dependency. CI does not change Windows
@@ -78,12 +79,23 @@ binary. Pipeline #17 ran later on `develop` and does not replace or redefine the
 release provenance. The release artifact and checksum are recorded in the
 [v0.1.3 release notes](releases/v0.1.3-release-notes.md).
 
-Any future release still requires the applicable branch review, passing target
-ref pipeline, exact package provenance, and separately authorized tag and
-publication actions. The GitLab Release and Generic Package Registry remain
-authoritative. A final tag-pipeline stage is intended to synchronize a verified
-GitLab Release to GitHub; its credentials and protected-tag prerequisites are
-not yet configured, so GitHub synchronization is not operational. See the
+Any future release requires the applicable branch review, protected-main
+eligibility, exact package provenance, a release-specific authorization record,
+and a protected stable tag created by a Maintainer. The tag pipeline publishes
+the verified current-pipeline artifact to the GitLab Generic Package Registry,
+creates the GitLab Release only after package read-back checks, and then runs
+the downstream GitHub synchronizer. A failed publisher job fails the pipeline;
+retry it in the same tag pipeline after correcting a transient issue. Assets
+and Releases are immutable to this automation. See the
 [GitHub Release sync runbook](GITHUB_RELEASE_SYNC.md). Never relabel Pipeline
 #11 or #17 receipts as provenance for the v0.1.3 release or for a future
 release.
+
+The automated publisher and downstream sync are implemented fail-closed but
+are not production-verified. Before the first future release, configure GitLab
+HTTPS and Runner certificate trust, set protected CI variable
+`MT5_RELEASE_OWNER_USER_ID`, independently verify the referenced MR's Release
+Owner approval, and validate effective `CI_JOB_TOKEN` permissions. See the
+[GitHub Release synchronization runbook](GITHUB_RELEASE_SYNC.md) for the exact
+authorization schema, limitations, and recovery steps. No real release has
+exercised this publication path.

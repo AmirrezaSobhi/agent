@@ -6,6 +6,7 @@ stages:
   - build
   - smoke
   - package
+  - release_publish
   - release_sync
 
 workflow:
@@ -210,19 +211,42 @@ package:windows:
       - reports/release-evidence.json
       - sha256.txt
 
-# GitLab Release remains authoritative and is published after its package files
-# are ready. This final tag job waits for that metadata and the mirrored tag;
-# it fails closed unless the tag is protected and the GitHub token is present.
+# Publish only from an authorized protected stable tag push, after every gate
+# and package evidence job. Generic Package files are verified before the
+# GitLab Release is made visible.
+release:gitlab-publish:
+  stage: release_publish
+  tags:
+    - linux-source-unit
+  timeout: 20 minutes
+  interruptible: false
+  resource_group: release-publish
+  needs:
+    - job: package:windows
+      artifacts: true
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_TAG =~ /^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/ && $CI_COMMIT_REF_PROTECTED == "true"'
+    - when: never
+  retry:
+    max: 2
+    when:
+      - api_failure
+      - runner_system_failure
+  script:
+    - python3 tools/release_sync/gitlab_release_publish.py
+
+# GitHub is downstream of the fully verified GitLab publication. The sync job
+# no longer polls for a manually created source Release.
 release:github-sync:
   stage: release_sync
   tags:
     - linux-source-unit
   timeout: 20 minutes
   needs:
-    - job: package:windows
+    - job: release:gitlab-publish
       artifacts: false
   rules:
-    - if: '$CI_COMMIT_TAG =~ /^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_TAG =~ /^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/ && $CI_COMMIT_REF_PROTECTED == "true"'
     - when: never
   retry:
     max: 2

@@ -60,10 +60,30 @@ Never rebuild or substitute the candidate after a smoke gate.
   will be published; never relabel Pipeline #11 provenance.
 - [ ] Require post-merge staging/main and final tag pipelines explicitly;
   the GitLab project does not currently enforce a successful-pipeline merge gate.
-- [ ] Obtain separate authorization to promote `develop` → `staging` → `main`.
-- [ ] Obtain separate authorization before creating a tag or release.
+- [ ] Obtain separate authorization for branch promotion
+  `develop` → `staging` → `main`.
+- [ ] Merge the exact versioned release notes and
+  `docs/releases/vX.Y.Z-authorization.json` record to protected `main`. The
+  record must identify the exact tag and commit, the configured Release Owner
+  GitLab user ID, an ISO-8601 approval time, a merged-main MR reference, and an
+  explicit disposition and Owner approval for each known release-blocking
+  risk (including KI-009). Configure protected CI variable
+  `MT5_RELEASE_OWNER_USER_ID`; the tag creator must be a different user.
+- [ ] Use HTTPS for the GitLab API and confirm Runner certificate trust. The
+  publisher and downstream sync fail closed on HTTP because they send
+  `CI_JOB_TOKEN`.
+- [ ] A reviewer verifies actual GitLab MR approval before creating the tag;
+  CI_JOB_TOKEN can read the MR but cannot read the approval API.
+- [ ] Confirm the commit is reachable from protected `main`; only an authorized
+  Maintainer may create a protected stable `vMAJOR.MINOR.PATCH` tag. That tag
+  push starts automatic publication after all required gates pass.
 - [ ] Preserve existing release tags/assets and historical evidence unchanged.
-- [ ] Publish only the exact validated candidate and checksum; do not rebuild.
+- [ ] Let `release:gitlab-publish` publish only the exact validated candidate
+  and checksum; it does not rebuild. It validates and reads back Generic
+  Package files before creating the GitLab Release.
+- [ ] Confirm `release:github-sync` ran only after verified GitLab publication.
+- [ ] On failure, retry the same tag pipeline after correcting the cause. Do
+  not move/recreate a tag or overwrite a conflicting package, asset, or Release.
 - [ ] Confirm downstream mirroring without direct GitHub release mutation.
 
 ## Scope exclusions

@@ -128,7 +128,9 @@ class _StripSensitiveRedirectHeaders(HTTPRedirectHandler):
 
     def redirect_request(self, request, response, code, message, headers, new_url):
         redirected = super().redirect_request(request, response, code, message, headers, new_url)
-        if redirected is not None and urlsplit(new_url).netloc.lower() != urlsplit(request.full_url).netloc.lower():
+        old = urlsplit(request.full_url)
+        new = urlsplit(new_url)
+        if redirected is not None and (new.scheme.lower(), new.netloc.lower()) != (old.scheme.lower(), old.netloc.lower()):
             for name in tuple(redirected.headers):
                 if name.lower() in ("job-token", "authorization", "private-token"):
                     del redirected.headers[name]
@@ -140,8 +142,11 @@ class _StripSensitiveRedirectHeaders(HTTPRedirectHandler):
 
 class GitLabAPI:
     def __init__(self, api_url: str, project_id: str, job_token: str):
-        if not api_url.startswith("http://") and not api_url.startswith("https://"):
-            raise SyncError("CI_API_V4_URL must be an HTTP(S) URL")
+        parsed = urlsplit(api_url)
+        if (parsed.scheme != "https" or parsed.hostname != "gitlab.local" or
+                parsed.username or parsed.password or parsed.query or parsed.fragment or
+                parsed.path.rstrip("/") != "/api/v4"):
+            raise SyncError("CI_API_V4_URL must be this project's HTTPS GitLab API")
         self.api_url = api_url.rstrip("/")
         self.project_id = quote(project_id, safe="")
         self.http = HTTP({"JOB-TOKEN": job_token, "Accept": "application/json"})
@@ -193,7 +198,7 @@ class GitLabAPI:
     def download(self, url: str) -> bytes:
         expected_host = urlsplit(self.api_url).netloc.lower()
         parsed = urlsplit(url)
-        if parsed.scheme not in ("http", "https") or parsed.netloc.lower() != expected_host:
+        if parsed.scheme != "https" or parsed.netloc.lower() != expected_host:
             raise SyncError("Release assets must come from the configured GitLab host")
         _, _, data = self.http.request("GET", url)
         return data
@@ -493,6 +498,12 @@ def run_from_environment(*, dry_run: bool = False, tag_override: str | None = No
                          commit_override: str | None = None) -> dict[str, Any]:
     if (tag_override is None) != (commit_override is None):
         raise SyncError("Historical reconciliation requires both --tag and --commit")
+    if tag_override is None:
+        if os.environ.get("CI_PIPELINE_SOURCE") != "push":
+            raise SyncError("Automatic GitHub publication requires the protected tag push pipeline")
+        if (os.environ.get("CI_PROJECT_ID") != "1" or
+                os.environ.get("CI_PROJECT_PATH") != "root/agent"):
+            raise SyncError("Automatic GitHub publication is restricted to root/agent")
     tag = tag_override if tag_override is not None else os.environ.get("CI_COMMIT_TAG", "")
     expected_commit = commit_override if commit_override is not None else os.environ.get("CI_COMMIT_SHA", "")
     if not SEMVER_TAG.fullmatch(tag):
