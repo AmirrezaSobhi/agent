@@ -141,7 +141,7 @@ passes. The test harness is designed to add one session logon-SID ACE and
 restore/verify the exact original DACL in `finally`, but the test's rollback
 claim is unverified until executed in its fail-closed authorized Session 0
 context. See the Windows Runner inventory and status in
-[Implementation Baseline](IMPLEMENTATION_BASELINE.md#phase-5-verification-snapshot--2026-10-08).
+[Implementation Baseline](IMPLEMENTATION_BASELINE.md#phase-5-verification-snapshot-2026-10-08).
 
 No source security defect was confirmed in this focused review. This is not a
 full security certification; production Service identity, cross-user/session

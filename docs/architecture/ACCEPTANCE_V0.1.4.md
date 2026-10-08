@@ -59,7 +59,7 @@ they do not verify Windows 11/Server compatibility, scaling/accessibility,
 installed Service lifecycle, cross-user/RDP behavior, performance gates, or
 production package installation. GitLab [pipeline #45](http://gitlab.local/root/agent/-/pipelines/45)
 passed all 9 jobs on commit `438c80f7`. Details are recorded in the
-[Phase 4 implementation baseline](IMPLEMENTATION_BASELINE.md#phase-4-desktop-operations--2026-10-08).
+[Phase 4 implementation baseline](IMPLEMENTATION_BASELINE.md#phase-4-desktop-operations-2026-10-08).
 
 ## Scope and release gates
 
@@ -131,7 +131,7 @@ The two Runtime Worker ACL experiment tests remain pending and must not be
 counted among the previously reported two skips. Their fail-closed test requires
 an explicit dedicated flag and local worker principal. No real trades were run.
 The Linux authoring host could not run pytest (`No module named pytest`). See
-[Phase 5 implementation baseline](IMPLEMENTATION_BASELINE.md#phase-5-verification-snapshot--2026-10-08),
+[Phase 5 implementation baseline](IMPLEMENTATION_BASELINE.md#phase-5-verification-snapshot-2026-10-08),
 [Quality Gates](QUALITY_GATES.md), and the [Windows compatibility matrix](WINDOWS_COMPATIBILITY.md)
 for evidence and remaining blockers. Phase 4 pipeline #45 is historical and
 was not run against Phase 5 documentation.

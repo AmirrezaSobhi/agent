@@ -206,6 +206,6 @@ Blocked/pending deliverables: actual installed-Service lifecycle; two gated
 Worker ACL tests; RDP/logoff/reboot and multi-session validation; Windows 11,
 Server 2022 Desktop Experience, Server 2025 Desktop Experience; interactive
 visual/DPI/accessibility checks; repeatable CPU/memory/latency/soak data; and
-Phase 5 CI pipeline evidence. See the [Phase 5 baseline](IMPLEMENTATION_BASELINE.md#phase-5-verification-snapshot--2026-10-08)
+Phase 5 CI pipeline evidence. See the [Phase 5 baseline](IMPLEMENTATION_BASELINE.md#phase-5-verification-snapshot-2026-10-08)
 and [compatibility matrix](WINDOWS_COMPATIBILITY.md). Do not mark Phase 5 or
 commercial readiness complete until required blockers are cleared.

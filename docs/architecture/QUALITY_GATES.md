@@ -157,7 +157,7 @@ Server 2025 Desktop Experience compatibility result exists. No installed
 MT5Agent Windows Service was found; accordingly Service lifecycle gates remain
 blocked on a prepared host. The Phase 4 Session 1 screenshots are historical,
 not Phase 5 verification. See the [Windows compatibility matrix](WINDOWS_COMPATIBILITY.md)
-and the [Phase 5 baseline snapshot](IMPLEMENTATION_BASELINE.md#phase-5-verification-snapshot--2026-10-08).
+and the [Phase 5 baseline snapshot](IMPLEMENTATION_BASELINE.md#phase-5-verification-snapshot-2026-10-08).
 
 No new test suite executed from the Linux authoring host because its system
 Python has no `pytest` module. Do not install dependencies into the host to
