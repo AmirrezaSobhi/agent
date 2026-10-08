@@ -25,7 +25,7 @@ namespace MT5Agent.Desktop.ViewModels
             _errors = errors;
             Cards = new ObservableCollection<StatusCardViewModel>
             {
-                new StatusCardViewModel(Strings.ServiceStatus, Strings.Unavailable, Strings.ServiceUnavailableDetail),
+                new StatusCardViewModel(Strings.ServiceStatus, Strings.Unknown, Strings.ServiceUnavailableDetail),
                 new StatusCardViewModel(Strings.AgentStatus, Strings.Unavailable, Strings.AgentUnavailableDetail),
                 new StatusCardViewModel(Strings.WorkerStatus, Strings.Unavailable, Strings.RuntimeUnavailableDetail),
                 new StatusCardViewModel(Strings.Mt5Status, Strings.Unavailable, Strings.Mt5UnavailableDetail),

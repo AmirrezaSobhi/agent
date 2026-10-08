@@ -484,8 +484,10 @@ namespace MT5Agent.Desktop.Tests
                 Handler = token => Task.FromResult(new ManagementStatus
                 {
                     IsObserved = true, AgentState = "AGENT_RUNNING", WorkerState = "READY",
-                    RuntimeState = "MT5_CONNECTED", Mt5Connected = true, CentralState = "NOT_CONFIGURED",
-                    TradingCapability = "UNSUPPORTED", TradingAuthorized = "NOT_AUTHORIZED",
+                    RuntimeState = "MT5_CONNECTED", Mt5State = "CONNECTED", Mt5Connected = true,
+                    ServiceState = "UNKNOWN", ManagementState = "CONNECTED", SourceIdentity = "MT5Agent.AgentCore",
+                    CentralState = "NOT_CONFIGURED", TradingCapability = "UNSUPPORTED",
+                    TradingAuthorized = "UNKNOWN", TradingReadiness = "UNAVAILABLE",
                     ObservedAtUtc = DateTime.UtcNow, IsStale = false
                 })
             };
