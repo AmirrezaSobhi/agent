@@ -22,14 +22,19 @@ related product plan is [v0.1.4 Desktop UI](../../planning/v0.1.4-desktop-ui.md)
 expected main commit is exact. Local `main` had been at `84e71cd…`, a strict
 ancestor six commits behind `origin/main`; it was safely fast-forwarded to
 `dbca8ca…` after confirming it was not checked out in another worktree. Local
-`staging` and `develop` already matched their authoritative refs. The current
-documentation work is on a separate `codex/v014-phase0-discovery` branch.
+`staging` and `develop` initially matched their authoritative refs. Phase 0
+was merged by MR !4 from `codex/v014-phase0-discovery` into `develop` after the
+MR pipeline passed. Merge commit `b1b915e4d80167fe41b6e99e03b9087269334d49`
+contains the authoritative `main` history and Phase 0 docs. Post-merge
+Pipeline #35 also passed all eight required jobs; `staging` remains at its
+promotion point with the same tree as `main`.
 
 GitLab reported MR !3 merged from `staging` to `main`, merge commit
 `dbca8ca…`, and protected `main`/`staging` with Maintainer-only push/merge
 access and force-push disabled. Protected tag pattern `v*` permits Maintainers.
 The branch flow is intentional: `develop` → `staging` → `main`; they need not
-have identical tips. No valid post-release commits were found to discard.
+have identical tips. At the post-Phase-0 state, ancestry is `staging` → `main`
+→ `develop`. No valid post-release commits were discarded or rewritten.
 
 ## v0.1.3 historical boundary
 
@@ -63,6 +68,8 @@ GitLab API evidence at audit time:
 | `staging` | #30 | `e34d6d7…` | success | Jobs #232–239, same eight required jobs, all success. |
 | `develop` | #25 | `428d115…` | success | Jobs #191–198, same eight required jobs, all success. |
 | v0.1.3 tag | #16 | `970c047…` | success | Jobs #118–125, all eight release gates success. |
+| Phase 0 MR | #34 | `4d2332b…` | success | Jobs #264–271, all eight jobs success; MR !4 merged to `develop`. |
+| Post-merge `develop` | #35 | `b1b915e…` | success | Jobs #272–279, all eight jobs success. |
 
 The release jobs are protected stable-tag push jobs. They were not run by these
 branch pipelines. The successful v0.1.3 release proves the older publication
@@ -217,8 +224,10 @@ was found. KI-009 is the formal v0.1.5 investigation/acceptance backlog.
 - Remote Windows hosts were queried read-only for OS build, Python and
   PowerShell versions, active session, Runner service state/session, time-zone
   and W32Time status. Job records corroborate practical capabilities.
-- No release tag, artifact, pipeline, package, branch protection or runner
-  setting was created or modified. No real trading operation was executed.
+- Pipelines #33–35 were generated automatically by the normal MR/push workflow;
+  the latest MR and post-merge pipelines passed. No release tag or published
+  release/package was created or modified, and no branch-protection or runner
+  setting was changed. No real trading operation was executed.
 - GitLab historical artifact identity is verified by registry/release and
   GitHub checksum metadata; this snapshot does not claim an independent
   byte-for-byte local rehash.
