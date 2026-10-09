@@ -41,8 +41,9 @@ failure.
   created a new service and later installation fails, remove only that exact
   newly created service and restore the prior allowlist.
 - Route required Service and configured Worker setup through an Inno Setup
-  `Exec` helper that checks the child exit code and raises an installation
-  failure for both interactive and silent setup.
+  `Exec` helper that checks the child exit code, reports the failure, and sets
+  Inno's `GetCustomSetupExitCode` result so both interactive and silent setup
+  finish with a nonzero process exit code.
 - On post-install failure, keep the installed files and Uninstall entry for
   repair/uninstall. Automatic deletion is avoided because Setup has finalized
   its uninstall record and must not erase user configuration, logs, or MT5 data.

@@ -41,8 +41,10 @@ the user does not install Python. MetaTrader 5 itself is never redistributed.
   redacted.
 - Service and configured Worker registration are required operations. Inno
   Setup checks their actual child-process exit codes and fails both interactive
-  and silent installation if either operation fails. Its own setup log records
-  the operation and exit code. Because these checks run after Inno has finalized
+  and silent installation if either operation fails. The required-operation
+  state is also returned through Inno's `GetCustomSetupExitCode`, since a
+  Pascal-script exception alone does not guarantee a nonzero process exit code.
+  Its own setup log records the operation and exit code. Because these checks run after Inno has finalized
   the uninstall record, a failed operation intentionally leaves the application
   files and Uninstall entry available for diagnosis and repair/uninstall. Setup
   does not delete user configuration, logs, or MT5 data as an automatic rollback.
