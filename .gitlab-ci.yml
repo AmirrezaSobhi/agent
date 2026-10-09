@@ -382,6 +382,8 @@ worker:build:
       if ($LASTEXITCODE -ne 0) { throw 'Bundled Worker runtime dependencies failed to install' }
       & $workerPython -m pip check
       if ($LASTEXITCODE -ne 0) { throw 'Worker build environment is inconsistent' }
+      & $workerPython ./deployment/make_icon.py
+      if ($LASTEXITCODE -ne 0) { throw 'Worker build icon generation failed' }
       & $workerPython -m PyInstaller --clean --noconfirm --distpath ./dist/worker --workpath ./.ci-worker-work ./deployment/RuntimeWorker.spec
       if ($LASTEXITCODE -ne 0) { throw 'Interactive Worker executable build failed' }
       $worker = Get-Item -LiteralPath './dist/worker/MT5AgentWorker-v0.1.3.exe' -ErrorAction Stop
