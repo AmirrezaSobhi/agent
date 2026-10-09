@@ -6,8 +6,8 @@ public release.
 
 ## Phase 6 implementation gates
 
-- [x] Build WPF Release x64 once on the Windows 10 runner (pipeline #53,
-  job #438).
+- [x] Build WPF Release x64 once on the Windows 10 runner (pipeline #54,
+  job #449, executable source commit `567c6810292c92ec4b00d8b9ae01e458fcabb88c`).
 - [x] Run compiled C# and Management IPC tests without rebuilding the
   WPF application.
 - [x] Produce the versioned Desktop ZIP and record commit, pipeline, build job,
@@ -15,30 +15,40 @@ public release.
 - [x] Validate the exact ZIP in a downstream job: safe extraction, no duplicate
   or traversal path, complete manifest/checksum coverage, expected file list,
   unchanged archive hash, packaged EXE hash equal to the tested build, and a
-  three-second non-interactive launch smoke (pipeline #53, job #446).
+  bounded non-interactive launch smoke (pipeline #54, job #457).
 - [x] Extract the CI ZIP into a fresh CI validation directory without relying on
   Visual Studio or source files; the packaged process stayed alive in the
   bounded non-interactive launch smoke.
-- [ ] Interactively verify Dashboard, Runtime, Settings, Logs, Diagnostics,
-  About, theme and
-  preferences persistence, tray behavior where interactive, offline behavior,
-  authorized read-only Management IPC behavior, and controlled exit.
-- [ ] Verify user preferences survive replacement and rollback; verify removal
-  deletes only the Desktop version folder/shortcut and leaves Agent, Worker,
-  machine configuration and user settings unchanged.
-- [ ] Scan package contents for secrets, private keys, test credentials,
-  development endpoints, PDBs, test assemblies and Python runtime files.
+- [ ] Interactive package walkthrough (Dashboard, pages, themes, tray and
+  shutdown): **DEFERRED**; optional for this internal milestone.
+- [ ] Installed product Service connection through the extracted package:
+  **DEFERRED**; existing Phase 5 Service/IPC and Phase 6 deterministic IPC
+  fixture evidence remain applicable to their tested scopes.
+- [ ] Side-by-side replacement/rollback and removal inventory: **DEFERRED**.
+  The manual procedure preserves prior binaries and keeps user preferences
+  outside the app folder; it was not rehearsed on Windows in this milestone.
+- [ ] Independent secret-canary scan: **DEFERRED**. The CI manifest/allowlist
+  validated package contents; no separate canary scan is claimed.
 - [x] Run C#, Windows/Python, Linux/Python, IPC, smoke, and existing Agent
-  packaging gates without weakening any job (all 11 jobs passed in pipeline #53).
+  packaging gates without weakening any job (all 11 jobs passed in pipeline #54).
 - [x] Confirm the tested branch commit has a successful GitLab pipeline and
   retain the exact tested artifact and evidence.
-- [ ] No real trade, tag, release publication, production deployment, Service
-  reconfiguration or automatic provisioning occurs in Phase 6.
+- [x] No real trade, tag, release publication, production deployment, Service
+  reconfiguration or automatic provisioning was performed.
+
+**Internal milestone:** COMPLETE — INTERNAL DEVELOPMENT MILESTONE. Pipeline #54
+passed 11/11 jobs for executable source commit `567c6810292c92ec4b00d8b9ae01e458fcabb88c`.
+The tested ZIP is `MT5Agent-Desktop-v0.1.4-windows-x64.zip`, SHA-256
+`ad32e673cc7a3f18f4eb64e25cbfb4f64fe438e103d9c139aed4c21b1bc5ac63`.
+Interactive package testing and other deferred checks do not block this
+Product Owner-approved internal milestone. Commercial release remains NOT
+APPROVED.
 
 ## Commercial/public release gates
 
 - [ ] Production code signing with an authorized certificate and protected
-  signing process.
+  signing process. Current package status: `UNSIGNED — ACCEPTED FOR INTERNAL
+  DEVELOPMENT`; commercial/public release remains blocked.
 - [ ] Product-owner review of all Windows 10 release-support/lifecycle
   conditions.
 - [ ] Product Owner validation of Windows 11, Windows Server 2022 Desktop
@@ -60,10 +70,12 @@ release evidence bundle. Include status `PASS`, `FAIL`, `BLOCKED`, `PENDING`, or
 test method, evidence path, and limitation. Never infer success from a build,
 source inspection, skipped test, or different artifact.
 
-Pipeline #53 passed on commit `246b1f109e56c32ba7174d23a1bb5708805750e4`.
-Build job #438 produced the 55,230-byte ZIP with SHA-256
-`01db0addfc3e85993fcb429ec124d5ce14fd48dabd5271d52fc0f00f51e40cff`;
-package verification job #446 consumed that artifact and passed. The unchecked
-interactive package, replacement, rollback and removal gates remain open.
-Public release is blocked on authorized code signing and applicable commercial
-validation gates.
+Pipeline #54 passed 11/11 jobs on executable source commit
+`567c6810292c92ec4b00d8b9ae01e458fcabb88c`. Build job #449 produced
+`MT5Agent-Desktop-v0.1.4-windows-x64.zip` with SHA-256
+`ad32e673cc7a3f18f4eb64e25cbfb4f64fe438e103d9c139aed4c21b1bc5ac63`;
+verification job #457 consumed that artifact and passed. Interactive package,
+installed-Service integration, replacement/rollback/removal, extended DPI,
+accessibility and stability checks remain visibly deferred. See
+[`DISTRIBUTION.md`](DISTRIBUTION.md). Public release is not approved and
+requires authorized code signing and applicable commercial validation gates.

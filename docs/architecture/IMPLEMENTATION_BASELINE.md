@@ -338,15 +338,20 @@ exported). The Windows 10 runner is shared infrastructure; tests must remain
 bounded and must not alter existing sessions or Service configuration.
 
 Phase 6 adds a ZIP-only WPF distribution workflow; it does not package or
-modify the Agent/Worker. Pipeline #53 passed all 11 jobs on commit
-`246b1f109e56c32ba7174d23a1bb5708805750e4`. Its Windows 10 build job #438
-produced a 55,230-byte package with SHA-256
-`01db0addfc3e85993fcb429ec124d5ce14fd48dabd5271d52fc0f00f51e40cff`; package
-verification job #446 extracted that same artifact, validated its manifest,
-hashes and provenance, and passed a 3-second non-interactive launch smoke.
-Job #441 passed 41 C# tests, 23 Windows Management IPC tests, and a
-deterministic cross-process status smoke. This is not interactive validation
-of the package, does not test an installed product Agent Service, and does not
-prove package replacement/removal behavior. See [Distribution](DISTRIBUTION.md)
-and [Release Checklist](RELEASE_CHECKLIST.md) for open gates. Windows 11 and
-Windows Server 2022/2025 remain `DEFERRED — PRODUCT OWNER VALIDATION`.
+modify the Agent/Worker. Pipeline #54 passed all 11 jobs on executable source
+commit `567c6810292c92ec4b00d8b9ae01e458fcabb88c`. Windows 10 build job #449
+produced `MT5Agent-Desktop-v0.1.4-windows-x64.zip`, SHA-256
+`ad32e673cc7a3f18f4eb64e25cbfb4f64fe438e103d9c139aed4c21b1bc5ac63`;
+verification job #457 consumed that same artifact, checked integrity and
+provenance, and completed a bounded non-interactive launch smoke. Job #452
+passed 41 C# tests, 23 Windows Management IPC tests, Python regression and a
+deterministic cross-process status smoke. By the Product Owner's fast-track
+decision, Phase 6 is **COMPLETE — INTERNAL DEVELOPMENT MILESTONE**. Interactive
+package validation, installed product Service connection, and package
+replacement/rollback/removal rehearsal remain deferred, not passed. The
+documentation-only closure commit does not alter the tested executable,
+package scripts, or CI configuration, so Pipeline #54 remains applicable to
+the artifact identified above. Windows 11 and Windows Server 2022/2025 remain
+`DEFERRED — PRODUCT OWNER VALIDATION`. Commercial release remains NOT APPROVED;
+the internal package is unsigned. See [Distribution](DISTRIBUTION.md) and
+[Release Checklist](RELEASE_CHECKLIST.md) for scope and remaining gates.

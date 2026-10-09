@@ -1,7 +1,7 @@
 # Windows Desktop Distribution — v0.1.4
 
-**Status:** Implemented internal ZIP workflow. Windows 10 CI evidence below is
-for the exact Phase 6 branch commit and artifact; interactive release
+**Status:** COMPLETE — INTERNAL DEVELOPMENT MILESTONE. Windows 10 CI evidence
+below covers the exact executable/package artifact. Interactive package
 validation and commercial release approval remain separate gates.
 
 ## Package boundary
@@ -79,25 +79,28 @@ implies their compatibility.
 
 ## Phase 6 evidence
 
+Product Owner fast-track scope accepts the verified CI package for internal
+development closure. No interactive package session was available for this
+closure, so visual package validation remains deferred. This acceptance does
+not change commercial release gates.
+
 | Gate | Evidence | Result |
 |---|---|---|
 | Branch baseline | Accepted Phase 5 SHA `12826f42989cda7cee3e3847632cbf39bf1a21dc`; Phase 6 branch created directly from it | PASS |
-| Windows 10 Release build | Pipeline [#53](http://gitlab.local/root/agent/-/pipelines/53), commit `246b1f109e56c32ba7174d23a1bb5708805750e4`; build job [#438](http://gitlab.local/root/agent/-/jobs/438), runner `WINDOW10-TEST`, Windows 10 Pro x64 build 19045; MSBuild `4.8.9037.0 built by: NET481REL1`; official .NET Framework 4.8 reference assembly `4.8.3761.0`; framework release key `533325` | PASS |
-| Build Once → Test Same Artifact | Job #438 performed one clean Release x64 rebuild and uploaded app/test outputs and ZIP; [test:wpf-management #441](http://gitlab.local/root/agent/-/jobs/441) consumed those outputs without rebuilding and passed 41 C# tests, 23 Python Management IPC tests and deterministic cross-process status smoke; [package verifier #446](http://gitlab.local/root/agent/-/jobs/446) consumed the ZIP from #438 | PASS |
-| Package SHA-256 and provenance | `MT5Agent-Desktop-v0.1.4-windows-x64.zip`, 55,230 bytes; SHA-256 `01db0addfc3e85993fcb429ec124d5ce14fd48dabd5271d52fc0f00f51e40cff`; source `246b1f109e56c32ba7174d23a1bb5708805750e4`; pipeline 53; build job 438; packaged EXE SHA-256 `f191b65826acf57b80819205a0b4337ff37a73e85de7cfe926aa5ce7d8e5df97` | PASS |
-| Clean extraction and package integrity | Job #446 extracted the exact job #438 ZIP; validated safe/unique paths, manifest, SHA256SUMS, declared file set, provenance, executable hash, and unchanged archive hash. Packaged executable remained alive for the three-second CI launch smoke. | PASS (non-interactive package smoke) |
-| C#/Python and integration regression | Pipeline #53 passed all 11 jobs; GitLab test summary showed 634 tests; job #441 reported 41/41 C# tests, 23/23 Windows Management IPC tests and deterministic cross-process status smoke (one 72 ms sample). Existing Linux/Windows Python, Agent build, smoke and Agent package jobs also passed. | PASS for executed CI suites; no live trading |
-| Packaged interactive pages, themes, tray, preferences, clean removal/upgrade, and installed-Service IPC | Shared runner has no installed Agent Service; CI launch is non-interactive. These scenarios were not executed against the packaged artifact. Phase 5 screenshots are historical WPF evidence, not proof for this ZIP. | PENDING |
-| Settings persistence and offline behavior | Same-build C# tests in job #441 cover preference persistence, invalid preference fallback, expected offline pipe state, Dashboard unavailable data and responsiveness. No interactive walkthrough used the extracted package. | PASS for automated logic; package-level interactive behavior PENDING |
-| Windows 10 interactive screenshots and tray behavior | No authorized interactive Windows desktop control was available for this Phase 6 run. | PENDING |
+| Windows 10 Release build | Pipeline [#54](http://gitlab.local/root/agent/-/pipelines/54), executable/package source commit `567c6810292c92ec4b00d8b9ae01e458fcabb88c`; build job [#449](http://gitlab.local/root/agent/-/jobs/449), Windows 10 x64 runner; official .NET Framework 4.8 build prerequisites | PASS |
+| Build Once → Test Same Artifact | Job #449 built Release x64 once; tests consumed the build outputs and package verifier [#457](http://gitlab.local/root/agent/-/jobs/457) consumed the same ZIP without rebuilding | PASS |
+| Package SHA-256 and provenance | `MT5Agent-Desktop-v0.1.4-windows-x64.zip`; SHA-256 `ad32e673cc7a3f18f4eb64e25cbfb4f64fe438e103d9c139aed4c21b1bc5ac63`; source `567c6810292c92ec4b00d8b9ae01e458fcabb88c`; pipeline 54; build job 449 | PASS |
+| Clean extraction and package integrity | Job #457 extracted the exact job #449 ZIP, validated manifest/checksums/provenance and unchanged artifact hash, then completed a bounded non-interactive executable launch smoke | PASS for package integrity and process smoke; not visual UI evidence |
+| C#/Python and integration regression | Pipeline #54 passed all 11 jobs; C# tests 41 passed, Python tests passed, IPC tests passed, and deterministic cross-process smoke passed. Existing Agent build/runtime smoke and package gates also passed. | PASS for executed CI suites; no live trades |
+| Settings and offline behavior | Existing automated tests cover user preference persistence, safe fallback, offline state and UI responsiveness. Package-specific replacement/rollback/removal was not rehearsed. | PASS for automated logic; package replacement/removal DEFERRED |
+| Packaged interactive pages, themes, tray, and installed-Service IPC | No interactive desktop or installed product Service was used for this fast-track closure. | DEFERRED |
+| Windows 10 package interactive launch | Optional focused interactive smoke was not immediately available in this environment. | DEFERRED; does not block internal milestone |
 | Windows 11 / Server OS validation | Not requested in this phase | `DEFERRED — PRODUCT OWNER VALIDATION` |
-| Production code signing | No authorized signer found in runner inspection | BLOCKED for commercial publication |
+| Production code signing | Package is unsigned; no authorized production signer is configured | `UNSIGNED — ACCEPTED FOR INTERNAL DEVELOPMENT`; `CODE SIGNING REQUIRED — RELEASE BLOCKED` for public/commercial release |
 
 Retained machine-readable build and validation reports are GitLab artifacts
-from jobs #438 and #446. The verification job passed only after its report
-returned `status=PASS`; its launch smoke is process-liveness evidence, not
-visual UI validation. Pipeline #52's verification wrapper incorrectly checked
-stale PowerShell `$LASTEXITCODE` after a `.ps1` call; the wrapper now verifies
-the structured report status, and pipeline #53 passed on the corrected commit.
-See the checked-in [pipeline evidence record](../evidence/v0.1.4/phase6/pipeline-53.md)
-and [Release Checklist](RELEASE_CHECKLIST.md).
+from jobs #449 and #457. The package smoke proves extraction, integrity, and
+process liveness only; it is not visual UI validation. See the [Release
+Checklist](RELEASE_CHECKLIST.md). Pipeline #54 covers the executable and CI
+configuration at commit `567c681`; this documentation-only closure does not
+change that artifact or its test applicability.

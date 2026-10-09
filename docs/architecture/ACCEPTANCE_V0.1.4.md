@@ -153,7 +153,10 @@ tests do not prevent Phase 5 completion.
 Commercial release remains a separate decision and is not automatically
 authorized by this phase.
 
-## Phase 6 package acceptance addendum
+## Phase 6 package acceptance addendum — internal development milestone
+
+**Status:** COMPLETE — INTERNAL DEVELOPMENT MILESTONE under the Product
+Owner's fast-track acceptance. This is not commercial/public release approval.
 
 The Phase 6 release artifact is a user-scope ZIP containing the WPF application
 only. It must not provision or replace the Python Agent/Worker. The mandatory
@@ -162,18 +165,20 @@ package-verification job that consumes the same ZIP without rebuilding.
 
 | ID | Phase 6 criterion | Evidence | Result |
 |---|---|---|---|
-| A21 | Versioned Desktop ZIP contains only approved WPF files, documentation, manifest and checksums | Pipeline #53 build job #438 and downstream verifier #446 | PASS for declared package contents; no separate secret-canary scanner run |
-| A22 | SHA-256 and commit/pipeline/build-job provenance match the tested artifact | Build report/manifest; source commit `246b1f109e56c32ba7174d23a1bb5708805750e4`; pipeline 53; build job 438; ZIP SHA-256 `01db0addfc3e85993fcb429ec124d5ce14fd48dabd5271d52fc0f00f51e40cff` | PASS |
-| A23 | Exact CI ZIP extracts and launches on Windows 10 without developer tooling/source checkout | Job #446 extracted and verified the build artifact, then kept the packaged EXE alive for a 3-second non-interactive smoke | PASS for extraction/process smoke; interactive UI remains PENDING |
-| A24 | User settings survive side-by-side upgrade and rollback and live outside installation folder | Job #441 preference tests; no package replacement/rollback walkthrough | PARTIAL; automated persistence passes, package upgrade/rollback PENDING |
-| A25 | Package removal leaves preferences, Agent/Worker, machine config and Service state unchanged | No interactive clean-host removal inventory; ZIP-only package by design | PENDING |
-| A26 | Package integrity checks reject unsafe paths, duplicates, missing or undeclared files and changed hashes | Job #446 positive validation of the exact ZIP; no tampered-archive negative fixture in this pipeline | PARTIAL; positive integrity verified, adversarial negative fixture PENDING |
-| A27 | No secrets, test credentials, private keys, PDBs, test binaries, Python Agent or Worker are packaged | Job #446 verified exact manifest-declared payload; builder allowlists Desktop runtime files and adds docs/manifest/checksums; no separate secret scanner | PARTIAL; package boundary verified, independent canary scan PENDING |
-| A28 | Production Authenticode signing is verified before commercial publication | Authorized certificate validation | BLOCKED for commercial release; internal Phase 6 artifact remains unsigned |
+| A21 | Versioned Desktop ZIP and manifest/checksums are produced | Pipeline #54 build job #449 and verifier #457 | PASS |
+| A22 | SHA-256 and commit/pipeline/build-job provenance match the tested artifact | Source commit `567c6810292c92ec4b00d8b9ae01e458fcabb88c`; pipeline 54; build job 449; ZIP SHA-256 `ad32e673cc7a3f18f4eb64e25cbfb4f64fe438e103d9c139aed4c21b1bc5ac63` | PASS |
+| A23 | Exact CI ZIP extracts and launches on Windows 10 without developer tooling/source checkout | Job #457 verified and extracted the artifact, then completed a bounded non-interactive process smoke | PASS for integrity/extraction/process smoke; interactive walkthrough DEFERRED |
+| A24 | User preferences are outside installation folder and automated persistence tests pass | Pipeline #54 C# tests and documented `%LOCALAPPDATA%` path | PASS for automated persistence; package replacement/rollback DEFERRED |
+| A25 | Manual extraction, replacement, and removal procedure is documented | [`deployment/desktop/INSTALL.md`](../../deployment/desktop/INSTALL.md); not rehearsed on Windows in this milestone | PASS for documentation; runtime rehearsal DEFERRED |
+| A26 | Same artifact is tested and verified; archive/checksum/provenance checks pass | Pipeline #54 jobs #449, #452 and #457; 11/11 jobs passed | PASS |
+| A27 | No confirmed critical package/security blocker or unauthorized trading capability | Existing CI and package allowlist/manifest checks; no trading operation is included | PASS for available evidence; separate secret-canary scan DEFERRED |
+| A28 | Production Authenticode signing is verified before commercial publication | No authorized production certificate | BLOCKED for commercial release; `UNSIGNED — ACCEPTED FOR INTERNAL DEVELOPMENT` |
 
 Windows 11, Server 2022 Desktop Experience and Server 2025 Desktop Experience
 remain `DEFERRED — PRODUCT OWNER VALIDATION`; they are not Phase 6 Codex test
-requirements and are not a Phase 6 implementation blocker. A commercial release
-still requires separate Product Owner authorization and closure of applicable
-signing/lifecycle gates. See [Distribution](DISTRIBUTION.md) and the
+requirements and are not an internal milestone blocker. Interactive package
+testing, installed-Service integration, package replacement/removal rehearsal,
+extended DPI/accessibility, and soak tests are also DEFERRED. A commercial
+release remains NOT APPROVED and requires separate Product Owner authorization
+and closure of applicable signing/lifecycle gates. See [Distribution](DISTRIBUTION.md) and the
 [Release Checklist](RELEASE_CHECKLIST.md).

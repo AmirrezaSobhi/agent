@@ -196,24 +196,25 @@ follow-up documentation commit receives a separate pipeline check.
 
 ## Phase 6 package-specific gates
 
-The package gates below apply in addition to the quality targets above. Their
-final values must cite the same CI artifact tested on Windows 10. A successful
-build alone is not a clean-package pass.
+The following status reflects the Product Owner-approved fast-track internal
+milestone. The deferred release gates below are not represented as passed.
 
 | Gate | Metric / threshold | Test and evidence | Result |
 |---|---|---|---|
-| One-build artifact provenance | Exactly one WPF Release x64 rebuild per pipeline; C# tests and package verifier consume that output; packaged EXE SHA-256 equals build-output SHA-256 | Pipeline #53: build job #438, test job #441, verifier job #446; commit and hashes in [Distribution](DISTRIBUTION.md) | PASS for pipeline #53; 11/11 jobs succeeded |
-| Package integrity | Every declared payload file and manifest has a SHA-256; no duplicate, traversal, absolute or undeclared files; archive hash unchanged before/after validation | `Test-DesktopPackage.ps1` executed by job #446 on exact ZIP; same artifact hash before/after | PASS for this package's positive verification; tampered-archive negative fixture remains untested |
-| Clean Windows 10 deployment | Exact CI ZIP extracts without repository/Visual Studio; package EXE remains alive for bounded startup smoke; interactive pages/startup/shutdown validated separately | Job #446 extracted exact artifact and observed process alive after 3 seconds in the Windows 10 CI session | PARTIAL: archive extraction and non-interactive launch PASS; interactive launch/screenshots remain pending |
-| Settings/data safety | Preferences outside application folder survive replacement/rollback; no plaintext secrets; package removal leaves preferences and Agent state intact | Job #441 tests preference persistence and safe defaults; user data path is outside app directory; no package replacement/removal inventory | PARTIAL: automated preferences pass; replacement/removal and independent secret-canary scan pending |
-| Upgrade recovery | New version extracted side-by-side; previous known-good folder remains available; interrupted replacement does not mutate the previous folder | Manual runbook review only; no Windows package replacement simulation | PENDING Windows run |
-| Runtime dependency | .NET Framework 4.8 or later installed; no developer targeting pack required on end-user host | Build runner release key 533325, official reference assembly 4.8.3761.0; package manifest/prerequisite; CI launch smoke | PARTIAL: CI host launch passed; clean end-user host dependency test pending |
-| Code signing | Authorized production Authenticode signature verifies for the distributed executable | Signer identity and `Get-AuthenticodeSignature` verification without exposing key material | BLOCKED: no authorized signer identified |
-| OS coverage | Windows 10 x64 package evidence; other approved OS rows explicitly deferred | [Compatibility Matrix](WINDOWS_COMPATIBILITY.md); pipeline #53 on Windows 10 Pro build 19045 | PARTIAL: build/extract/process smoke pass; interactive package validation pending. Windows 11/Server `DEFERRED — PRODUCT OWNER VALIDATION` |
+| One-build artifact provenance | One WPF Release x64 build; test and verifier consume same artifact | Pipeline #54, build #449, tests #452, verifier #457; source commit and hashes in [Distribution](DISTRIBUTION.md) | PASS; pipeline 11/11 |
+| Package integrity | Manifest/checksum/provenance and unchanged archive hash validate | Exact package verified by job #457 | PASS; SHA-256 `ad32e673cc7a3f18f4eb64e25cbfb4f64fe438e103d9c139aed4c21b1bc5ac63` |
+| Windows 10 launch | Exact ZIP extracts and executable survives bounded launch smoke | Job #457 on the Windows 10 runner | PASS for extraction/process smoke; interactive launch deferred |
+| Settings/data safety | Automated persistence/default recovery; preferences stored outside package; no secrets in preference schema | C# tests in job #452 and documented LocalAppData ownership | PASS for automated settings behavior; package replacement/removal and separate secret-canary scan DEFERRED |
+| Manual install/upgrade/removal | Extract/launch/replace/remove procedure is documented; prior version retained for manual rollback | [`deployment/desktop/INSTALL.md`](../../deployment/desktop/INSTALL.md); not rehearsed on Windows for this fast-track milestone | PASS for documented procedure; Windows rehearsal DEFERRED |
+| Runtime dependency | .NET Framework 4.8 or later end-user runtime; targeting pack is build-only | Windows CI host successfully ran the packaged executable; prerequisite documented | PASS for the tested Windows 10 host; clean independent machine dependency test DEFERRED |
+| Interactive validation | Dashboard/pages/themes/tray/shutdown tested from extracted ZIP in desktop session | Not run in this fast-track closure | DEFERRED; not an internal milestone blocker |
+| Installed-Service integration | Extracted package connects to an installed product Agent Service | Existing Phase 5 and deterministic IPC fixture evidence only; no product Service on package runner | DEFERRED |
+| Code signing | Authorized production Authenticode signature verifies | No authorized production signer | `UNSIGNED — ACCEPTED FOR INTERNAL DEVELOPMENT`; commercial release BLOCKED |
+| OS coverage | Windows 10 x64 is the only Codex target for this phase | Pipeline #54 on Windows 10; see [Compatibility Matrix](WINDOWS_COMPATIBILITY.md) | Windows 10 CI package evidence PASS; interactive package check DEFERRED. Windows 11/Server `DEFERRED — PRODUCT OWNER VALIDATION` |
 
-Thresholds for startup, idle CPU/RAM and IPC remain those documented in the
-Phase 5 measurement protocol; compare only equivalent WPF artifacts and test
-conditions. Do not use a CI Session 0 startup smoke as interactive UI evidence.
-Pipeline #53's three-second launch sample is not a startup percentile or
-performance measurement; no Phase 6 CPU, memory, IPC latency, repeated launch,
-or shutdown benchmark was collected.
+No Phase 6 CPU, memory, UI responsiveness, IPC percentile, repeated-launch, or
+shutdown benchmark is claimed. Pipeline process smoke is not interactive UI or
+performance evidence. Long-duration stability, advanced accessibility, RDP,
+extended DPI, package replacement/rollback rehearsal, code signing, and
+commercial validation remain open release gates. Windows 11/Server tests are
+`DEFERRED — PRODUCT OWNER VALIDATION` and do not block this internal milestone.
