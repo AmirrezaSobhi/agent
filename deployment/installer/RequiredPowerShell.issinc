@@ -1,0 +1,18 @@
+function RunRequiredPowerShell(const OperationName, Parameters, WorkingDirectory: string): Boolean;
+var
+  ResultCode: Integer;
+  PowerShellPath: string;
+begin
+  PowerShellPath := ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe');
+  Log('Required operation starting: ' + OperationName);
+  if not Exec(PowerShellPath, Parameters, WorkingDirectory, SW_HIDE, ewWaitUntilTerminated, ResultCode) then begin
+    Log('Required operation could not start: ' + OperationName + '; error=' + SysErrorMessage(ResultCode));
+    RaiseException(OperationName + ' could not be started. See the service installation log for details.');
+  end;
+
+  Log('Required operation exit code: ' + OperationName + '=' + IntToStr(ResultCode));
+  if ResultCode <> 0 then
+    RaiseException(OperationName + ' failed with exit code ' + IntToStr(ResultCode) +
+      '. The installation is incomplete. See C:\ProgramData\MT5Agent\Logs\service-install.log.');
+  Result := True;
+end;

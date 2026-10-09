@@ -32,6 +32,23 @@ the user does not install Python. MetaTrader 5 itself is never redistributed.
   original non-elevated user's settings, even when UAC credentials came from a
   different administrator account. The profile path and Runtime Principal still need
   explicit provisioning before a live Worker task can safely be registered.
+- The Service installer uses Windows PowerShell 5.1 `New-Service`, `Set-Service`,
+  and `Start-Service` APIs instead of constructing `sc.exe create` arguments.
+  It verifies the registered binary, LocalSystem identity, automatic start mode,
+  and Running state. Service diagnostics are written to
+  `%ProgramData%\MT5Agent\Logs\service-install.log`; exception message, error
+  identifier, source line, and stack are recorded with credential-like values
+  redacted.
+- Service and configured Worker registration are required operations. Inno
+  Setup checks their actual child-process exit codes and fails both interactive
+  and silent installation if either operation fails. Its own setup log records
+  the operation and exit code. Because these checks run after Inno has finalized
+  the uninstall record, a failed operation intentionally leaves the application
+  files and Uninstall entry available for diagnosis and repair/uninstall. Setup
+  does not delete user configuration, logs, or MT5 data as an automatic rollback.
+  Re-running installation is idempotent for a matching Service binary and
+  preserves existing Management Pipe allowlist entries; a Service name/path or
+  account collision is refused.
 - Desktop preferences remain per-user. Setup does not modify account data,
   MT5 profiles, trading permissions, or credentials. Uninstall removes the
   MT5Agent service and application files but preserves configuration and logs.
@@ -96,6 +113,11 @@ does not install the product or remove a Service on its persistent runner.
   reading `Values[0]`. Silent runs skip the UI page entirely and safely detect
   only the conventional MT5 path if its executable exists. The same shared
   `MT5AgentWizard.issinc` is used by the product and CI smoke setup.
+- Windows CI exercises mocked Service creation success, a simulated SCM failure
+  with detailed log output, and retry from a stopped partially installed Service.
+  A separate Inno smoke setup verifies required-operation exit-code handling in
+  `/SILENT` and `/VERYSILENT`. It does not register a real Service on the shared
+  build runner; live Service installation remains a disposable-VM validation.
 - Windows 10 x64 build and packaging are CI targets. A disposable Windows 10 VM
   was not available for clean install/upgrade/repair/uninstall validation, so
   live SCM lifecycle and installer installation remain deferred.

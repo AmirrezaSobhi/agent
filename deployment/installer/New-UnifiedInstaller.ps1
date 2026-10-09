@@ -71,6 +71,12 @@ $setupScript = Join-Path $PSScriptRoot 'MT5Agent.iss'
 if ($LASTEXITCODE -ne 0) { throw "Inno Setup compilation failed with code $LASTEXITCODE" }
 $wizardSmokeScript = Join-Path $PSScriptRoot 'Test-WizardInitialization.ps1'
 & $wizardSmokeScript -CompilerPath $isccPath
+$serviceScriptTest = Join-Path $repo 'deployment\Test-InstallMT5AgentService.ps1'
+& $serviceScriptTest
+if ($LASTEXITCODE -ne 0) { throw 'MT5Agent Service installation contract tests failed.' }
+$requiredOperationTest = Join-Path $PSScriptRoot 'Test-RequiredOperationPropagation.ps1'
+& $requiredOperationTest -CompilerPath $isccPath
+if ($LASTEXITCODE -ne 0) { throw 'Required installer operation failure-propagation tests failed.' }
 $setupFile = Join-Path $output "MT5Agent-Setup-v$version-$arch.exe"
 if (-not (Test-Path -LiteralPath $setupFile -PathType Leaf)) { throw 'Inno Setup did not produce the expected single-file installer.' }
 $payload = @()

@@ -57,8 +57,6 @@ Name: "{autoprograms}\MT5Agent\MT5Agent Desktop"; Filename: "{app}\Desktop\MT5Ag
 Name: "{autodesktop}\MT5Agent Desktop"; Filename: "{app}\Desktop\MT5Agent.Desktop.exe"; WorkingDir: "{app}\Desktop"; Tasks: desktopicon
 
 [Run]
-Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File ""{app}\maintenance\Install-MT5AgentService.ps1"" -Action Install -InstallRoot ""{app}"""; Flags: runhidden waituntilterminated; StatusMsg: "Installing the MT5Agent Windows Service..."
-Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File ""{app}\Worker\Register-PackagedMT5Worker.ps1"" -InstallRoot ""{app}"""; Flags: runhidden waituntilterminated; StatusMsg: "Registering the preconfigured interactive Worker..."; Check: HasRuntimeProvisioning
 Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File ""{app}\maintenance\Save-MT5AgentUserSettings.ps1"" -InstallPath ""{app}"" -TerminalPath ""{code:GetTerminalPath}"""; Flags: runasoriginaluser runhidden waituntilterminated; StatusMsg: "Saving Desktop settings for the current Windows user..."
 
 [UninstallRun]
@@ -78,6 +76,26 @@ begin
     RegQueryStringValue(HKLM, 'SOFTWARE\MT5Agent\Runtime', 'WorkerInstallPath', WorkerInstallPath) and
     (CompareText(ExpandConstant('{app}\Worker'), WorkerInstallPath) = 0) and
     FileExists(TerminalPath) and DirExists(ProfilePath);
+end;
+
+#include "RequiredPowerShell.issinc"
+
+procedure CurStepChanged(CurStep: TSetupStep);
+var Params, InstallRoot: string;
+begin
+  if CurStep = ssPostInstall then begin
+    InstallRoot := ExpandConstant('{app}');
+    Params := '-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "' +
+      InstallRoot + '\maintenance\Install-MT5AgentService.ps1" -Action Install -InstallRoot "' +
+      InstallRoot + '"';
+    RunRequiredPowerShell('MT5Agent Service installation', Params, InstallRoot);
+
+    if HasRuntimeProvisioning then begin
+      Params := '-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "' +
+        InstallRoot + '\Worker\Register-PackagedMT5Worker.ps1" -InstallRoot "' + InstallRoot + '"';
+      RunRequiredPowerShell('MT5Agent interactive Worker registration', Params, InstallRoot);
+    end;
+  end;
 end;
 
 function InitializeSetup: Boolean;
