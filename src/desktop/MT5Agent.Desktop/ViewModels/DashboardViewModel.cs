@@ -180,7 +180,9 @@ namespace MT5Agent.Desktop.ViewModels
             }
             catch (OperationCanceledException) { ServiceOperationText = "Operation cancelled; check current Service state before retrying."; }
             catch (Exception) { ServiceOperationText = "Service operation failed; check current Service state before retrying."; }
-            finally { await RefreshServiceAsync(CancellationToken.None); IsServiceBusy = false; NotifyServiceActions(); }
+            await RefreshServiceAsync(CancellationToken.None);
+            IsServiceBusy = false;
+            NotifyServiceActions();
         }
 
         private void NotifyServiceActions()
