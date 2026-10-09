@@ -267,7 +267,7 @@ installer:build:
   script:
     - |
       $ErrorActionPreference = 'Stop'
-      $scriptPaths = @('./deployment/Install-MT5AgentService.ps1','./deployment/Register-PackagedMT5Worker.ps1','./deployment/Unregister-PackagedMT5Worker.ps1','./deployment/Save-MT5AgentUserSettings.ps1','./deployment/installer/New-UnifiedInstaller.ps1','./deployment/installer/Test-UnifiedInstaller.ps1')
+      $scriptPaths = @('./deployment/Install-MT5AgentService.ps1','./deployment/Register-PackagedMT5Worker.ps1','./deployment/Unregister-PackagedMT5Worker.ps1','./deployment/Save-MT5AgentUserSettings.ps1','./deployment/Set-MT5RuntimeConfiguration.ps1','./deployment/installer/New-UnifiedInstaller.ps1','./deployment/installer/Test-UnifiedInstaller.ps1')
       foreach ($scriptPath in $scriptPaths) {
         $tokens = $null
         $parseErrors = $null

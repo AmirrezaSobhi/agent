@@ -72,6 +72,9 @@ foreach ($group in $runnerGroups) {
 
 $runtimeSid = $runtimeUser.SID
 $controlSid = ([Security.Principal.NTAccount]::new($ControlPrincipal)).Translate([Security.Principal.SecurityIdentifier])
+if ($runtimeSid -eq $controlSid) {
+    throw 'RuntimePrincipal and ControlPrincipal must be different Windows identities.'
+}
 $systemSid = [Security.Principal.SecurityIdentifier]::new('S-1-5-18')
 $adminsSid = [Security.Principal.SecurityIdentifier]::new('S-1-5-32-544')
 

@@ -17,6 +17,8 @@ $principalParts = ([string]$config.RuntimePrincipal) -split '\\', 2
 if ($principalParts.Count -ne 2 -or $principalParts[0] -ne $env:COMPUTERNAME) { throw 'RUNTIME_PRINCIPAL_MUST_BE_LOCAL' }
 $runtimeUser = Get-LocalUser -Name $principalParts[1] -ErrorAction Stop
 if (-not $runtimeUser.Enabled) { throw 'RUNTIME_PRINCIPAL_DISABLED' }
+$controlSid = ([Security.Principal.NTAccount]::new([string]$config.ControlPrincipal)).Translate([Security.Principal.SecurityIdentifier])
+if ($runtimeUser.SID -eq $controlSid) { throw 'RUNTIME_AND_CONTROL_PRINCIPALS_MUST_BE_DISTINCT' }
 $adminSids = @((Get-LocalGroupMember -SID 'S-1-5-32-544' -ErrorAction Stop).SID | ForEach-Object Value)
 $rdpSids = @((Get-LocalGroupMember -SID 'S-1-5-32-555' -ErrorAction SilentlyContinue).SID | ForEach-Object Value)
 if ($adminSids -contains $runtimeUser.SID.Value -or $rdpSids -contains $runtimeUser.SID.Value) { throw 'RUNTIME_PRINCIPAL_MUST_BE_STANDARD_USER' }
