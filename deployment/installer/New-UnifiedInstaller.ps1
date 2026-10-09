@@ -11,7 +11,11 @@ $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 $version = '0.1.5'
 $arch = 'windows-x64'
 $stage = Join-Path $repo 'deployment\installer\stage'
-$output = [IO.Path]::GetFullPath($OutputPath)
+if ([IO.Path]::IsPathRooted($OutputPath)) {
+  $output = [IO.Path]::GetFullPath($OutputPath)
+} else {
+  $output = [IO.Path]::GetFullPath((Join-Path $repo $OutputPath))
+}
 if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $stage, $output | Out-Null
 $agent = Get-ChildItem -LiteralPath $AgentPath -File -Filter 'MT5Agent-v*.exe' | Select-Object -First 1
