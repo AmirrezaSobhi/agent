@@ -364,6 +364,7 @@ try {
             $buildEvidence = [ordered]@{
                 schema_version = '1'
                 pipeline_id = $pipelineId
+                build_job_id = [string]$env:CI_JOB_ID
                 commit_sha = $sourceCommit
                 source_commit = $sourceCommit
                 candidate_version = $version
