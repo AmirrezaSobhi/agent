@@ -355,3 +355,17 @@ the artifact identified above. Windows 11 and Windows Server 2022/2025 remain
 `DEFERRED — PRODUCT OWNER VALIDATION`. Commercial release remains NOT APPROVED;
 the internal package is unsigned. See [Distribution](DISTRIBUTION.md) and
 [Release Checklist](RELEASE_CHECKLIST.md) for scope and remaining gates.
+
+### Develop integration closure
+
+The approved Phase 6 branch was fast-forward integrated into `develop` at
+`ad497956dbd2c6700830da5d1a067f3b7074bd2e`; the remote `develop` push
+succeeded without a force update or history rewrite. GitLab Pipeline #55 passed
+11/11 jobs on that commit. Its WPF/Management IPC job passed 41 C# tests, 23
+Windows Management IPC tests and the cross-process status smoke; GitLab
+reported 634 tests overall. Desktop build job #460 and same-artifact verifier
+#468 passed. That pipeline's package SHA-256 is
+`3187027cd997348c293d0a4b7940c5902f4444dd68fc3d995bde2bfc81cad656` (EXE
+SHA-256 `b845a8ab1c06639468cad29e93800281eedb6b6a1d10f3e9dc81b23537706082`).
+The internal development milestone is integrated; this does not authorize
+commercial release. See [Distribution](DISTRIBUTION.md).

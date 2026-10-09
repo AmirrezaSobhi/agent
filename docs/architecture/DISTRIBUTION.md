@@ -104,3 +104,17 @@ process liveness only; it is not visual UI validation. See the [Release
 Checklist](RELEASE_CHECKLIST.md). Pipeline #54 covers the executable and CI
 configuration at commit `567c681`; this documentation-only closure does not
 change that artifact or its test applicability.
+
+## Develop integration evidence
+
+Phase 6 was fast-forward integrated into `develop` at
+`ad497956dbd2c6700830da5d1a067f3b7074bd2e`, preserving the 26 source-branch
+commits and the pre-existing `develop` history. Pipeline [#55](http://gitlab.local/root/agent/-/pipelines/55)
+passed 11/11 jobs on that commit. Build job #460 produced
+`MT5Agent-Desktop-v0.1.4-windows-x64.zip` (55,226 bytes), SHA-256
+`3187027cd997348c293d0a4b7940c5902f4444dd68fc3d995bde2bfc81cad656`, with
+packaged EXE SHA-256
+`b845a8ab1c06639468cad29e93800281eedb6b6a1d10f3e9dc81b23537706082`;
+verifier job #468 consumed that build artifact and passed. The archive differs
+from Phase 6 Pipeline #54 because provenance embeds the source commit and
+pipeline. See also [Implementation Baseline](IMPLEMENTATION_BASELINE.md).
