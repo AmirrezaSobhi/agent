@@ -2,8 +2,9 @@
 
 **State:** v0.1.5 extends the accepted v0.1.4 x64 WPF application with local
 SCM management, safer runtime diagnostics, optional log refresh and a versioned
-Desktop-only package. Windows-specific build and SCM lifecycle verification
-require the Windows CI runner.
+Desktop-only package. Windows 10 x64 build and automated regression evidence
+is recorded in the [v0.1.5 internal status](../../docs/releases/v0.1.5-internal-status.md).
+Live Service lifecycle/denial integration remains unverified.
 
 ## Implemented
 
