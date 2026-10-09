@@ -2,7 +2,7 @@ from pathlib import Path
 from runpy import run_path
 from PyInstaller.utils.hooks import copy_metadata
 
-project_root = Path(SPECPATH).resolve().parent.parent
+project_root = Path(SPECPATH).resolve().parent
 version = run_path(str(project_root / "agent" / "__init__.py"))["__version__"]
 icon_path = project_root / "deployment" / "MT5Agent.ico"
 
