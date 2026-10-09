@@ -182,11 +182,16 @@ namespace MT5Agent.Desktop.Services
                 ServiceState = Text(data, "service_state") ?? "UNKNOWN",
                 AgentState = Text(data, "agent_state") ?? "UNKNOWN",
                 AgentLifecycleState = Text(data, "agent_lifecycle_state") ?? "UNKNOWN",
+                AgentVersion = Text(data, "agent_version") ?? "UNKNOWN",
+                ManagementProtocolVersion = IntValue(data, "management_protocol_version"),
                 ManagementState = "CONNECTED",
                 WorkerState = Text(data, "worker_state") ?? "UNKNOWN",
                 RuntimeState = Text(data, "runtime_state") ?? "UNKNOWN",
                 Mt5State = mt5State,
                 Mt5Connected = String.Equals(mt5State, "CONNECTED", StringComparison.Ordinal),
+                WorkerSessionId = NullableIntValue(data, "worker_session_id"),
+                WorkerProtocolVersion = Text(data, "worker_protocol_version"),
+                LastSuccessfulMt5Operation = Text(data, "last_successful_mt5_operation"),
                 CentralState = Text(data, "central_state") ?? "NOT_CONFIGURED",
                 TradingCapability = Text(data, "trading_capability") ?? "UNSUPPORTED",
                 TradingAuthorized = Text(data, "trading_authorized") ?? "UNKNOWN",
@@ -235,6 +240,14 @@ namespace MT5Agent.Desktop.Services
 
         private static int IntValue(IDictionary<string, object> data, string key)
         { object value; return data.TryGetValue(key, out value) ? Convert.ToInt32(value, CultureInfo.InvariantCulture) : -1; }
+
+        private static int? NullableIntValue(IDictionary<string, object> data, string key)
+        {
+            object value;
+            if (!data.TryGetValue(key, out value) || value == null) return null;
+            try { return Convert.ToInt32(value, CultureInfo.InvariantCulture); }
+            catch (Exception) { throw new ManagementIpcException("INVALID_RESPONSE"); }
+        }
 
         private static bool BoolValue(IDictionary<string, object> data, string key)
         { object value; return data.TryGetValue(key, out value) && value is bool && (bool)value; }

@@ -130,6 +130,11 @@ def test_management_status_does_not_infer_worker_or_trading_readiness():
     assert status["trading_authorized"] == "UNKNOWN"
     assert status["trading_readiness"] == "UNAVAILABLE"
     assert status["source_identity"] == "MT5Agent.AgentCore"
+    assert status["agent_version"]
+    assert status["management_protocol_version"] == 1
+    assert status["worker_session_id"] is None
+    assert status["worker_protocol_version"] is None
+    assert "terminal_path" not in status and "terminal_pid" not in status
     assert status["freshness"] == "FRESH"
     assert status["observed_at_utc"].endswith("Z")
 
@@ -152,12 +157,18 @@ def test_management_status_preserves_the_worker_contract_state_after_a_live_heal
     class Health:
         state = type("State", (), {"value": "running"})()
         runtime_state = "MT5_CONNECTED"
-        runtime = {"worker_available": True, "worker_state": "WORKER_READY", "mt5_connected": True}
+        runtime = {"worker_available": True, "worker_state": "WORKER_READY", "mt5_connected": True,
+                   "worker_session_id": 3, "protocol_version": "1", "last_successful_mt5_operation": "initialize",
+                   "terminal_path": "C:/private/terminal.exe", "terminal_pid": 1234}
 
     status = build_status(type("Agent", (), {"health": lambda self: Health()})())
     assert status["worker_available"] is True
     assert status["worker_state"] == "WORKER_READY"
     assert status["mt5_state"] == "CONNECTED"
+    assert status["worker_session_id"] == 3
+    assert status["worker_protocol_version"] == "1"
+    assert status["last_successful_mt5_operation"] == "initialize"
+    assert "terminal_path" not in status and "terminal_pid" not in status
 
 
 def test_management_allowlist_is_explicit_and_validated():

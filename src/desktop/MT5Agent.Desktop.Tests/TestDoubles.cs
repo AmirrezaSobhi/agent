@@ -35,4 +35,16 @@ namespace MT5Agent.Desktop.Tests
                 : LogsHandler(limit, severity, cancellationToken);
         }
     }
+
+    internal sealed class FakeServiceControlClient : IServiceControlClient
+    {
+        public Func<int, CancellationToken, Task<ServiceObservation>> QueryHandler { get; set; }
+        public Func<ServiceAction, CancellationToken, Task<ServiceActionResult>> ExecuteHandler { get; set; }
+        public int QueryCount { get; private set; }
+        public ServiceAction? LastAction { get; private set; }
+        public Task<ServiceObservation> QueryAsync(CancellationToken cancellationToken)
+        { return QueryHandler(++QueryCount, cancellationToken); }
+        public Task<ServiceActionResult> ExecuteAsync(ServiceAction action, CancellationToken cancellationToken)
+        { LastAction = action; return ExecuteHandler(action, cancellationToken); }
+    }
 }

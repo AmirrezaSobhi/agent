@@ -69,6 +69,7 @@ namespace MT5Agent.Desktop.Tests
             Run("Management IPC handles concurrent status requests", ManagementClientConcurrentRequests);
             Run("Management IPC marks delayed and clock-skewed observations stale", ManagementClientMarksStaleData);
             Run("Dashboard presents fresh, typed management status", DashboardObservedStatus);
+            Run("Dashboard gates Service actions by SCM rights and refreshes action results", DashboardServiceControlAuthorization);
 
             Console.WriteLine("RESULT: {0} passed; {1} failed.", _passed, _failed);
             return _failed == 0 ? 0 : 1;
@@ -552,6 +553,10 @@ namespace MT5Agent.Desktop.Tests
                 result.SourceIdentity == "MT5Agent.AgentCore", "Status provenance or unknown service state was lost.");
             Assert(result.CentralState == "NOT_CONFIGURED" && result.TradingCapability == "UNSUPPORTED",
                 "Local Setup or trading capability was falsely enabled.");
+            Assert(result.AgentVersion == "0.1.3" && result.ManagementProtocolVersion == 1 &&
+                result.WorkerSessionId == 7 && result.WorkerProtocolVersion == "1" &&
+                result.LastSuccessfulMt5Operation == "initialize",
+                "Versioned runtime diagnostics were not projected from observed fields.");
         }
 
         private static void ManagementClientReadsBoundedLogs()
@@ -735,6 +740,31 @@ namespace MT5Agent.Desktop.Tests
             vm.Dispose(); errors.Dispose();
         }
 
+        private static void DashboardServiceControlAuthorization()
+        {
+            var errors = new ErrorService();
+            var calls = new List<ServiceAction>();
+            var service = new FakeServiceControlClient
+            {
+                QueryHandler = (count, token) => Task.FromResult(new ServiceObservation
+                {
+                    Installed = true, State = count == 1 ? "STOPPED" : "RUNNING",
+                    CanStart = true, CanStop = count > 1, ObservedAtUtc = DateTime.UtcNow
+                }),
+                ExecuteHandler = (action, token) => { calls.Add(action); return Task.FromResult(new ServiceActionResult { Succeeded = true, Code = "COMPLETED", State = "RUNNING" }); }
+            };
+            var management = new FakeManagementClient { Handler = token => Task.FromResult(new ManagementStatus { IsObserved = false, Reason = "offline" }) };
+            var vm = new DashboardViewModel(management, errors, serviceControl: service,
+                confirmServiceAction: action => false, auditServiceAction: (action, code, state) => true);
+            vm.RefreshAsync(CancellationToken.None).GetAwaiter().GetResult();
+            Assert(vm.ServiceState == "STOPPED" && vm.CanStartService && !vm.CanStopService && !vm.CanRestartService,
+                "Service controls were not gated by current state and per-operation SCM rights.");
+            vm.StartServiceCommand.ExecuteAsync(CancellationToken.None).GetAwaiter().GetResult();
+            Assert(calls.Count == 1 && calls[0] == ServiceAction.Start && vm.ServiceState == "RUNNING" &&
+                vm.ServiceOperationText.Contains("COMPLETED"), "Service action result was not displayed and read back.");
+            vm.Dispose(); errors.Dispose();
+        }
+
         private static void DashboardStaleStatus()
         {
             var client = new FakeManagementClient
@@ -826,6 +856,9 @@ namespace MT5Agent.Desktop.Tests
                         { "agent_state", agentState }, { "worker_available", true }, { "worker_state", "WORKER_READY" },
                         { "agent_lifecycle_state", "RUNNING" }, { "runtime_state", "MT5_CONNECTED" },
                         { "mt5_state", "CONNECTED" }, { "mt5_connected", true },
+                        { "agent_version", "0.1.3" }, { "management_protocol_version", 1 },
+                        { "worker_session_id", 7 }, { "worker_protocol_version", "1" },
+                        { "last_successful_mt5_operation", "initialize" },
                         { "central_state", "NOT_CONFIGURED" }, { "trading_capability", "UNSUPPORTED" },
                         { "trading_authorized", "UNKNOWN" }, { "trading_readiness", "UNAVAILABLE" }
                     }

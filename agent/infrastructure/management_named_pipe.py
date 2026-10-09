@@ -15,6 +15,7 @@ from ctypes import wintypes
 from typing import Callable
 
 from agent.infrastructure.logging_observability import safe_log
+from agent.contracts.models import AgentIdentity
 
 PIPE_NAME = r"\\.\pipe\MT5Agent.Management.v1"
 PROTOCOL_VERSION = 1
@@ -136,11 +137,20 @@ def build_status(agent) -> dict[str, object]:
         "service_state": "UNKNOWN",
         "agent_state": "AGENT_RUNNING" if lifecycle == "RUNNING" else "AGENT_" + lifecycle,
         "agent_lifecycle_state": lifecycle,
+        "agent_version": AgentIdentity().version,
+        "management_protocol_version": PROTOCOL_VERSION,
         "worker_available": worker_available if isinstance(worker_available, bool) else None,
         "worker_state": worker_state,
         "runtime_state": runtime_state,
         "mt5_state": mt5_state,
         "mt5_connected": mt5_connected if isinstance(mt5_connected, bool) else None,
+        # Expose only non-secret values already returned by the authenticated
+        # Worker adapter. Do not include terminal paths, account details, or PIDs.
+        "worker_session_id": runtime.get("worker_session_id")
+            if isinstance(runtime.get("worker_session_id"), int) and not isinstance(runtime.get("worker_session_id"), bool) else None,
+        "worker_protocol_version": runtime.get("protocol_version") if isinstance(runtime.get("protocol_version"), str) else None,
+        "last_successful_mt5_operation": runtime.get("last_successful_mt5_operation")
+            if isinstance(runtime.get("last_successful_mt5_operation"), str) else None,
         "central_state": "NOT_CONFIGURED",
         "trading_capability": "UNSUPPORTED",
         "trading_authorized": "UNKNOWN",

@@ -5,6 +5,7 @@ using System.Reflection;
 using Microsoft.Win32;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using MT5Agent.Desktop.Resources;
 using MT5Agent.Desktop.Services;
 using MT5Agent.Desktop.ViewModels.Commands;
@@ -25,12 +26,14 @@ namespace MT5Agent.Desktop.ViewModels
         private bool _isLoading;
         private string _lastResponse = Strings.NoObservationYet;
         private string _connectionError = Strings.NoConnectionError;
+        private string _copyFeedback;
 
         public DiagnosticsViewModel(IManagementClient management, IErrorHandler errors)
         {
             _management = management; _errors = errors;
             Items = new ObservableCollection<DiagnosticItem>();
             RefreshCommand = new AsyncCommand(RefreshAsync, errors);
+            CopySummaryCommand = new RelayCommand(_ => CopySummary());
             Add("UI version", Assembly.GetExecutingAssembly().GetName().Version.ToString());
             Add(".NET Framework target", "4.8 · CLR " + Environment.Version);
             Add("Operating system", GetOperatingSystemDisplayName());
@@ -41,12 +44,14 @@ namespace MT5Agent.Desktop.ViewModels
 
         public ObservableCollection<DiagnosticItem> Items { get; private set; }
         public AsyncCommand RefreshCommand { get; private set; }
+        public RelayCommand CopySummaryCommand { get; private set; }
         public string Title { get { return Strings.DiagnosticsTitle; } }
         public string SectionLabel { get { return Strings.SectionHealth; } }
         public string Description { get { return Strings.DiagnosticsLocalDescription; } }
         public string LastResponse { get { return _lastResponse; } private set { SetProperty(ref _lastResponse, value); } }
         public string ConnectionError { get { return _connectionError; } private set { SetProperty(ref _connectionError, value); } }
         public bool IsLoading { get { return _isLoading; } private set { SetProperty(ref _isLoading, value); } }
+        public string CopyFeedback { get { return _copyFeedback; } private set { SetProperty(ref _copyFeedback, value); } }
 
         public async Task RefreshAsync(CancellationToken cancellationToken)
         {
@@ -59,10 +64,12 @@ namespace MT5Agent.Desktop.ViewModels
                 ConnectionError = String.IsNullOrWhiteSpace(status.ErrorCode) || status.ErrorCode == "OK"
                     ? Strings.NoConnectionError : String.Format(Strings.RuntimeErrorCode, status.ErrorCode);
                 SetItem("Agent", status.AgentState);
+                SetItem("Agent version", status.AgentVersion);
                 SetItem("Worker", status.WorkerState);
                 SetItem("MT5", status.Mt5State);
                 SetItem("Management source", status.SourceIdentity);
                 SetItem("Status freshness", status.IsStale ? "Stale" : "Fresh");
+                SetItem("Management protocol version", status.ManagementProtocolVersion > 0 ? status.ManagementProtocolVersion.ToString() : "Unknown");
             }
             catch (OperationCanceledException) { throw; }
             catch (ManagementIpcException ex)
@@ -75,6 +82,19 @@ namespace MT5Agent.Desktop.ViewModels
         }
 
         private void Add(string name, string value) { Items.Add(new DiagnosticItem(name, value)); }
+
+        private void CopySummary()
+        {
+            // Copy only this explicit, non-secret allowlist; never dump arbitrary diagnostics.
+            var allowed = new System.Collections.Generic.HashSet<string>(StringComparer.Ordinal)
+                { "UI version", ".NET Framework target", "Management protocol", "Agent", "Worker", "MT5", "Management source", "Status freshness" };
+            var lines = new System.Collections.Generic.List<string> { "MT5Agent Desktop diagnostics" };
+            foreach (var item in Items) if (allowed.Contains(item.Name)) lines.Add(item.Name + ": " + (item.Value ?? "Unknown"));
+            lines.Add("Last response: " + LastResponse);
+            lines.Add("Connection: " + ConnectionError);
+            try { Clipboard.SetText(String.Join(Environment.NewLine, lines)); CopyFeedback = "Diagnostic summary copied."; }
+            catch (Exception) { CopyFeedback = "Clipboard is unavailable."; }
+        }
 
         private static string GetOperatingSystemDisplayName()
         {

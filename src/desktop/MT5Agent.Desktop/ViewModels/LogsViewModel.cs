@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Threading;
 using MT5Agent.Desktop.Resources;
 using MT5Agent.Desktop.Services;
 using MT5Agent.Desktop.ViewModels.Commands;
@@ -18,6 +19,8 @@ namespace MT5Agent.Desktop.ViewModels
         private string _searchText;
         private bool _isLoading;
         private string _message = Strings.NoLogs;
+        private bool _autoRefresh;
+        private readonly DispatcherTimer _autoRefreshTimer;
 
         public LogsViewModel(IManagementClient management, IErrorHandler errors)
         {
@@ -25,6 +28,11 @@ namespace MT5Agent.Desktop.ViewModels
             Entries = new ObservableCollection<ManagementLogEntry>();
             FilteredEntries = new ObservableCollection<ManagementLogEntry>();
             LoadCommand = new AsyncCommand(LoadAsync, errors);
+            _autoRefreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
+            _autoRefreshTimer.Tick += async (sender, args) =>
+            {
+                if (!IsLoading) await LoadAsync(CancellationToken.None);
+            };
         }
 
         public ObservableCollection<ManagementLogEntry> Entries { get; private set; }
@@ -38,9 +46,19 @@ namespace MT5Agent.Desktop.ViewModels
         public string Severity { get { return _severity; } set { if (SetProperty(ref _severity, value)) ApplyFilter(); } }
         public string SearchText { get { return _searchText; } set { if (SetProperty(ref _searchText, value)) ApplyFilter(); } }
         public bool HasEntries { get { return FilteredEntries.Count != 0; } }
+        public bool AutoRefresh
+        {
+            get { return _autoRefresh; }
+            set
+            {
+                if (!SetProperty(ref _autoRefresh, value)) return;
+                if (value) _autoRefreshTimer.Start(); else _autoRefreshTimer.Stop();
+            }
+        }
 
         public async Task LoadAsync(CancellationToken cancellationToken)
         {
+            if (IsLoading) return;
             IsLoading = true; Message = Strings.LoadingLogs;
             _loadCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             try
@@ -93,7 +111,7 @@ namespace MT5Agent.Desktop.ViewModels
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing) { CancelLoad(); if (LoadCommand != null) LoadCommand.Dispose(); }
+            if (disposing) { _autoRefreshTimer.Stop(); CancelLoad(); if (LoadCommand != null) LoadCommand.Dispose(); }
             base.Dispose(disposing);
         }
     }

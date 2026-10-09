@@ -10,7 +10,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$version = '0.1.4'
+$version = '0.1.5'
 $architecture = 'windows-x64'
 $archiveName = "MT5Agent-Desktop-v$version-$architecture.zip"
 $folderName = "MT5Agent-Desktop-v$version-$architecture"

@@ -1,4 +1,4 @@
-# MT5Agent Desktop v0.1.4 — Windows x64
+# MT5Agent Desktop v0.1.5 — Windows x64
 
 ## Prerequisites
 
@@ -19,15 +19,21 @@ Server Core is unsupported because this is a WPF desktop application.
    verify the extracted `SHA256SUMS.txt` using the bundled package verifier or
    Windows `Get-FileHash`.
 2. Extract the archive to a versioned per-user directory such as
-   `%LOCALAPPDATA%\Programs\MT5Agent\Desktop\v0.1.4`. No administrator rights
+   `%LOCALAPPDATA%\Programs\MT5Agent\Desktop\v0.1.5`. No administrator rights
    are required for this location.
 3. Start `app\MT5Agent.Desktop.exe`. Create a shortcut if desired.
 4. If the Agent is provisioned, its machine administrator must separately
    configure the Management Pipe allowlist. The UI never falls back to `/command`
    or connects to the Worker pipe.
 
-The package does not create a Service, change machine configuration, provision
-an account, configure Autologon, install MT5, or authorize trading.
+The Dashboard queries and controls only the fixed Windows Service name
+`MT5Agent` through the Windows Service Control Manager. The user's existing
+Windows token and the Service's configured SCM ACL determine query/start/stop
+rights. Stop and restart ask for confirmation. The app never elevates, changes
+Service ACLs, uses `/command`, or starts arbitrary processes. An absent Service
+is reported as Not Installed. This ZIP does not create or install a Service,
+change machine configuration, provision an account, configure Autologon,
+install MT5, or authorize trading.
 
 ## Upgrade and rollback
 

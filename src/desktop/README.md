@@ -1,11 +1,9 @@
 # MT5Agent Desktop — WPF Foundation and Management IPC
 
-**State:** Phases 1–4 are implemented on the Phase 4 branch. The x64 WPF
-application has Runtime, per-user Settings, bounded Management Logs, local
-Diagnostics, and notification-area lifecycle support. Windows build and
-automated tests ran on one Windows 10 x64 interactive host. Windows 11 and
-Server matrix validation, GitLab branch pipeline, installed Service lifecycle,
-and release packaging remain pending.
+**State:** v0.1.5 extends the accepted v0.1.4 x64 WPF application with local
+SCM management, safer runtime diagnostics, optional log refresh and a versioned
+Desktop-only package. Windows-specific build and SCM lifecycle verification
+require the Windows CI runner.
 
 ## Implemented
 
@@ -24,16 +22,25 @@ and release packaging remain pending.
   events from a 200-entry volatile buffer (100 records maximum per query).
   Logs accept no path and never read files. Central reports
   `NOT_CONFIGURED`; trading reports `UNSUPPORTED` and `NOT_AUTHORIZED`.
+- Windows Service status and lifecycle requests use SCM for only the fixed
+  `MT5Agent` name. SCM authorizes the current caller per requested access
+  right. The app does not elevate or alter ACLs. Stop and Restart require
+  confirmation. Operation results and post-operation state are shown in
+  Dashboard; an unknown outcome requires state refresh before retry.
 - With the Service stopped or allowlist missing, the UI remains available and
   presents offline/unavailable state. The UI does not call `/command` or open
   the internal Worker pipe. The tray can restore or explicitly exit the UI;
   closing/minimizing the window never controls the Agent or Worker. No trade or
-  Service control exists.
+  Service mutation through the Python Management pipe exists.
 - User preferences (theme, bounded refresh interval, notifications and
   close-to-tray) are validated and atomically saved in LocalAppData. Startup
   registration is shown as unavailable; it is not changed by the client.
-- Runtime identity/process/session details are explicitly shown as unexposed
-  because the current Management status contract does not report them.
+- Runtime shows the Worker session ID, protocol version and last successful
+  MT5 operation only when present in authenticated status. Terminal paths,
+  process IDs, and account details are excluded.
+- Logs support optional 30-second auto-refresh with overlap prevention. The
+  remote query remains capped at 100 events. Diagnostics copy an explicit
+  allowlist of non-secret fields.
 - Local Diagnostics show the UI/framework/OS and last verified Agent response.
   Support export and remote upload are not implemented.
 
@@ -104,9 +111,10 @@ The Service identity is also included in the pipe DACL for server operations.
 | Supported OS matrix | Partially verified | Only Windows 10 Pro 22H2 build/test evidence; Windows 11 and Server 2022/2025 not run. |
 | Production Agent Service identity/provisioning | Open | Spike used disposable LocalSystem service. SID list is configured manually; no reader group provisioning. |
 | Multi-user/multi-session behavior | Partial | Session 0/1 communication tested; full multiple-user isolation matrix not run. |
-| Service start/stop and Runtime restart | Not implemented | No privileged operation or custom helper. SCM/UAC guidance only. |
+| SCM start/stop/restart | Implemented; Windows verification pending | Fixed `MT5Agent` service name; caller-token SCM ACL checks, bounded result/read-back, confirmation for disruptive actions and per-user audit. No lifecycle test was run against a real Service in this cycle. |
+| Runtime Worker restart | Not implemented | No Desktop-to-Worker mutation exists. |
 | Logs, diagnostics, tray, notifications | Implemented, bounded | Logs expose only fixed-message Management events; no raw file access or support upload. Interactive tray lifecycle verified on the Windows 10 console host. |
-| Packaging and release | Not implemented | Reproducible UI build is verified; user-scope deployment package and same-artifact release flow remain future gates. |
+| v0.1.5 package | Windows CI pending | Build job publishes `MT5Agent-Desktop-v0.1.5-windows-x64.zip`; verifier consumes the same artifact. |
 | Performance, memory, CPU, soak | Not measured | Dispatcher responsiveness covered by unit harness, not commercial thresholds. |
 
 No real trades were executed. The earlier Phase 1 build evidence used the

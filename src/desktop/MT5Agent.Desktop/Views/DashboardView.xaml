@@ -48,6 +48,19 @@
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
+        <Border Style="{StaticResource CardBorder}" Margin="0,16,0,0" Padding="18">
+            <StackPanel>
+                <TextBlock Text="Windows Service management" FontSize="16" FontWeight="SemiBold"/>
+                <TextBlock Text="{Binding ServicePermission}" Style="{StaticResource BodyText}" Margin="0,5,0,10" TextWrapping="Wrap"/>
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="Start" Command="{Binding StartServiceCommand}" IsEnabled="{Binding CanStartService}" Margin="0,0,8,0" Padding="14,7"/>
+                    <Button Content="Stop" Command="{Binding StopServiceCommand}" IsEnabled="{Binding CanStopService}" Margin="0,0,8,0" Padding="14,7"/>
+                    <Button Content="Restart" Command="{Binding RestartServiceCommand}" IsEnabled="{Binding CanRestartService}" Padding="14,7"/>
+                    <ProgressBar Width="72" Height="4" IsIndeterminate="True" Margin="14,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsServiceBusy, Converter={StaticResource BoolToVisibility}}"/>
+                </StackPanel>
+                <TextBlock Text="{Binding ServiceOperationText}" Style="{StaticResource BodyText}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+            </StackPanel>
+        </Border>
         <TextBlock Text="{Binding InlineError}" Foreground="{DynamicResource ErrorBrush}" TextWrapping="Wrap" Margin="0,8,0,0" />
     </StackPanel>
 </UserControl>

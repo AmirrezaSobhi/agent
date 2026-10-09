@@ -50,7 +50,7 @@ try {
 [System.IO.Compression.ZipFile]::ExtractToDirectory($archive, $target)
 
 $roots = @(Get-ChildItem -LiteralPath $target -Directory)
-if ($roots.Count -ne 1 -or $roots[0].Name -ne 'MT5Agent-Desktop-v0.1.4-windows-x64' -or
+if ($roots.Count -ne 1 -or $roots[0].Name -ne 'MT5Agent-Desktop-v0.1.5-windows-x64' -or
     @(Get-ChildItem -LiteralPath $target -File).Count -ne 0) {
     throw 'Package does not have the expected single versioned root directory.'
 }
@@ -58,7 +58,7 @@ $packageRoot = $roots[0].FullName
 $manifestPath = Join-Path $packageRoot 'MANIFEST.json'
 $checksumsPath = Join-Path $packageRoot 'SHA256SUMS.txt'
 $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
-if ($manifest.version -ne '0.1.4' -or $manifest.architecture -ne 'x64' -or
+if ($manifest.version -ne '0.1.5' -or $manifest.architecture -ne 'x64' -or
     $manifest.framework_target -ne '.NET Framework 4.8' -or
     $manifest.source_commit -ne $ExpectedCommit -or $manifest.pipeline_id -ne $ExpectedPipelineId -or
     $manifest.build_job_id -ne $report.build_job_id) {

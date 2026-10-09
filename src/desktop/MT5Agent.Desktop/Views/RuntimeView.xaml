@@ -28,6 +28,7 @@
                 <TextBlock Text="{x:Static res:Strings.ManagementSource}" Style="{StaticResource CardTitle}"/><TextBlock Text="{Binding SourceIdentity}" Style="{StaticResource BodyText}" Margin="0,3,0,12"/>
                 <TextBlock Text="{x:Static res:Strings.RuntimeIdentity}" Style="{StaticResource CardTitle}"/><TextBlock Text="{Binding RuntimeIdentity}" Style="{StaticResource BodyText}" Margin="0,3,0,12"/>
                 <TextBlock Text="{x:Static res:Strings.ProcessSession}" Style="{StaticResource CardTitle}"/><TextBlock Text="{Binding ProcessSession}" Style="{StaticResource BodyText}" Margin="0,3,0,12"/>
+                <TextBlock Text="Last successful MT5 operation" Style="{StaticResource CardTitle}"/><TextBlock Text="{Binding LastSuccessfulOperation}" Style="{StaticResource BodyText}" Margin="0,3,0,12"/>
                 <TextBlock Text="{x:Static res:Strings.CurrentError}" Style="{StaticResource CardTitle}"/><TextBlock Text="{Binding Error}" Foreground="{DynamicResource ErrorBrush}" TextWrapping="Wrap" Margin="0,3,0,12"/>
                 <TextBlock Text="{x:Static res:Strings.RecoveryGuidance}" Style="{StaticResource CardTitle}"/><TextBlock Text="{Binding RecoveryGuidance}" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,3,0,0"/>
             </StackPanel>

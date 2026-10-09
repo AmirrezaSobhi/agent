@@ -21,6 +21,7 @@ workflow:
     - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS && $CI_PIPELINE_SOURCE == "push"'
       when: never
     - if: '$CI_COMMIT_BRANCH =~ /^(develop|staging|main)$/ && $CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_COMMIT_BRANCH == "feat/v0.1.5-desktop-integration" && $CI_PIPELINE_SOURCE == "push"'
     - when: never
 
 variables:
@@ -182,7 +183,7 @@ desktop:build-package:
         -PipelineId $env:CI_PIPELINE_ID `
         -BuildJobId $env:CI_JOB_ID
       if ($LASTEXITCODE -ne 0) { throw 'Desktop package creation failed' }
-      $packagePath = './dist/desktop/MT5Agent-Desktop-v0.1.4-windows-x64.zip'
+      $packagePath = './dist/desktop/MT5Agent-Desktop-v0.1.5-windows-x64.zip'
       $reportPath = './dist/desktop/desktop-build.json'
       $testOutputPath = './desktop-test-output'
       foreach ($requiredPath in @($packagePath, $reportPath, $testOutputPath)) {
@@ -201,7 +202,7 @@ desktop:build-package:
     name: 'MT5Agent-Desktop-$CI_COMMIT_SHORT_SHA-$CI_PIPELINE_ID'
     expire_in: 30 days
     paths:
-      - dist/desktop/MT5Agent-Desktop-v0.1.4-windows-x64.zip
+      - dist/desktop/MT5Agent-Desktop-v0.1.5-windows-x64.zip
       - reports/desktop-build.json
       - src/desktop/MT5Agent.Desktop/bin/Release/
       - src/desktop/MT5Agent.Desktop.Tests/bin/Release/
@@ -222,7 +223,7 @@ desktop:package-verify:
       $ErrorActionPreference = 'Stop'
       New-Item -ItemType Directory -Force -Path 'reports/desktop-package-validation' | Out-Null
       $validationOutput = & ./deployment/desktop/Test-DesktopPackage.ps1 `
-        -ArchivePath './dist/desktop/MT5Agent-Desktop-v0.1.4-windows-x64.zip' `
+        -ArchivePath './dist/desktop/MT5Agent-Desktop-v0.1.5-windows-x64.zip' `
         -BuildReportPath './reports/desktop-build.json' `
         -ExpectedCommit $env:CI_COMMIT_SHA `
         -ExpectedPipelineId $env:CI_PIPELINE_ID `

@@ -37,8 +37,9 @@ namespace MT5Agent.Desktop.ViewModels
         public string SourceIdentity { get { return HasStatus ? _status.SourceIdentity : Strings.NotObserved; } }
         public string LastObservation { get { return _lastObserved; } private set { SetProperty(ref _lastObserved, value); } }
         public string Error { get { return _error; } private set { SetProperty(ref _error, value); } }
-        public string RuntimeIdentity { get { return Strings.RuntimeIdentityNotExposed; } }
-        public string ProcessSession { get { return Strings.ProcessSessionNotExposed; } }
+        public string RuntimeIdentity { get { return HasStatus && _status.WorkerSessionId.HasValue ? "Worker session " + _status.WorkerSessionId.Value : Strings.RuntimeIdentityNotExposed; } }
+        public string ProcessSession { get { return HasStatus && !String.IsNullOrWhiteSpace(_status.WorkerProtocolVersion) ? "Worker protocol " + _status.WorkerProtocolVersion : Strings.ProcessSessionNotExposed; } }
+        public string LastSuccessfulOperation { get { return HasStatus && !String.IsNullOrWhiteSpace(_status.LastSuccessfulMt5Operation) ? _status.LastSuccessfulMt5Operation : Strings.NotObserved; } }
         public string RecoveryGuidance { get { return Error == null ? Strings.RuntimeRecoveryDefault : Error; } }
         public AsyncCommand RefreshCommand { get; private set; }
 
@@ -71,6 +72,7 @@ namespace MT5Agent.Desktop.ViewModels
             OnPropertyChanged("HasStatus"); OnPropertyChanged("IsStale"); OnPropertyChanged("AgentState");
             OnPropertyChanged("WorkerState"); OnPropertyChanged("RuntimeState"); OnPropertyChanged("Mt5State");
             OnPropertyChanged("SourceIdentity"); OnPropertyChanged("RecoveryGuidance");
+            OnPropertyChanged("RuntimeIdentity"); OnPropertyChanged("ProcessSession"); OnPropertyChanged("LastSuccessfulOperation");
         }
         private static string Display(string value) { return String.IsNullOrWhiteSpace(value) ? Strings.Unknown : value.Replace('_', ' '); }
         private static string SafeCode(string code) { return String.Format(Strings.RuntimeErrorCode, String.IsNullOrWhiteSpace(code) ? "UNKNOWN" : code); }

@@ -8,7 +8,7 @@
         <TextBlock Text="{Binding Description}" Style="{StaticResource BodyText}" Margin="0,0,0,18" TextWrapping="Wrap"/>
         <Border Style="{StaticResource CardBorder}" Padding="20" MaxWidth="800" HorizontalAlignment="Left">
             <StackPanel>
-                <DockPanel><TextBlock Text="{x:Static res:Strings.LocalDiagnosticSnapshot}" FontSize="16" FontWeight="SemiBold"/><ProgressBar DockPanel.Dock="Right" Width="72" Height="4" IsIndeterminate="True" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/></DockPanel>
+                <DockPanel><StackPanel Orientation="Horizontal"><TextBlock Text="{x:Static res:Strings.LocalDiagnosticSnapshot}" FontSize="16" FontWeight="SemiBold"/><Button Content="Copy summary" Command="{Binding CopySummaryCommand}" Margin="14,0,0,0" Padding="10,4"/><TextBlock Text="{Binding CopyFeedback}" Style="{StaticResource BodyText}" Margin="10,0,0,0" VerticalAlignment="Center"/></StackPanel><ProgressBar DockPanel.Dock="Right" Width="72" Height="4" IsIndeterminate="True" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/></DockPanel>
                 <ItemsControl ItemsSource="{Binding Items}" Margin="0,12,0,12">
                     <ItemsControl.ItemTemplate><DataTemplate><Grid Margin="0,6"><Grid.ColumnDefinitions><ColumnDefinition Width="220"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="{Binding Name}" Style="{StaticResource CardTitle}"/><TextBlock Grid.Column="1" Text="{Binding Value}" Style="{StaticResource BodyText}" TextWrapping="Wrap"/></Grid></DataTemplate></ItemsControl.ItemTemplate>
                 </ItemsControl>

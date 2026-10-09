@@ -1,8 +1,10 @@
 # Local Management IPC and Status Contract
 
-**Status:** Implemented, limited read-only v1 contract (2026-10-08).
+**Status:** Implemented v1 read-only Management pipe plus separate local SCM
+operations (2026-10-09).
 `protocol.negotiate`, `status.get`, and bounded `logs.query` are supported.
-Runtime/Service restart remains unauthorized. Current
+Runtime restart remains unauthorized. Service operations are outside this
+pipe. Current
 evidence is summarized in [Implementation Baseline](IMPLEMENTATION_BASELINE.md).
 
 ## Recommendation: a separate Windows Named Pipe
@@ -47,9 +49,12 @@ reviewed authenticated design; it must not reuse `/command` as-is.
    failure stops the management listener. `GetNamedPipeClientProcessId` is not
    authentication.
 4. **Per-operation authorization:** allowlist authorization covers read-only
-   `protocol.negotiate`, `status.get`, and `logs.query`. Service start/stop is
-   outside the pipe and subject to SCM ACL/UAC. Trading and Runtime mutations
-   are absent; Desktop diagnostics/preferences are local operations.
+   `protocol.negotiate`, `status.get`, and `logs.query`. Service
+   status/start/stop/restart uses a separate Desktop-to-SCM path. The client
+   opens only fixed service `MT5Agent` and requests only query/start/stop
+   access; SCM checks each right against the current Windows token. Stop and
+   Restart require confirmation. The UI never elevates or modifies ACLs.
+   Trading and Runtime mutations remain absent from both paths.
 5. **Multiple sessions:** each Windows user has a distinct SID and preference
    store. The Service can accept clients from approved SIDs but returns only
    permitted projections; one user's layout or credentials never leak to
@@ -108,9 +113,13 @@ service log and diagnostics without carrying identity secrets.
 `protocol.negotiate` returns supported major versions. `status.get` projects
 the existing Agent health report: Agent lifecycle/responsiveness, Worker
 availability/state, runtime and MT5 state, source identity, UTC observation
-time, freshness and bounded error code. The response echoes the request
-correlation ID. Windows Service state is `UNKNOWN` because Agent Core does not
-query SCM. Central management is `NOT_CONFIGURED`; trading capability is
+time, freshness and bounded error code. It includes Agent and Management
+protocol versions, Worker protocol and session ID, and last successful MT5
+operation only when exposed by the authenticated Worker adapter. Terminal
+paths, process IDs and account metadata are excluded. The response echoes the
+request correlation ID. Windows Service state remains `UNKNOWN` in this pipe
+because Agent Core does not query SCM; the Desktop queries SCM independently.
+Central management is `NOT_CONFIGURED`; trading capability is
 `UNSUPPORTED`, authorization is `UNKNOWN`, and readiness is `UNAVAILABLE`.
 The Agent cannot prove user trading authorization. It does not submit, modify,
 or close orders. `logs.query` returns up to 100 events from a fixed 200-event
@@ -156,7 +165,7 @@ and cancels pending work on navigation/unload.
 
 | Dimension | Source | Stale/unknown rule |
 |---|---|---|
-| `SERVICE_STATE` | Not currently queried by Agent or Desktop | UNKNOWN; no running state is inferred from Agent responsiveness. |
+| `SERVICE_STATE` | Desktop's local SCM query for fixed service `MT5Agent` | SCM-derived; absent registration is NOT_INSTALLED, denied query is ACCESS_DENIED, query failures stay ERROR/UNKNOWN. Independent of Agent IPC. |
 | `LOCAL_MANAGEMENT` | successful authenticated Management Pipe response | Connected for the response; a failed request shows Offline; last runtime observation is Stale. |
 | `LOCAL_AGENT_RESPONSIVE` | successful management-pipe status response | Current response proves Agent process responsiveness. Source timestamp >15 s is STALE. |
 | `WORKER_READY` | Agent's authenticated Worker health projection | READY only after a valid Worker response; IPC/auth/configuration failure is disconnected/error, missing evidence is UNKNOWN; >15 s is STALE. |
@@ -174,14 +183,18 @@ when the Agent process exits.
 
 ## Error taxonomy and recovery
 
-`PIPE_NOT_FOUND` → Management Pipe unavailable; Service state remains UNKNOWN
-until a separate SCM query exists. `ACCESS_DENIED` → explain current SID lacks operation permission;
+`PIPE_NOT_FOUND` → Management Pipe unavailable; Service status remains
+independently available through SCM. `ACCESS_DENIED` → explain that the current
+Windows token lacks Management Pipe or requested SCM operation permission;
 do not prompt for or store admin credentials. `PROTOCOL_MISMATCH` → stop
 requests and show installed version mismatch. `BUSY` → short retry suggestion.
 `TIMEOUT` → label outcome unknown for a mutating management operation; status
 poll can retry. `STALE_STATUS` → display observation time and refresh action.
-`SERVICE_START_REQUIRES_ELEVATION` → user invokes Windows-approved SCM/UAC
-flow. `UNSUPPORTED_CAPABILITY`/`NOT_CONFIGURED` → no action offered.
+`SERVICE_OPERATION_FAILED`/`TIMEOUT_OUTCOME_UNKNOWN` → inspect Service state
+before another request. The app does not trigger UAC or elevate. An SCM
+`ACCESS_DENIED` means the user needs an administrator to configure the
+appropriate Service ACL through the normal Windows provisioning process.
+`UNSUPPORTED_CAPABILITY`/`NOT_CONFIGURED` → no action offered.
 `INTERNAL_ERROR` returns correlation ID and sanitized text only.
 
 Service restart, Runtime Worker restart, MT5 terminal restart and UI restart

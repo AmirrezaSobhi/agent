@@ -25,7 +25,10 @@ namespace MT5Agent.Desktop
                 var managementClient = new NamedPipeManagementClient();
                 var navigation = new NavigationService();
                 _tray = new TrayService(preferences, Dispatcher);
-                _services = new ApplicationServices(preferences, themeService, errors, managementClient, navigation, _tray);
+                _services = new ApplicationServices(preferences, themeService, errors, managementClient, navigation, _tray,
+                    new WindowsServiceControlClient(), action => MessageBox.Show(
+                        action == ServiceAction.Stop ? "Stopping the Agent Service interrupts its runtime. Continue?" : "Restarting the Agent Service interrupts its runtime. Continue?",
+                        "Confirm Service operation", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes);
                 _services.RegisterRoutes();
 
                 var shell = new ShellViewModel(navigation, errors);

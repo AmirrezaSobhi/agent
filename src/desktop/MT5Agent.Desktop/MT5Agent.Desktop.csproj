@@ -80,6 +80,8 @@
     <Compile Include="Services\Management\ManagementClientStub.cs" />
     <Compile Include="Services\Management\ManagementIpcException.cs" />
     <Compile Include="Services\Management\NamedPipeManagementClient.cs" />
+    <Compile Include="Services\Management\WindowsServiceControlClient.cs" />
+    <Compile Include="Services\Management\ServiceOperationAudit.cs" />
     <Compile Include="Services\NavigationService.cs" />
     <Compile Include="Services\ThemeService.cs" />
     <Compile Include="Services\TrayService.cs" />

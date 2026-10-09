@@ -13,7 +13,7 @@
             <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                 <ComboBox SelectedValue="{Binding Severity, Mode=TwoWay}" SelectedValuePath="Tag" MinHeight="34" VerticalContentAlignment="Center"><ComboBoxItem Content="All severities" Tag="ALL"/><ComboBoxItem Content="Info" Tag="INFO"/><ComboBoxItem Content="Warning" Tag="WARNING"/><ComboBoxItem Content="Error" Tag="ERROR"/></ComboBox>
                 <TextBox Grid.Column="1" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Margin="10,0" VerticalContentAlignment="Center" MinHeight="34" AutomationProperties.Name="Search logs" />
-                <TextBlock Grid.Column="2" Text="{Binding Message}" Style="{StaticResource BodyText}" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="280"/>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"><CheckBox Content="Auto refresh · 30s" IsChecked="{Binding AutoRefresh}" VerticalAlignment="Center" Margin="0,0,12,0"/><TextBlock Text="{Binding Message}" Style="{StaticResource BodyText}" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="220"/></StackPanel>
             </Grid>
         </Border>
         <ListView Grid.Row="2" ItemsSource="{Binding FilteredEntries}" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"

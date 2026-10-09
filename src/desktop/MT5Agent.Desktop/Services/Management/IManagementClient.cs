@@ -23,11 +23,16 @@ namespace MT5Agent.Desktop.Services
         public string ServiceState { get; set; }
         public string AgentState { get; set; }
         public string AgentLifecycleState { get; set; }
+        public string AgentVersion { get; set; }
+        public int ManagementProtocolVersion { get; set; }
         public string ManagementState { get; set; }
         public string WorkerState { get; set; }
         public string RuntimeState { get; set; }
         public string Mt5State { get; set; }
         public bool Mt5Connected { get; set; }
+        public int? WorkerSessionId { get; set; }
+        public string WorkerProtocolVersion { get; set; }
+        public string LastSuccessfulMt5Operation { get; set; }
         public string CentralState { get; set; }
         public string TradingCapability { get; set; }
         public string TradingAuthorized { get; set; }
