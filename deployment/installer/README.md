@@ -45,11 +45,30 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
   -InstallRoot "C:\Program Files\MT5Agent"
 ```
 
-The script fails closed unless the configured local account is enabled,
-non-administrative, has the expected terminal/profile configuration, and the
-Worker install path is under MT5Agent. Sign in interactively as that account
-for the Worker to start. The Installer does not create the account or store its
-password.
+For a fresh setup, first create or designate a standard local Runtime Principal
+and a separate Control Principal. Sign in as the Runtime Principal once and
+open MT5 so its profile directory and `origin.txt` exist. Then use the bundled
+machine-configuration script from an elevated PowerShell session:
+
+```powershell
+$root = 'C:\Program Files\MT5Agent'
+& "$root\maintenance\Set-MT5RuntimeConfiguration.ps1" `
+  -RuntimePrincipal "$env:COMPUTERNAME\MT5RuntimeUser" `
+  -ControlPrincipal "$env:COMPUTERNAME\MT5ControlUser" `
+  -TerminalPath 'C:\Program Files\MetaTrader 5\terminal64.exe' `
+  -ProfilePath 'C:\Users\MT5RuntimeUser\AppData\Roaming\MetaQuotes\Terminal\<instance>' `
+  -WorkerInstallPath "$root\Worker"
+& "$root\maintenance\Install-MT5AgentService.ps1" -Action Install -InstallRoot $root
+& "$root\Worker\Register-PackagedMT5Worker.ps1" -InstallRoot $root
+```
+
+Replace the account names and paths with values verified on that machine. The
+configuration script checks `origin.txt`, standard-user membership, pipe name,
+and protected file/registry ACLs. Worker registration fails closed unless the
+account is enabled, distinct from Control Principal, non-administrative, and
+the configured terminal/profile are valid. Sign in interactively as that
+account for the Worker to start. No credentials are stored; the Installer does
+not create the account or enable Autologon.
 
 ## CI artifact
 

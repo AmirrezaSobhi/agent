@@ -43,7 +43,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "Create a Desktop shortcut"; GroupDescription: "Shortcuts:"; Flags: unchecked
 
 [Dirs]
-Name: "{commonappdata}\MT5Agent\Logs"; Permissions: system-full administrators-full
+Name: "{commonappdata}\MT5Agent\Logs"; Permissions: system-full admins-full
 
 [Files]
 Source: "{#SourceRoot}\deployment\installer\stage\Service\*"; DestDir: "{app}\Service"; Flags: ignoreversion recursesubdirs createallsubdirs; BeforeInstall: StopExistingService

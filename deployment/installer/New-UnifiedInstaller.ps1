@@ -44,6 +44,7 @@ Copy-Item -LiteralPath (Join-Path $repo 'deployment\Install-MT5AgentService.ps1'
 Copy-Item -LiteralPath (Join-Path $repo 'deployment\Register-PackagedMT5Worker.ps1') -Destination (Join-Path $stage 'Worker\Register-PackagedMT5Worker.ps1')
 Copy-Item -LiteralPath (Join-Path $repo 'deployment\Unregister-PackagedMT5Worker.ps1') -Destination (Join-Path $stage 'Worker\Unregister-PackagedMT5Worker.ps1')
 Copy-Item -LiteralPath (Join-Path $repo 'deployment\Save-MT5AgentUserSettings.ps1') -Destination (Join-Path $stage 'Support\Save-MT5AgentUserSettings.ps1')
+Copy-Item -LiteralPath (Join-Path $repo 'deployment\Set-MT5RuntimeConfiguration.ps1') -Destination (Join-Path $stage 'Support\Set-MT5RuntimeConfiguration.ps1')
 if (-not (Test-Path -LiteralPath (Join-Path $stage 'Desktop\MT5Agent.Desktop.exe'))) { throw 'Desktop payload copy failed.' }
 
 $iscc = Get-Command ISCC.exe -ErrorAction SilentlyContinue
