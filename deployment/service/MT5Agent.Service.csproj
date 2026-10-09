@@ -1,0 +1,13 @@
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
+    <ProjectGuid>{DAE7DF8C-E023-4F6C-BD0B-2D8D8B9A11A5}</ProjectGuid>
+    <OutputType>WinExe</OutputType><RootNamespace>MT5Agent.Service</RootNamespace><AssemblyName>MT5Agent.Service</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion><AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <OutputPath>bin\$(Configuration)\</OutputPath><PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+  <ItemGroup><Reference Include="System"/><Reference Include="System.ServiceProcess"/><Reference Include="Microsoft.CSharp"/></ItemGroup>
+  <ItemGroup><Compile Include="Program.cs" /></ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

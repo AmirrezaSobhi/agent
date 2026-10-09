@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import importlib.metadata
 import os
+import sys
 import threading
 import time
 import uuid
@@ -111,7 +112,11 @@ def validate_worker_install_path(settings: RuntimeSettings) -> None:
     """Ensure the scheduled task launched the staged, trusted Worker copy."""
     if settings.worker_install_path is None:
         raise RuntimeError("WORKER_INSTALL_PATH_NOT_CONFIGURED")
-    module_path = Path(__file__).resolve()
+    # In a one-file frozen Worker, __file__ points into PyInstaller's temporary
+    # extraction tree. Validate the executable actually installed under the
+    # protected Worker directory instead.
+    module_path = Path(sys.executable if getattr(sys, "frozen", False) else __file__).resolve()
+    module_path = module_path.resolve()
     install_path = settings.worker_install_path.resolve()
     try:
         module_path.relative_to(install_path)
@@ -658,4 +663,24 @@ def run_worker(settings: RuntimeSettings | None = None) -> None:
 
 
 if __name__ == "__main__":
-    run_worker()
+    try:
+        run_worker()
+    except Exception as exc:
+        # The packaged Worker is windowless; keep startup failures visible to
+        # the per-user diagnostics surface without writing beside the binary.
+        log_root = os.environ.get("LOCALAPPDATA")
+        if log_root:
+            try:
+                target = Path(log_root) / "MT5Agent" / "Logs" / "worker.log"
+                target.parent.mkdir(parents=True, exist_ok=True)
+                if target.exists() and target.stat().st_size >= 1024 * 1024:
+                    previous = target.with_suffix(".log.1")
+                    if previous.exists():
+                        previous.unlink()
+                    target.replace(previous)
+                message = f"{datetime.now(timezone.utc).isoformat()} {type(exc).__name__}: {str(exc)[:512]}\n"
+                with target.open("a", encoding="utf-8") as stream:
+                    stream.write(message)
+            except OSError:
+                pass
+        raise SystemExit(1) from None

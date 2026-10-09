@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.1.5] — Desktop operations and unified Windows setup (internal development)
+
+- WPF Desktop v0.1.5 adds live Management IPC status, SCM status/control,
+  diagnostics, runtime and log views while remaining independent of Agent and
+  Worker lifecycles.
+- The internal Windows setup work adds an Inno Setup x64 bootstrap executable,
+  a .NET Framework Windows Service host for the Python Agent executable, and a
+  separate frozen Python/MT5 Worker payload. Python is bundled; MT5 is external.
+- Service control uses the Windows SCM and its default ACL. The helper accepts
+  only the protected Program Files installation root. The Management Pipe
+  allowlist is SID based and the Worker task is restricted to a configured
+  standard interactive identity. No password, Autologon, trade, or MT5 terminal
+  installer is included.
+- Acceptance remains **PARTIAL** until a disposable Windows 10 installation
+  validates install, Service start/stop, Worker onboarding, upgrade, repair, and
+  uninstall. Windows 11 and Server validation remain deferred. The setup is
+  unsigned internal output; Inno Setup commercial-use licensing and code
+  signing must be resolved before a public/commercial distribution.
+
 This record consolidates the release documents present at
 `1a133e6c6ea1b02a039f45610182037d347390ba` and the existing Git tags. Historical
 verification statements below describe those records, not fresh validation of

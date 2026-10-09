@@ -1,8 +1,8 @@
 # MT5Agent Desktop distribution
 
-This directory contains the v0.1.5 user-scope WPF package tooling. It builds
-only `MT5Agent.Desktop`; it does not install, replace, configure, or stop the
-Python Agent, Windows Service, Runtime Worker, MT5 terminal, or user account.
+This directory retains the v0.1.5 Desktop-only ZIP as a diagnostic artifact.
+The intended user-facing delivery is now the unified Setup executable built by
+`installer:build` under `deployment/installer/`.
 
 The CI package is `MT5Agent-Desktop-v0.1.5-windows-x64.zip`. Download it from
 the `desktop:build-package` job under `dist/desktop/`; the package verification

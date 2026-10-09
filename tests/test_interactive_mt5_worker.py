@@ -391,6 +391,30 @@ def test_worker_install_path_must_contain_the_running_module(monkeypatch, tmp_pa
         )
 
 
+def test_frozen_worker_validates_installed_executable_not_pyinstaller_temp(monkeypatch, tmp_path):
+    install = tmp_path / "Program Files" / "MT5Agent" / "Worker"
+    install.mkdir(parents=True)
+    executable = install / "MT5AgentWorker-v0.1.3.exe"
+    executable.touch()
+    monkeypatch.setattr(worker.sys, "frozen", True, raising=False)
+    monkeypatch.setattr(worker.sys, "executable", str(executable))
+    worker.validate_worker_install_path(
+        worker.RuntimeSettings(
+            "HOST\\MT5RuntimeUser",
+            "HOST\\AgentService",
+            worker_install_path=install,
+        )
+    )
+    with pytest.raises(RuntimeError, match="WORKER_INSTALL_PATH_MISMATCH"):
+        worker.validate_worker_install_path(
+            worker.RuntimeSettings(
+                "HOST\\MT5RuntimeUser",
+                "HOST\\AgentService",
+                worker_install_path=tmp_path / "other",
+            )
+        )
+
+
 def test_windows_worker_configuration_fails_closed_without_machine_key(monkeypatch):
     class MissingRegistryKey:
         HKEY_LOCAL_MACHINE = object()
