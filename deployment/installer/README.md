@@ -92,9 +92,10 @@ does not install the product or remove a Service on its persistent runner.
 
 ## Validation and limitations
 
-- The MT5 path Wizard must create its `InputDirWizardPage` field with `Add`
-  before reading `Values[0]`. `MT5AgentWizard.issinc` is shared by the product
-  setup and the CI smoke setup so both exercise the same initialization code.
+- The MT5 path Wizard creates its `InputDirWizardPage` field with `Add` before
+  reading `Values[0]`. Silent runs skip the UI page entirely and safely detect
+  only the conventional MT5 path if its executable exists. The same shared
+  `MT5AgentWizard.issinc` is used by the product and CI smoke setup.
 - Windows 10 x64 build and packaging are CI targets. A disposable Windows 10 VM
   was not available for clean install/upgrade/repair/uninstall validation, so
   live SCM lifecycle and installer installation remain deferred.

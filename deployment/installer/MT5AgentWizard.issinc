@@ -1,6 +1,11 @@
 procedure InitializeWizard;
 var Candidate: string;
 begin
+  if WizardSilent then begin
+    Log('MT5AgentWizard.InitializeWizard completed (silent).');
+    Exit;
+  end;
+
   Mt5Page := CreateInputDirPage(wpSelectDir,
     'MetaTrader 5 path', 'Optional path to an existing MetaTrader 5 terminal',
     'MT5 is not included. This records the terminal path for the installing user; it does not start or connect MT5. A standard Runtime Principal and matching terminal profile are configured separately before the Worker can run.', False, '');
@@ -13,23 +18,31 @@ begin
   Candidate := ExpandConstant('{autopf}\MetaTrader 5');
   if FileExists(AddBackslash(Candidate) + 'terminal64.exe') then
     Mt5Page.Values[0] := Candidate;
+  Log('MT5AgentWizard.InitializeWizard completed (interactive).');
 end;
 
 function GetTerminalPath(Param: string): string;
+var Candidate: string;
 begin
   Result := '';
-  if Mt5Page.Values[0] <> '' then
+  if WizardSilent then begin
+    Candidate := ExpandConstant('{autopf}\MetaTrader 5');
+    if FileExists(AddBackslash(Candidate) + 'terminal64.exe') then
+      Result := AddBackslash(Candidate) + 'terminal64.exe';
+  end else if Mt5Page.Values[0] <> '' then
     Result := AddBackslash(Mt5Page.Values[0]) + 'terminal64.exe';
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   Result := True;
-  if CurPageID = Mt5Page.ID then begin
-    if Mt5Page.Values[0] <> '' then begin
-      if not FileExists(AddBackslash(Mt5Page.Values[0]) + 'terminal64.exe') then begin
-        MsgBox('The selected folder does not contain terminal64.exe. Choose a valid existing MT5 folder or clear the field to configure it later.', mbError, MB_OK);
-        Result := False;
+  if not WizardSilent then begin
+    if CurPageID = Mt5Page.ID then begin
+      if Mt5Page.Values[0] <> '' then begin
+        if not FileExists(AddBackslash(Mt5Page.Values[0]) + 'terminal64.exe') then begin
+          MsgBox('The selected folder does not contain terminal64.exe. Choose a valid existing MT5 folder or clear the field to configure it later.', mbError, MB_OK);
+          Result := False;
+        end;
       end;
     end;
   end;

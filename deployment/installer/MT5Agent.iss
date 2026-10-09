@@ -69,11 +69,6 @@ Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile
 var Mt5Page: TInputDirWizardPage;
 #include "MT5AgentWizard.issinc"
 
-function HasTerminalPath: Boolean;
-begin
-  Result := (Mt5Page.Values[0] <> '') and FileExists(AddBackslash(Mt5Page.Values[0]) + 'terminal64.exe');
-end;
-
 function HasRuntimeProvisioning: Boolean;
 var RuntimePrincipal, TerminalPath, ProfilePath, WorkerInstallPath: string;
 begin

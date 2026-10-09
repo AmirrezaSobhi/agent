@@ -18,3 +18,9 @@ SetupLogging=yes
 var Mt5Page: TInputDirWizardPage;
 
 #include "..\MT5AgentWizard.issinc"
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssPostInstall then
+    Log('MT5AgentWizard.GetTerminalPath completed: ' + GetTerminalPath(''));
+end;
