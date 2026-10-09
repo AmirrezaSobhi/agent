@@ -2,6 +2,7 @@ using Microsoft.Win32;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.ServiceProcess;
 using System.Threading;
 
@@ -15,6 +16,7 @@ namespace MT5Agent.Service
     internal sealed class AgentService : ServiceBase
     {
         private Process agent;
+        private IntPtr agentJob = IntPtr.Zero;
         private readonly object gate = new object();
         private readonly object logGate = new object();
         private string root;
@@ -51,6 +53,7 @@ namespace MT5Agent.Service
                 agent.OutputDataReceived += (s, e) => Append("agent.stdout.log", e.Data);
                 agent.ErrorDataReceived += (s, e) => Append("agent.stderr.log", e.Data);
                 if (!agent.Start()) throw new InvalidOperationException("AGENT_PROCESS_START_FAILED");
+                AttachAgentToOwnedJob(agent);
                 agent.BeginOutputReadLine(); agent.BeginErrorReadLine();
             }
         }
@@ -88,7 +91,14 @@ namespace MT5Agent.Service
                         agent.WaitForExit(5000);
                     }
                 }
-                finally { agent.Dispose(); agent = null; }
+                finally
+                {
+                    // Closing a kill-on-close Job Object reaps only this
+                    // Service-owned Agent process tree, including a PyInstaller
+                    // one-file child if graceful shutdown did not finish it.
+                    if (agentJob != IntPtr.Zero) { NativeMethods.CloseHandle(agentJob); agentJob = IntPtr.Zero; }
+                    agent.Dispose(); agent = null;
+                }
             }
         }
 
@@ -111,6 +121,81 @@ namespace MT5Agent.Service
                 }
             }
             catch { /* Service availability does not depend on diagnostic disk writes. */ }
+        }
+
+        private void AttachAgentToOwnedJob(Process process)
+        {
+            agentJob = NativeMethods.CreateJobObject(IntPtr.Zero, null);
+            if (agentJob == IntPtr.Zero)
+            {
+                int error = Marshal.GetLastWin32Error();
+                try { process.Kill(); } catch { }
+                throw new InvalidOperationException("AGENT_JOB_CREATE_FAILED:" + error);
+            }
+            JobObjectExtendedLimitInformation limits = new JobObjectExtendedLimitInformation();
+            limits.BasicLimitInformation.LimitFlags = 0x00002000; // JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+            if (!NativeMethods.SetInformationJobObject(agentJob, 9, ref limits,
+                    (uint)Marshal.SizeOf(typeof(JobObjectExtendedLimitInformation))) ||
+                !NativeMethods.AssignProcessToJobObject(agentJob, process.Handle))
+            {
+                int error = Marshal.GetLastWin32Error();
+                NativeMethods.CloseHandle(agentJob);
+                agentJob = IntPtr.Zero;
+                try { process.Kill(); } catch { }
+                throw new InvalidOperationException("AGENT_JOB_ASSIGN_FAILED:" + error);
+            }
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct BasicLimitInformation
+        {
+            public long PerProcessUserTimeLimit;
+            public long PerJobUserTimeLimit;
+            public uint LimitFlags;
+            public UIntPtr MinimumWorkingSetSize;
+            public UIntPtr MaximumWorkingSetSize;
+            public uint ActiveProcessLimit;
+            public UIntPtr Affinity;
+            public uint PriorityClass;
+            public uint SchedulingClass;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct IoCounters
+        {
+            public ulong ReadOperationCount;
+            public ulong WriteOperationCount;
+            public ulong OtherOperationCount;
+            public ulong ReadTransferCount;
+            public ulong WriteTransferCount;
+            public ulong OtherTransferCount;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct JobObjectExtendedLimitInformation
+        {
+            public BasicLimitInformation BasicLimitInformation;
+            public IoCounters IoInfo;
+            public UIntPtr ProcessMemoryLimit;
+            public UIntPtr JobMemoryLimit;
+            public UIntPtr PeakProcessMemoryUsed;
+            public UIntPtr PeakJobMemoryUsed;
+        }
+
+        private static class NativeMethods
+        {
+            [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)]
+            internal static extern IntPtr CreateJobObject(IntPtr attributes, string name);
+            [DllImport("kernel32.dll", SetLastError=true)]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            internal static extern bool SetInformationJobObject(IntPtr job, int informationClass,
+                ref JobObjectExtendedLimitInformation information, uint informationLength);
+            [DllImport("kernel32.dll", SetLastError=true)]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            internal static extern bool AssignProcessToJobObject(IntPtr job, IntPtr process);
+            [DllImport("kernel32.dll", SetLastError=true)]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            internal static extern bool CloseHandle(IntPtr handle);
         }
     }
 }

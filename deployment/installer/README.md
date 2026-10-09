@@ -18,7 +18,8 @@ the user does not install Python. MetaTrader 5 itself is never redistributed.
   Windows Service and machine files. No permission is silently elevated.
 - Service `MT5Agent` runs as LocalSystem because the existing Worker launcher
   requires Session 0 token/session APIs. The service starts only the fixed
-  Agent executable below its protected install root. SCM's default ACL is kept.
+  Agent executable below its protected install root and tracks that process
+  tree in a kill-on-close Job Object. SCM's default ACL is kept.
 - The Agent Management Pipe allowlist is seeded from the Windows SID that
   launched elevated Setup. Pipe ACL and token SID validation remain enforced;
   all other callers are denied by default.

@@ -11,8 +11,9 @@
 - Service control uses the Windows SCM and its default ACL. The helper accepts
   only the protected Program Files installation root. The Management Pipe
   allowlist is SID based and the Worker task is restricted to a configured
-  standard interactive identity. No password, Autologon, trade, or MT5 terminal
-  installer is included.
+  standard interactive identity. Control and Runtime SIDs must differ. The
+  Service tracks its Agent child in a kill-on-close Job Object. No password,
+  Autologon, trade, or MT5 terminal installer is included.
 - Acceptance remains **PARTIAL** until a disposable Windows 10 installation
   validates install, Service start/stop, Worker onboarding, upgrade, repair, and
   uninstall. Windows 11 and Server validation remain deferred. The setup is
