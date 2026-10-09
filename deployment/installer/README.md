@@ -81,11 +81,20 @@ not create the account or enable Autologon.
 Download all three from the `installer:build` job artifacts in the develop
 pipeline. The downstream `installer:verify` job consumes those exact artifacts
 and checks commit/pipeline/build provenance, required payload records, and the
-SHA-256. Setup is unsigned and internal only. The CI verifier does not perform
-an install or remove a Service on its persistent runner.
+SHA-256. Before publishing the package, `installer:build` compiles a disposable
+smoke setup from the same `MT5AgentWizard.issinc` used by the product and runs
+it with `/SILENT` and `/VERYSILENT`. The test requires exit code zero, an Inno
+log, and an initialization marker in each mode. Its setup has no product
+payload, Service commands, or MT5 actions and writes only under a unique
+temporary directory. Interactive UI behavior is not exercised by this
+noninteractive CI check. Setup is unsigned and internal only. The CI verifier
+does not install the product or remove a Service on its persistent runner.
 
 ## Validation and limitations
 
+- The MT5 path Wizard must create its `InputDirWizardPage` field with `Add`
+  before reading `Values[0]`. `MT5AgentWizard.issinc` is shared by the product
+  setup and the CI smoke setup so both exercise the same initialization code.
 - Windows 10 x64 build and packaging are CI targets. A disposable Windows 10 VM
   was not available for clean install/upgrade/repair/uninstall validation, so
   live SCM lifecycle and installer installation remain deferred.

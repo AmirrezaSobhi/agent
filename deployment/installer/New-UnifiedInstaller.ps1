@@ -69,6 +69,8 @@ if (-not (Test-Path -LiteralPath $isccPath -PathType Leaf)) { throw 'ISCC.exe is
 $setupScript = Join-Path $PSScriptRoot 'MT5Agent.iss'
 & $isccPath "/DSourceRoot=$repo" "/DProductVersion=$version" "/DOutputRoot=$output" $setupScript
 if ($LASTEXITCODE -ne 0) { throw "Inno Setup compilation failed with code $LASTEXITCODE" }
+$wizardSmokeScript = Join-Path $PSScriptRoot 'Test-WizardInitialization.ps1'
+& $wizardSmokeScript -CompilerPath $isccPath
 $setupFile = Join-Path $output "MT5Agent-Setup-v$version-$arch.exe"
 if (-not (Test-Path -LiteralPath $setupFile -PathType Leaf)) { throw 'Inno Setup did not produce the expected single-file installer.' }
 $payload = @()
