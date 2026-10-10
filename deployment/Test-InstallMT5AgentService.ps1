@@ -17,6 +17,7 @@ $script:MT5AgentScCommandOverride = {
     $verb = [string]$Arguments[0]
     $script:MockScCalls += [pscustomobject]@{ Arguments = @($Arguments) }
     if ($script:MockFailScVerb -eq $verb) { return [pscustomobject]@{ Output = @('Simulated SCM recovery configuration failure.'); ExitCode = 5 } }
+    if ($verb -eq 'delete') { $script:MockService = $null }
     if ($verb -eq 'qfailure') {
         $count = if ($script:MockBadRecoveryReadback) { 2 } else { 3 }
         return [pscustomobject]@{ Output = @("Number of actions: $count; reset=86400; actions=restart/5000/restart/15000/none/0"); ExitCode = 0 }
