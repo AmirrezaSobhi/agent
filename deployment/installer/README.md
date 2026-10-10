@@ -19,7 +19,19 @@ the user does not install Python. MetaTrader 5 itself is never redistributed.
 - Service `MT5Agent` runs as LocalSystem because the existing Worker launcher
   requires Session 0 token/session APIs. The service starts only the fixed
   Agent executable below its protected install root and tracks that process
-  tree in a kill-on-close Job Object. SCM's default ACL is kept.
+  tree in a kill-on-close Job Object. The deployed layout is `Service` and
+  `Agent` as sibling directories under the install root; the Service resolves
+  the Agent from the parent of its own `Service` directory. SCM's default ACL
+  is kept.
+- Startup validation errors and the original exception with stack are written
+  to `%ProgramData%\MT5Agent\Logs\service-host.log` before the failure is
+  returned to SCM. A child that exits shortly after launch is treated as a
+  startup failure; an unexpected later exit is logged and transitions the
+  service to a failed/stopped state. Stop waits briefly, then closes only the
+  Service-owned process Job Object to reap the Agent process tree. CI exercises
+  this process lifecycle with disposable child processes but does not register
+  a Service or run under Session 0; live SCM/Session 0 validation remains for
+  the dedicated Windows test VM.
 - The Agent Management Pipe allowlist is seeded from the Windows SID that
   launched elevated Setup. Pipe ACL and token SID validation remain enforced;
   all other callers are denied by default.
