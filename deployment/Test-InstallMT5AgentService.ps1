@@ -9,6 +9,21 @@ $script:MockNewServiceCalls = 0
 $script:MockSetServiceCalls = 0
 $script:MockStartServiceCalls = 0
 $script:MockFailNewService = $false
+$script:MockFailScVerb = $null
+$script:MockBadRecoveryReadback = $false
+$script:MockScCalls = @()
+$script:MT5AgentScCommandOverride = {
+    param([string[]] $Arguments)
+    $verb = [string]$Arguments[0]
+    $script:MockScCalls += [pscustomobject]@{ Arguments = @($Arguments) }
+    if ($script:MockFailScVerb -eq $verb) { return [pscustomobject]@{ Output = @('Simulated SCM recovery configuration failure.'); ExitCode = 5 } }
+    if ($verb -eq 'qfailure') {
+        $count = if ($script:MockBadRecoveryReadback) { 2 } else { 3 }
+        return [pscustomobject]@{ Output = @("Number of actions: $count; reset=86400; actions=restart/5000/restart/15000/none/0"); ExitCode = 0 }
+    }
+    if ($verb -eq 'qfailureflag') { return [pscustomobject]@{ Output = @('Failure actions on non-crash failures: 1'); ExitCode = 0 } }
+    return [pscustomobject]@{ Output = @('Simulated SCM command succeeded.'); ExitCode = 0 }
+}
 $script:MockServiceExe = Join-Path $env:ProgramFiles 'MT5Agent\Service\MT5Agent.Service.exe'
 
 function Test-Path {
@@ -106,6 +121,9 @@ try {
     $script:MockSetServiceCalls = 0
     $script:MockStartServiceCalls = 0
     $script:MockFailNewService = $false
+    $script:MockFailScVerb = $null
+    $script:MockBadRecoveryReadback = $false
+    $script:MockScCalls = @()
     $successLog = Join-Path $testRoot 'service-success.log'
     $result = Invoke-MT5AgentService -RequestedAction Install -RequestedInstallRoot $root -LogPath $successLog
     if ($result -ne 0 -or $script:MockNewServiceCalls -ne 1 -or $script:MockStartServiceCalls -ne 1 -or $script:MockService.State -ne 'Running') {
@@ -113,6 +131,12 @@ try {
     }
     if ((Get-Content -LiteralPath $successLog -Raw) -notmatch 'Service verified: Name=MT5Agent; State=Running') {
         throw 'Successful Service registration did not produce its completion log record.'
+    }
+    $recoveryCalls = @($script:MockScCalls | Where-Object { $_.Arguments[0] -in @('failure', 'failureflag') })
+    if ($recoveryCalls.Count -ne 2 -or $recoveryCalls[0].Arguments[0] -ne 'failure' -or
+        ($recoveryCalls[0].Arguments -join ' ') -notmatch 'restart/5000/restart/15000' -or
+        $recoveryCalls[1].Arguments[0] -ne 'failureflag' -or $recoveryCalls[1].Arguments[-1] -ne '1') {
+        throw 'Service recovery actions are missing, unbounded, or omit non-crash failures.'
     }
     Write-Host 'Service registration success simulation PASS.'
 
@@ -123,6 +147,9 @@ try {
     $script:MockSetServiceCalls = 0
     $script:MockStartServiceCalls = 0
     $script:MockFailNewService = $true
+    $script:MockFailScVerb = $null
+    $script:MockBadRecoveryReadback = $false
+    $script:MockScCalls = @()
     $failureLog = Join-Path $testRoot 'service-failure.log'
     $result = Invoke-MT5AgentService -RequestedAction Install -RequestedInstallRoot $root -LogPath $failureLog
     $failureText = Get-Content -LiteralPath $failureLog -Raw
@@ -140,6 +167,9 @@ try {
     $script:MockSetServiceCalls = 0
     $script:MockStartServiceCalls = 0
     $script:MockFailNewService = $false
+    $script:MockFailScVerb = $null
+    $script:MockBadRecoveryReadback = $false
+    $script:MockScCalls = @()
     $repairLog = Join-Path $testRoot 'partial-reinstall.log'
     $result = Invoke-MT5AgentService -RequestedAction Install -RequestedInstallRoot $root -LogPath $repairLog
     if ($result -ne 0 -or $script:MockNewServiceCalls -ne 0 -or $script:MockSetServiceCalls -ne 1 -or
@@ -148,6 +178,36 @@ try {
         throw 'Partial-install retry was not idempotent or did not preserve existing Management permissions.'
     }
     Write-Host 'Partial-install idempotent-retry simulation PASS.'
+
+    $script:MockService = $null
+    $script:MockManagementKey = $true
+    $script:MockAllowedSids = @('S-1-5-21-previous-control')
+    $script:MockFailNewService = $false
+    $script:MockFailScVerb = 'failureflag'
+    $script:MockBadRecoveryReadback = $false
+    $script:MockScCalls = @()
+    $recoveryFailureLog = Join-Path $testRoot 'recovery-failure.log'
+    $result = Invoke-MT5AgentService -RequestedAction Install -RequestedInstallRoot $root -LogPath $recoveryFailureLog
+    $recoveryFailureText = Get-Content -LiteralPath $recoveryFailureLog -Raw
+    if ($result -ne 1 -or $script:MockService -or
+        $recoveryFailureText -notmatch 'SCM command .failureflag. failed with exit code 5' -or
+        $script:MockAllowedSids -notcontains 'S-1-5-21-previous-control') {
+        throw 'A required recovery-policy failure did not fail installation and roll back the newly created Service.'
+    }
+    Write-Host 'Service recovery failure propagation and rollback simulation PASS.'
+
+    $script:MockService = $null
+    $script:MockAllowedSids = @('S-1-5-21-previous-control')
+    $script:MockFailScVerb = $null
+    $script:MockBadRecoveryReadback = $true
+    $script:MockScCalls = @()
+    $readbackFailureLog = Join-Path $testRoot 'recovery-readback-failure.log'
+    $result = Invoke-MT5AgentService -RequestedAction Install -RequestedInstallRoot $root -LogPath $readbackFailureLog
+    if ($result -ne 1 -or $script:MockService -or
+        (Get-Content -LiteralPath $readbackFailureLog -Raw) -notmatch 'SERVICE_RECOVERY_CONFIGURATION_VERIFICATION_FAILED') {
+        throw 'A mismatched SCM recovery read-back did not fail installation and roll back its newly created Service.'
+    }
+    Write-Host 'Service recovery read-back mismatch and rollback simulation PASS.'
 
     $serviceText = Get-Content -LiteralPath $serviceScript -Raw
     if ($serviceText -match '(?im)\b(Stop-Process|Remove-Item)\b.*(terminal64|MetaTrader|MetaQuotes)') {

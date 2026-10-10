@@ -50,7 +50,10 @@ the user does not install Python. MetaTrader 5 itself is never redistributed.
   and Running state. Service diagnostics are written to
   `%ProgramData%\MT5Agent\Logs\service-install.log`; exception message, error
   identifier, source line, and stack are recorded with credential-like values
-  redacted.
+  redacted. SCM recovery is set to two automatic restarts (5 seconds, then 15
+  seconds) with a one-day reset period, then no further automatic restart;
+  non-crash failures are included. `sc.exe qfailure` and `qfailureflag` outputs
+  are checked before Setup reports service installation as successful.
 - Service and configured Worker registration are required operations. Inno
   Setup checks their actual child-process exit codes and fails both interactive
   and silent installation if either operation fails. The required-operation

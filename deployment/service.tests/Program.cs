@@ -65,6 +65,14 @@ namespace MT5Agent.Service.Tests
                     Throws<InvalidOperationException>(host.StartForTest, "MANAGEMENT_CONTROL_SID_INVALID");
                     Contains(File.ReadAllText(Path.Combine(logs, "service-host.log")), "MANAGEMENT_CONTROL_SID_INVALID");
                 });
+                Run("permission-denied configuration fails closed with original diagnostic", delegate {
+                    AgentService host = new AgentService(service, AgentName, delegate { throw new UnauthorizedAccessException("Access is denied."); },
+                        "/c exit 0", logs);
+                    Throws<InvalidOperationException>(host.StartForTest, "Access is denied");
+                    string log = File.ReadAllText(Path.Combine(logs, "service-host.log"));
+                    Contains(log, "UnauthorizedAccessException");
+                    Contains(log, "Access is denied");
+                });
                 Run("invalid working directory is logged as a startup failure", delegate {
                     AgentService host = new AgentService(service, AgentName, delegate { return new[] { "S-1-5-18" }; },
                         "/c exit 0", logs, Path.Combine(root, "missing-working-directory"));

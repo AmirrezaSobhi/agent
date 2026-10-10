@@ -44,11 +44,18 @@ function Get-MT5AgentServiceBinaryPath {
 function Invoke-MT5AgentScCommand {
     param(
         [Parameter(Mandatory = $true)][string[]] $Arguments,
-        [Parameter(Mandatory = $true)][string] $LogPath
+        [Parameter(Mandatory = $true)][string] $LogPath,
+        [switch] $PassThru
     )
 
-    $output = @(& $script:MT5AgentScPath @Arguments 2>&1 | ForEach-Object { [string]$_ })
-    $exitCode = $LASTEXITCODE
+    if ($script:MT5AgentScCommandOverride) {
+        $mockResult = & $script:MT5AgentScCommandOverride $Arguments
+        $output = @($mockResult.Output)
+        $exitCode = [int]$mockResult.ExitCode
+    } else {
+        $output = @(& $script:MT5AgentScPath @Arguments 2>&1 | ForEach-Object { [string]$_ })
+        $exitCode = $LASTEXITCODE
+    }
     foreach ($line in $output) {
         if (-not [string]::IsNullOrWhiteSpace($line)) {
             Write-MT5AgentServiceLog -Level INFO -Message ("SCM: {0}" -f $line) -LogPath $LogPath
@@ -57,6 +64,30 @@ function Invoke-MT5AgentScCommand {
     if ($exitCode -ne 0) {
         throw ("SCM command '{0}' failed with exit code {1}. Output: {2}" -f $Arguments[0], $exitCode, ($output -join ' '))
     }
+    if ($PassThru) { return $output }
+}
+
+function Set-MT5AgentServiceRecovery {
+    param(
+        [Parameter(Mandatory = $true)][string] $ServiceName,
+        [Parameter(Mandatory = $true)][string] $LogPath
+    )
+
+    # Bounded recovery: two restarts, then require operator intervention.
+    # The reset period lets a stable service return to its initial retry budget.
+    Invoke-MT5AgentScCommand -Arguments @('failure', $ServiceName, 'reset=', '86400', 'actions=', 'restart/5000/restart/15000/""/0') -LogPath $LogPath
+    Invoke-MT5AgentScCommand -Arguments @('failureflag', $ServiceName, '1') -LogPath $LogPath
+    $failureOutput = @(Invoke-MT5AgentScCommand -Arguments @('qfailure', $ServiceName) -LogPath $LogPath -PassThru)
+    $failureFlagOutput = @(Invoke-MT5AgentScCommand -Arguments @('qfailureflag', $ServiceName) -LogPath $LogPath -PassThru)
+    $failureText = $failureOutput -join ' '
+    $failureFlagText = $failureFlagOutput -join ' '
+    $actionCount = [regex]::Match($failureText, '(?i)number of actions\s*:?\s*(\d+)\b')
+    if ($failureText -notmatch '(?<!\d)86400(?!\d)' -or $failureText -notmatch '(?<!\d)5000(?!\d)' -or
+        $failureText -notmatch '(?<!\d)15000(?!\d)' -or ($actionCount.Success -and $actionCount.Groups[1].Value -ne '3') -or
+        $failureFlagText -notmatch '(?<!\d)1(?!\d)') {
+        throw 'SERVICE_RECOVERY_CONFIGURATION_VERIFICATION_FAILED'
+    }
+    Write-MT5AgentServiceLog -Level INFO -Message 'SCM recovery policy set: restart after 5s and 15s, then no further automatic restart; non-crash failures are included.' -LogPath $LogPath
 }
 
 function Invoke-MT5AgentService {
@@ -178,6 +209,7 @@ function Invoke-MT5AgentService {
         if ([string]$service.StartName -notmatch '^(LocalSystem|NT AUTHORITY\\SYSTEM)$') { throw 'SERVICE_ACCOUNT_VERIFICATION_FAILED' }
 
         $currentService = Get-Service -Name $serviceName -ErrorAction Stop
+        Set-MT5AgentServiceRecovery -ServiceName $serviceName -LogPath $LogPath
         if ($currentService.Status -ne [System.ServiceProcess.ServiceControllerStatus]::Running) {
             Start-Service -Name $serviceName -ErrorAction Stop
         }
