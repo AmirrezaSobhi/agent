@@ -69,7 +69,9 @@ namespace MT5Agent.Service.Tests
                     AgentService host = new AgentService(service, AgentName, delegate { return new[] { "S-1-5-18" }; },
                         "/c exit 0", logs, Path.Combine(root, "missing-working-directory"));
                     Throws<InvalidOperationException>(host.StartForTest, "failed to start");
-                    Contains(File.ReadAllText(Path.Combine(logs, "service-host.log")), "DirectoryNotFoundException");
+                    string log = File.ReadAllText(Path.Combine(logs, "service-host.log"));
+                    Contains(log, "working_directory=");
+                    Contains(log, "Win32Exception");
                 });
                 Run("unexpected child exit is recorded as service failure", delegate {
                     AgentService host = Create(service, logs, "/c ping 127.0.0.1 -n 3 >nul & exit 7");
