@@ -11,7 +11,11 @@ $script:MockStartServiceCalls = 0
 $script:MockFailNewService = $false
 $script:MockFailScVerb = $null
 $script:MockBadRecoveryReadback = $false
-$script:MockRecoveryFlagReadback = 'FAILURE_ACTIONS_ON_NONCRASH_FAILURES: TRUE'
+$script:MockRecoveryFlagReadback = @(
+    '[SC] QueryServiceConfig2 SUCCESS',
+    'SERVICE_NAME: MT5Agent',
+    'FAILURE_ACTIONS_ON_NONCRASH_FAILURES:  TRUE'
+)
 $script:MockScCalls = @()
 $script:MT5AgentScCommandOverride = {
     param([string[]] $Arguments)
@@ -23,7 +27,7 @@ $script:MT5AgentScCommandOverride = {
         $count = if ($script:MockBadRecoveryReadback) { 2 } else { 3 }
         return [pscustomobject]@{ Output = @("Number of actions: $count; reset=86400; actions=restart/5000/restart/15000/none/0"); ExitCode = 0 }
     }
-    if ($verb -eq 'qfailureflag') { return [pscustomobject]@{ Output = @($script:MockRecoveryFlagReadback); ExitCode = 0 } }
+    if ($verb -eq 'qfailureflag') { return [pscustomobject]@{ Output = $script:MockRecoveryFlagReadback; ExitCode = 0 } }
     return [pscustomobject]@{ Output = @('Simulated SCM command succeeded.'); ExitCode = 0 }
 }
 $script:MockServiceExe = Join-Path $env:ProgramFiles 'MT5Agent\Service\MT5Agent.Service.exe'
@@ -118,11 +122,11 @@ try {
 
     $recoveryReadbackLog = Join-Path $testRoot 'recovery-readback-values.log'
     foreach ($readback in @(
-        [pscustomobject]@{ Value = 'FAILURE_ACTIONS_ON_NONCRASH_FAILURES: TRUE'; Accepted = $true },
-        [pscustomobject]@{ Value = 'FAILURE_ACTIONS_ON_NONCRASH_FAILURES: 1'; Accepted = $true },
-        [pscustomobject]@{ Value = 'FAILURE_ACTIONS_ON_NONCRASH_FAILURES: FALSE'; Accepted = $false },
-        [pscustomobject]@{ Value = 'FAILURE_ACTIONS_ON_NONCRASH_FAILURES: MAYBE'; Accepted = $false },
-        [pscustomobject]@{ Value = 'FAILURE_ACTIONS_ON_NONCRASH_FAILURES:'; Accepted = $false }
+        [pscustomobject]@{ Value = @('[SC] QueryServiceConfig2 SUCCESS', 'SERVICE_NAME: MT5Agent', 'FAILURE_ACTIONS_ON_NONCRASH_FAILURES:  TRUE'); Accepted = $true },
+        [pscustomobject]@{ Value = @('[SC] QueryServiceConfig2 SUCCESS', 'SERVICE_NAME: MT5Agent', 'FAILURE_ACTIONS_ON_NONCRASH_FAILURES:  1'); Accepted = $true },
+        [pscustomobject]@{ Value = @('[SC] QueryServiceConfig2 SUCCESS', 'SERVICE_NAME: MT5Agent', 'FAILURE_ACTIONS_ON_NONCRASH_FAILURES:  FALSE'); Accepted = $false },
+        [pscustomobject]@{ Value = @('[SC] QueryServiceConfig2 SUCCESS', 'SERVICE_NAME: MT5Agent', 'FAILURE_ACTIONS_ON_NONCRASH_FAILURES:  MAYBE'); Accepted = $false },
+        [pscustomobject]@{ Value = @('[SC] QueryServiceConfig2 SUCCESS', 'SERVICE_NAME: MT5Agent', 'FAILURE_ACTIONS_ON_NONCRASH_FAILURES:'); Accepted = $false }
     )) {
         $script:MockRecoveryFlagReadback = $readback.Value
         $threw = $false
@@ -136,7 +140,11 @@ try {
             throw "SCM recovery read-back acceptance was incorrect for '$($readback.Value)'."
         }
     }
-    $script:MockRecoveryFlagReadback = 'FAILURE_ACTIONS_ON_NONCRASH_FAILURES: TRUE'
+    $script:MockRecoveryFlagReadback = @(
+        '[SC] QueryServiceConfig2 SUCCESS',
+        'SERVICE_NAME: MT5Agent',
+        'FAILURE_ACTIONS_ON_NONCRASH_FAILURES:  TRUE'
+    )
     Write-Host 'SCM recovery read-back accepts TRUE/1 and rejects FALSE, invalid, and incomplete values PASS.'
 
     $script:MockService = $null

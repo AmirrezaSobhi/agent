@@ -80,7 +80,9 @@ function Set-MT5AgentServiceRecovery {
     $failureOutput = @(Invoke-MT5AgentScCommand -Arguments @('qfailure', $ServiceName) -LogPath $LogPath -PassThru)
     $failureFlagOutput = @(Invoke-MT5AgentScCommand -Arguments @('qfailureflag', $ServiceName) -LogPath $LogPath -PassThru)
     $failureText = $failureOutput -join ' '
-    $failureFlagText = $failureFlagOutput -join ' '
+    # Keep SCM output line boundaries: the read-back value is preceded by the
+    # query header and service name, so a line-anchored match needs newlines.
+    $failureFlagText = $failureFlagOutput -join [Environment]::NewLine
     $actionCount = [regex]::Match($failureText, '(?i)number of actions\s*:?\s*(\d+)\b')
     $failureFlagMatch = [regex]::Match($failureFlagText, '(?im)^\s*(?:FAILURE_ACTIONS_ON_NONCRASH_FAILURES|Failure actions on non-crash failures)\s*:\s*([^\r\n]*)$')
     $failureFlagValue = if ($failureFlagMatch.Success) { $failureFlagMatch.Groups[1].Value.Trim() } else { '' }

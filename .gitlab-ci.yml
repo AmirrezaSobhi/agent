@@ -274,13 +274,14 @@ installer:build:
         [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $scriptPath).Path, [ref]$tokens, [ref]$parseErrors) | Out-Null
         if ($parseErrors.Count -gt 0) { throw "PowerShell syntax error in $scriptPath`: $($parseErrors[0].Message)" }
       }
+      New-Item -ItemType Directory -Force -Path 'reports' | Out-Null
+      & ./deployment/Test-InstallMT5AgentService.ps1 2>&1 | Tee-Object -FilePath './reports/service-install-script-tests.txt'
       $msbuild = 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\MSBuild.exe'
       if (-not (Test-Path $msbuild)) { throw 'MSBuild is required for the .NET Framework Service host.' }
       & $msbuild './deployment/service/MT5Agent.Service.csproj' /t:Rebuild /p:Configuration=Release /p:Platform=x64 /m:1 /nologo /verbosity:minimal
       if ($LASTEXITCODE -ne 0) { throw 'Windows Service host build failed.' }
       & $msbuild './deployment/service.tests/MT5Agent.Service.Tests.csproj' /t:Rebuild /p:Configuration=Release /p:Platform=x64 /m:1 /nologo /verbosity:minimal
       if ($LASTEXITCODE -ne 0) { throw 'Windows Service lifecycle test build failed.' }
-      New-Item -ItemType Directory -Force -Path 'reports' | Out-Null
       & './deployment/service.tests/bin/Release/MT5Agent.Service.Tests.exe' 2>&1 | Tee-Object -FilePath './reports/service-host-tests.txt'
       if ($LASTEXITCODE -ne 0) { throw 'Windows Service lifecycle tests failed.' }
       $agentBuild = Get-Content './reports/build.json' -Raw | ConvertFrom-Json
@@ -301,6 +302,7 @@ installer:build:
       - dist/installer/MT5Agent-Setup-v0.1.5-windows-x64.exe
       - dist/installer/MT5Agent-Setup-v0.1.5-windows-x64.manifest.json
       - dist/installer/MT5Agent-Setup-v0.1.5-windows-x64.sha256
+      - reports/service-install-script-tests.txt
       - reports/service-host-tests.txt
 
 installer:verify:
