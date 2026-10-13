@@ -89,3 +89,14 @@ def test_system_runtime_smoke_does_not_collide_with_the_installed_management_pip
     assert "ManagementAllowedSid" not in body
     assert "management-ipc-smoke" not in body
     assert "installed Service owns the fixed Management pipe" in body
+
+
+def test_authorized_management_smoke_runs_outside_system_after_receipt_validation():
+    assert "CI coordinator SID is not already authorized" in COORDINATOR
+    assert "$runnerSid -notin $managementAllowedSids" in COORDINATOR
+    assert "managementEvidence.executable_sha256" in COORDINATOR
+    assert "'--management-ipc-smoke' $managementLiveEvidence 'live-runtime'" in COORDINATOR
+    assert "Configured authorized CI caller could not read the installed Management pipe" in COORDINATOR
+    assert "management-ipc-smoke" not in re.search(
+        r"(?ms)^        'smoke-mt5-runtime-system' \{(?P<body>.*?)^        'package' \{", CI
+    ).group("body")

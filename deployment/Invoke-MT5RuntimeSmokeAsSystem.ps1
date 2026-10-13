@@ -146,6 +146,11 @@ if ($runnerSession -ne 0 -or -not ([System.Security.Principal.WindowsPrincipal]:
 }
 
 $runtimeConfig = Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\MT5Agent\Runtime' -ErrorAction Stop
+$managementConfig = Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\MT5Agent\Management' -Name AllowedUserSids -ErrorAction Stop
+$managementAllowedSids = @($managementConfig.AllowedUserSids)
+if ($runnerSid -notin $managementAllowedSids) {
+    throw 'CI coordinator SID is not already authorized for the installed Management pipe'
+}
 $controlSid = Get-AccountSid -Account ([string]$runtimeConfig.ControlPrincipal)
 if ($controlSid -cne 'S-1-5-18' -or [string]$runtimeConfig.ControlPrincipal -ine 'NT AUTHORITY\SYSTEM') {
     throw 'Installed Worker ControlPrincipal must remain LocalSystem'
@@ -360,6 +365,16 @@ try {
     foreach ($name in @('mt5-runtime.json', 'task.stdout.log', 'task.stderr.log')) {
         $source = Join-Path $stagePath "reports\$name"
         if (Test-Path -LiteralPath $source -PathType Leaf) { Copy-Item -LiteralPath $source -Destination (Join-Path $reportDestination $name) -Force }
+    }
+    $desktopSmokeSource = Join-Path $RepoRoot 'src/desktop/MT5Agent.Desktop.Tests/bin/Release/MT5Agent.Desktop.Tests.exe'
+    if ((Get-FileHash -LiteralPath $desktopSmokeSource -Algorithm SHA256).Hash.ToLowerInvariant() -cne
+        [string]$managementEvidence.executable_sha256) {
+        throw 'Management IPC test executable changed after its provenance check'
+    }
+    $managementLiveEvidence = Join-Path $reportDestination 'management-ipc-live-smoke.txt'
+    & $desktopSmokeSource '--management-ipc-smoke' $managementLiveEvidence 'live-runtime'
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Configured authorized CI caller could not read the installed Management pipe'
     }
     Copy-Item -LiteralPath $resultPath -Destination (Join-Path $reportDestination 'runtime-task-result.json') -Force
     $resultCopied = $true

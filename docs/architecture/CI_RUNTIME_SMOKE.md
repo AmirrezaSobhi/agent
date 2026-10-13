@@ -80,11 +80,14 @@ interactive Worker/MT5 session concurrently.
 The System smoke permits only the existing non-trading health and terminal
 read operations (`mt5.get_symbols_total`, `mt5.get_terminal_version`, and
 `mt5.get_account_information`). The candidate Agent does not create a second
-instance of the installed Service's fixed Management pipe; Management IPC
-authorization is covered by the separate Windows contract tests and installed
-product validation using its configured authorized caller. Unsupported trading
-operations remain rejected by the Worker protocol. The test does not start,
-stop, or reconfigure the existing Worker or MetaTrader terminal.
+instance of the installed Service's fixed Management pipe. After the System
+task returns a validated receipt, the coordinator runs the same-pipeline
+Management client only if its exact SID is already present in the installed
+Management allowlist; it does not edit that allowlist. This keeps the
+LocalSystem-to-Worker check separate from an authorized Management client
+check. Unsupported trading operations remain rejected by the Worker protocol.
+The test does not start, stop, or reconfigure the existing Worker or MetaTrader
+terminal.
 
 ## Verification status
 
