@@ -89,6 +89,8 @@ def test_system_runtime_smoke_does_not_collide_with_the_installed_management_pip
     assert "ManagementAllowedSid" not in body
     assert "management-ipc-smoke" not in body
     assert "installed Service owns the fixed Management pipe" in body
+    assert "$managementEvidencePath" not in body
+    assert "Worker session=$($worker.session_id)" in body
 
 
 def test_authorized_management_smoke_runs_outside_system_after_receipt_validation():

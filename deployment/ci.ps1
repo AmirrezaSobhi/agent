@@ -556,8 +556,7 @@ try {
                     account_information_success = $true; account_information_field_count = $accountFieldCount
                     final_health = 'AGENT_RUNNING + MT5_CONNECTED'
                 })
-                Write-Output (Get-Content -LiteralPath $managementEvidencePath -Raw)
-                Write-Output "Runtime integration passed; Worker and terminal identity/session verified; MT5 safe-read checks passed; SHA256=$afterHash"
+                Write-Output "Runtime integration passed; Worker session=$($worker.session_id); Worker and terminal identity/session verified; MT5 safe-read checks passed; SHA256=$afterHash"
             }
             finally { Stop-CandidateAgent -Process $script:CandidateProcess; $script:CandidateProcess = $null }
         }
