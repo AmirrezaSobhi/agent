@@ -46,6 +46,14 @@ def test_privileged_payload_is_committed_hash_checked_and_acl_protected():
     assert "management-ipc-build.json" in PIPELINE
 
 
+def test_product_root_acl_check_does_not_confuse_read_execute_with_write_access():
+    assert "FileSystemRights]::WriteData" in COORDINATOR
+    assert "FileSystemRights]::WriteAttributes" in COORDINATOR
+    assert "FileSystemRights]::ChangePermissions" in COORDINATOR
+    assert "($rule.FileSystemRights -band $_) -eq $_" in COORDINATOR
+    assert "$writeMask" not in COORDINATOR
+
+
 def test_stale_results_timeouts_failed_exit_and_owned_resource_cleanup_are_checked():
     assert "Test-Path -LiteralPath $stagePath" in COORDINATOR
     assert "Stale System smoke result" in SYSTEM_TASK

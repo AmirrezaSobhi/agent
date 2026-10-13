@@ -35,6 +35,16 @@ WinError 5). It serializes runtime jobs with a GitLab `resource_group` and a
 machine-wide mutex. The task name and entry point are fixed by the coordinator;
 there is no caller-supplied command or script argument.
 
+The product-root ACL check evaluates individual write, append, delete, owner,
+and DACL-change rights. It does not bitmask a composite `Write`/`Modify` value,
+because composite Windows rights share bits with the valid `Read & Execute`
+permission. On the first Pipeline #91 attempt, the composite mask falsely
+classified the installed `BUILTIN\Users:(RX)` ACE as writable and failed before
+creating the task. Read-only `icacls` evidence showed the product root is
+inherited from TrustedInstaller/System/Administrators with Users read/execute.
+The check was corrected to enumerate specific mutating rights without changing
+the machine ACL. The corrected check still needs a fresh Windows Pipeline run.
+
 Inputs are copied under `Program Files\MT5Agent\CiRuntimeSmoke\<pipeline>_<job>`
 with an explicit, non-inheriting DACL granting Full Control only to LocalSystem
 and Administrators. The installed product directory must itself be non-reparse

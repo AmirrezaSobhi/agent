@@ -162,16 +162,24 @@ if (($baseItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0)
 }
 $baseAcl = Get-Acl -LiteralPath $programFilesRoot
 $untrustedSids = @('S-1-1-0', 'S-1-5-11', 'S-1-5-32-545', $runtimeSid)
-$writeMask = [System.Security.AccessControl.FileSystemRights]::Write -bor
-    [System.Security.AccessControl.FileSystemRights]::Modify -bor
-    [System.Security.AccessControl.FileSystemRights]::Delete -bor
-    [System.Security.AccessControl.FileSystemRights]::ChangePermissions -bor
+$untrustedWriteRights = @(
+    [System.Security.AccessControl.FileSystemRights]::WriteData,
+    [System.Security.AccessControl.FileSystemRights]::AppendData,
+    [System.Security.AccessControl.FileSystemRights]::WriteExtendedAttributes,
+    [System.Security.AccessControl.FileSystemRights]::WriteAttributes,
+    [System.Security.AccessControl.FileSystemRights]::Delete,
+    [System.Security.AccessControl.FileSystemRights]::DeleteSubdirectoriesAndFiles,
+    [System.Security.AccessControl.FileSystemRights]::ChangePermissions,
     [System.Security.AccessControl.FileSystemRights]::TakeOwnership
+)
 foreach ($rule in $baseAcl.Access) {
     $sid = $rule.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier]).Value
+    $matchingWriteRights = @($untrustedWriteRights | Where-Object {
+        ($rule.FileSystemRights -band $_) -eq $_
+    })
     if ($sid -in $untrustedSids -and $rule.AccessControlType -eq [System.Security.AccessControl.AccessControlType]::Allow -and
-        ($rule.FileSystemRights -band $writeMask) -ne 0) {
-        throw 'Product root is writable by an unprivileged principal; refusing privileged execution'
+        $matchingWriteRights.Count -gt 0) {
+        throw 'Product root grants write/delete/ACL-change rights to an unprivileged principal; refusing privileged execution'
     }
 }
 Set-ProtectedDirectory -Path $stageParent
