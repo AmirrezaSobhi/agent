@@ -102,7 +102,8 @@ function Invoke-CandidateCommand {
 function Get-CandidateDiagnostics {
     $versionResult = Invoke-CandidateCommand -Name 'version' -Arguments @('--version')
     if ($versionResult.ExitCode -ne 0 -or $versionResult.Output.Trim() -cne $version) {
-        throw 'Candidate --version failed or disagrees with source metadata'
+        $actualVersionOutput = if ($versionResult.Output) { $versionResult.Output.Trim() } else { '<empty>' }
+        throw "Candidate --version contract failed: exit=$($versionResult.ExitCode); expected=$version; actual=$actualVersionOutput"
     }
     $result = Invoke-CandidateCommand -Name 'diagnostics' -Arguments @('--diagnose', '--json') -TimeoutMilliseconds 30000
     try { $inspection = $result.Output | ConvertFrom-Json -ErrorAction Stop }

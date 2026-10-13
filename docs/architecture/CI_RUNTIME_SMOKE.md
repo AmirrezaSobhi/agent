@@ -49,6 +49,15 @@ the runner token. The root check now skips inherit-only entries and treats an
 untranslatable effective ACE with any mutating right as unsafe. The corrected
 check still needs a fresh Windows Pipeline run.
 
+Pipeline #93 passed that preflight and reached the scheduled test action. Its
+child wrote the expected version text (`0.1.3`) but the `--version` contract
+still failed; the captured stderr contains no further detail because the
+candidate check previously reported only a generic message. This smoke attempt
+did not reach Worker IPC. The coordinator removes its own scheduled task and
+protected stage on failure; the task was confirmed absent afterward. The next
+revision reports the child exit code and actual version text, and preserves the
+raw structured task result on failures as well as successes.
+
 Inputs are copied under `Program Files\MT5Agent\CiRuntimeSmoke\<pipeline>_<job>`
 with an explicit, non-inheriting DACL granting Full Control only to LocalSystem
 and Administrators. The installed product directory must itself be non-reparse

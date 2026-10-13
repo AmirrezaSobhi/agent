@@ -44,6 +44,8 @@ def test_privileged_payload_is_committed_hash_checked_and_acl_protected():
     assert "$context.desktop_smoke_files" in SYSTEM_TASK
     assert "Staged Management test payload integrity check failed" in SYSTEM_TASK
     assert "management-ipc-build.json" in PIPELINE
+    assert "exit=$($versionResult.ExitCode)" in CI
+    assert "actual=$actualVersionOutput" in CI
 
 
 def test_product_root_acl_check_does_not_confuse_read_execute_with_write_access():
@@ -66,6 +68,7 @@ def test_stale_results_timeouts_failed_exit_and_owned_resource_cleanup_are_check
     assert "$taskCreated" in COORDINATOR
     assert "Unregister-ScheduledTask -TaskName $taskName" in COORDINATOR
     assert "Remove-Item -LiteralPath $stagePath -Recurse -Force" in COORDINATOR
+    assert "runtime-task-result.raw.json" in COORDINATOR
     assert "Global\\MT5Agent.v0.1.5.RuntimeSmoke" in COORDINATOR
 
 

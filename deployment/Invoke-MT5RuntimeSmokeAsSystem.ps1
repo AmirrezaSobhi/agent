@@ -412,6 +412,11 @@ finally {
                 Copy-Item -LiteralPath $stagedReport.FullName -Destination $destination -Force -ErrorAction SilentlyContinue
             }
         }
+        $rawTaskResult = Join-Path $stagePath 'task-result.json'
+        if ($stageCreated -and (Test-Path -LiteralPath $rawTaskResult -PathType Leaf)) {
+            Copy-Item -LiteralPath $rawTaskResult -Destination (Join-Path $reportDestination 'runtime-task-result.raw.json') `
+                -Force -ErrorAction SilentlyContinue
+        }
     }
     finally {
         try {
