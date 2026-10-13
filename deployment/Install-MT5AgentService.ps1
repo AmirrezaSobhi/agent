@@ -82,9 +82,11 @@ function Set-MT5AgentServiceRecovery {
     $failureText = $failureOutput -join ' '
     $failureFlagText = $failureFlagOutput -join ' '
     $actionCount = [regex]::Match($failureText, '(?i)number of actions\s*:?\s*(\d+)\b')
+    $failureFlagMatch = [regex]::Match($failureFlagText, '(?im)^\s*(?:FAILURE_ACTIONS_ON_NONCRASH_FAILURES|Failure actions on non-crash failures)\s*:\s*([^\r\n]*)$')
+    $failureFlagValue = if ($failureFlagMatch.Success) { $failureFlagMatch.Groups[1].Value.Trim() } else { '' }
     if ($failureText -notmatch '(?<!\d)86400(?!\d)' -or $failureText -notmatch '(?<!\d)5000(?!\d)' -or
         $failureText -notmatch '(?<!\d)15000(?!\d)' -or ($actionCount.Success -and $actionCount.Groups[1].Value -ne '3') -or
-        $failureFlagText -notmatch '(?<!\d)1(?!\d)') {
+        $failureFlagValue -notmatch '^(?i:TRUE|1)$') {
         throw 'SERVICE_RECOVERY_CONFIGURATION_VERIFICATION_FAILED'
     }
     Write-MT5AgentServiceLog -Level INFO -Message 'SCM recovery policy set: restart after 5s and 15s, then no further automatic restart; non-crash failures are included.' -LogPath $LogPath
