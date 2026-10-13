@@ -122,7 +122,11 @@ and MT5 terminal PID 7944 remained in Session 1 under `MT5RuntimeUser`.
   session number and has a regression test. Pipeline #85's Windows tests and
   WPF Management tests passed, but its two build jobs failed because the
   configured `package-mirror.liara.ir` endpoint timed out while fetching Pillow.
-  No replacement Installer was produced, and no CI source or quality gate was
+  Documentation follow-up Pipeline #86 passed Windows tests, WPF Management
+  tests, and Desktop package verification, but Linux tests failed before test
+  execution when the same endpoint timed out fetching `Pillow==12.3.0`; the
+  build and Installer stages were consequently skipped. No replacement
+  Installer was produced, and no CI source, package source, or quality gate was
   changed. Therefore this correction has **not** been validated in a Windows
   binary.
 - No account identifier, balance, order, quote, credentials or secrets were
