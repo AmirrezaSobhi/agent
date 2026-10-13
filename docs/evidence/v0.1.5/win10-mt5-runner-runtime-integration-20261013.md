@@ -1,12 +1,11 @@
 # MT5Agent v0.1.5 — MT5 Integration Runner Evidence (2026-10-13)
 
-**Result: PARTIAL; the interactive Worker and terminal have been preserved, and
-Agent↔Worker IPC now works under the correct service identity.** Pipeline #84
-was manually installed by the Product Owner. We did not run that Installer.
-The exact installed components match Job #862's manifest. A fresh integrated
-15-minute observation is in progress; an initial reconnect transition was
-observed after a controlled Worker API shutdown. This is live Windows evidence,
-not CI-only validation.
+**Result: PARTIAL; a clean 15-minute Agent↔Worker↔MT5 soak and a controlled
+Service restart passed, but the installed Pipeline #84 binary still has a
+health-reporting defect and the source fix has no verified artifact yet.**
+Pipeline #84 was manually installed by the Product Owner. We did not run that
+Installer. The exact installed components match Job #862's manifest. This is
+live Windows evidence, not CI-only validation.
 
 ## Artifact and installation
 
@@ -63,7 +62,10 @@ The existing `MT5 Agent Interactive Runtime Worker - MT5RuntimeUser` task is
 Running with an interactive, limited token. The legacy Administrator task
 remains Disabled. No duplicate Worker process was observed. Two WPF process
 instances were visible in Session 1; we did not launch, close, or interact with
-them, and WPF smoke testing on this runner is **NOT TESTED**.
+them, and WPF smoke testing on this runner is **NOT TESTED**. After the
+controlled Service restart the Service PID changed from 4088 to 2368 and the
+Agent packaged parent/child changed to 8092/6544 in Session 0. Worker PID 7032
+and MT5 terminal PID 7944 remained in Session 1 under `MT5RuntimeUser`.
 
 ## Runtime and IPC observations
 
@@ -89,24 +91,60 @@ them, and WPF smoke testing on this runner is **NOT TESTED**.
 - Live negative checks: an `order_send` request to the Worker was rejected as
   `IPC_UNSUPPORTED_OPERATION`; no order was submitted. Administrator access to
   the Worker pipe and RuntimeUser access to Management were both denied.
-- A separate integrated soak began at 11:48 UTC. It first observed a connected
-  Agent/Worker/MT5 state, then a temporary `MT5_NOT_CONNECTED` and retry-exhausted
-  interval after the controlled Worker API shutdown/restart. Direct LocalSystem
-  health and a subsequent Management read recovered to `MT5_CONNECTED` by
-  11:54:32 UTC. This run must not be reported as a clean stability PASS; its
-  final sample count and transition record will be appended after completion.
+- After the controlled Worker API shutdown/restart, an initial integrated run
+  recorded a temporary `MT5_NOT_CONNECTED` / retry-exhausted interval and one
+  probe collision (`ERROR_PIPE_BUSY`) from concurrent Management access. Direct
+  LocalSystem health and a subsequent Management read recovered to
+  `MT5_CONNECTED` by 11:54:32 UTC. This run is not counted as a clean stability
+  pass.
+- A separate, clean integrated soak then ran from 12:06:48.908Z to
+  12:22:24.195Z: **32/32** samples reported fresh `MT5_CONNECTED` health, with
+  no probe errors, over 15m35s. Management response latency was 25.76–191.72 ms
+  (median 52.18 ms). Worker PID 7032 stayed in Session 1; its working set was
+  6.58–7.18 MiB and CPU time rose from 0.562 to 0.703 s. MT5 PID 7944 stayed
+  in Session 1; its working set was 8.46–76.47 MiB and CPU time rose from
+  242.844 to 253.000 s. Service PID 4088 stayed in Session 0 during this soak;
+  its working set was 4.64–5.13 MiB and CPU time remained 0.094 s. The soak
+  confirms stable health during that interval; it does not erase the earlier
+  reconnect transition.
+- A subsequent controlled `Restart-Service MT5Agent` completed successfully:
+  the Service returned Running as LocalSystem/Automatic under PID 2368, a fresh
+  Management response reported Worker ready, MT5 connected and `FRESH`, and
+  Worker PID 7032 plus terminal PID 7944 were preserved. This was one Service
+  restart, not a Worker or terminal restart.
+- Management contract probes run as the authorized LocalSystem control identity
+  returned structured `TIMEOUT` in 2,015 ms when no request was sent and
+  `UNSUPPORTED_OPERATION` for `service.restart`; neither performed a trading
+  action or restarted the Service. The temporary scheduled task was removed.
+- The installed Pipeline #84 artifact still returned `worker_session_id: null`
+  after the Service restart. The source correction is committed as
+  `a5b8a6f4f872af019450e9f94100edda41083899`; it exposes the validated Worker
+  session number and has a regression test. Pipeline #85's Windows tests and
+  WPF Management tests passed, but its two build jobs failed because the
+  configured `package-mirror.liara.ir` endpoint timed out while fetching Pillow.
+  No replacement Installer was produced, and no CI source or quality gate was
+  changed. Therefore this correction has **not** been validated in a Windows
+  binary.
 - No account identifier, balance, order, quote, credentials or secrets were
   requested. Trading capability remains `UNSUPPORTED`; no trade was executed.
 
 ## Events and limits
 
-From the post-install/reconfiguration review window, one informational
-MT5Agent Application event and one informational Service Control Manager event
-were found; no .NET Runtime, Application Error or MT5Agent error event was
-found. Agent logs used fixed messages and redacted caller SIDs.
+In the final audit after Service restart, two informational MT5Agent Application
+events were found; no .NET Runtime, Application Error, Service Control Manager
+failure or MT5Agent error event was found in that review window. Earlier
+post-install/reconfiguration review found one informational MT5Agent event and
+one informational Service Control Manager event. Agent logs used fixed
+messages and redacted caller SIDs. The final audit also confirmed no Installer
+process was active, the Worker task remained Running, and Service recovery
+settings still included 5 s/15 s restart actions plus non-crash failures
+enabled.
 
 Windows 11/Server compatibility, RDP disconnect/logoff, WPF UI behavior, a
-separate Worker-unavailable injection, and a clean 15-minute integrated soak
-remain **NOT TESTED** or **BLOCKED**. The local regression fix is not present in
-the manually installed Pipeline #84 binary. Do not use this report as release
-approval.
+separate Worker-unavailable injection, and a Worker/terminal OS-parent topology
+after Worker restart remain **NOT TESTED**. MT5 stayed running across the
+supported Worker API shutdown and has CIM ParentPid 6852 (the prior Worker),
+even though the replacement Worker PID 7032 successfully reconnected to it;
+the terminal was intentionally not terminated to preserve the existing user
+session. The local health-reporting fix is not present in the installed
+Pipeline #84 binary. Do not use this report as release approval.
