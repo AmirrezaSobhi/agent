@@ -178,3 +178,32 @@ the terminal was intentionally not terminated to preserve the active session.
 After the normal machine boot, the current terminal PID 7308 was a child of the
 current Worker PID 6276. The local health-reporting fix is not present in the
 installed Pipeline #84 binary. Do not use this report as release approval.
+
+## Follow-up Pipeline #88
+
+- Pipeline #88 ran on commit `1c746bc39ecbb7b734169d9f12eb0733d5bc9b94` after
+  the operator powered on the CI and MT5 integration machines. It completed
+  with **10 passed, 1 failed, and 3 skipped** jobs. Windows validation,
+  Desktop build/package validation, Linux/Windows/WPF tests, Windows and Worker
+  builds, control-plane and invalid-configuration smoke tests, and Desktop
+  package verification passed.
+- `smoke:mt5-runtime` Job #915 ran on `WIN10-MT5-RUNNE` in Session 0 but failed
+  closed in `Assert-WorkerTaskAndPreflight` before opening runtime IPC. Read-only
+  inspection established the GitLab Runner service identity is
+  `WIN10-MT5-RUNNE\Administrator`, while the machine runtime configuration is
+  `ControlPrincipal=NT AUTHORITY\SYSTEM` (`S-1-5-18`) and
+  `RuntimePrincipal=WIN10-MT5-RUNNE\MT5RuntimeUser`. The preflight correctly
+  rejected this caller mismatch; the failure is in CI execution identity setup,
+  not evidence of a Worker or MT5 failure.
+- Package/Windows-package and Installer build/verify jobs were skipped. Pipeline
+  #88 produced **no new Installer artifact**. The previous Pipeline #84 binary
+  remains the only installed artifact and still reports `worker_session_id`
+  incorrectly as `null`.
+- Keep the SID check and pipe DACL unchanged. A subsequent live CI smoke must
+  run its Session 0 control client under the configured Service identity using
+  an approved runner arrangement; do not change `ControlPrincipal` to the
+  Administrator runner or widen the Worker pipe ACL to make the smoke pass.
+- CI runner services were inspected read-only: the MT5 integration runner runs
+  as `WIN10-MT5-RUNNE\Administrator`; `win10-runner` is the separate project CI
+  Windows VM and was powered on to release Pipeline #88. No product Installer
+  was run on either runner as part of this follow-up.
