@@ -584,6 +584,8 @@ try {
                 $runtime.symbols_total_success -ne $true -or $runtime.terminal_version_success -ne $true -or
                 $runtime.account_information_success -ne $true -or $runtime.agent.session_id -ne 0 -or
                 $runtime.worker.protocol_version -ne '1' -or $runtime.worker.session_id -le 0 -or
+                ($runtime.worker_session_id -isnot [int] -and $runtime.worker_session_id -isnot [long]) -or
+                $runtime.worker_session_id -le 0 -or
                 $runtime.worker_session_id -ne $runtime.worker.session_id -or
                 $runtime.terminal.session_id -ne $runtime.worker.session_id -or
                 $runtime.terminal.principal -ine $runtime.worker.principal -or

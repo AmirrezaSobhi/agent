@@ -137,6 +137,7 @@ def checkout(tmp_path):
         account_information_field_count=8,
         agent={"session_id": 0},
         worker={"principal": "HOST\\MT5RuntimeUser", "sid": "S-1-5-21-1", "session_id": 1, "protocol_version": "1"},
+        worker_session_id=1,
         terminal={"principal": "HOST\\MT5RuntimeUser", "sid": "S-1-5-21-1", "session_id": 1},
     )))
     env = {k: v for k, v in os.environ.items() if not k.startswith("CI_") and k != "ARTIFACT_NAME"}
@@ -202,6 +203,9 @@ def test_package_preserves_single_validated_binary(checkout):
     ("mt5-runtime", "commit_sha", "stale"),
     ("mt5-runtime", "pipeline_id", "other-pipeline"),
     ("mt5-runtime", "candidate_sha256_after", "tampered"),
+    ("mt5-runtime", "worker_session_id", None),
+    ("mt5-runtime", "worker_session_id", True),
+    ("mt5-runtime", "worker_session_id", 2),
     ("mt5-runtime", "account_information_success", False),
     ("mt5-runtime", "terminal", {"principal": "HOST\\MT5RuntimeUser", "sid": "S-1-5-21-1", "session_id": 2}),
 ])
