@@ -1,6 +1,6 @@
 # MT5Agent v0.1.5 — Pipeline 82 Windows 10 Installation Evidence
 
-**Result: PARTIAL pending Worker/MT5 provisioning and completion of the 15-minute stability sample.** This is evidence for an internal candidate, not a public release. CI success is not treated as proof of a Windows installation; the observations below were collected from the dedicated `WIN10-INSTALLER` VM.
+**Result: PARTIAL because Worker/MT5 provisioning and several platform/lifecycle checks remain incomplete.** The 15-minute stability sample and one controlled recovery cycle completed. This is evidence for an internal candidate, not a public release. CI success is not treated as proof of a Windows installation; the observations below were collected from the dedicated `WIN10-INSTALLER` VM.
 
 ## Artifact and provenance
 
@@ -48,7 +48,7 @@ The authenticated artifact archive was downloaded from Build #834. Two browser t
 
 The installed Service remained Running through 32 samples over 987 seconds. Service PID stayed `2268` (zero Service PID changes); the Agent process PID set stayed constant; product process count remained three (Service host and Agent parent/child). Sampled per-process cumulative CPU values ranged from 0.016 to 0.078 seconds and the observed Working Set range was 4.71–26.15 MiB. No listener appeared on port 8080 and no .NET Runtime/Application Error event was found during the sample. After the soak, the one controlled Agent termination above recovered automatically. Repeated crash behavior, reboot, RDP disconnect and logoff were not tested.
 
-Windows 11 and Windows Server compatibility remain **NOT TESTED**. The Windows 10 installation, Session 0 Service startup, Agent health, authorized and rejected Management requests, installed WPF smoke and Service recovery settings have real VM evidence. The release remains **PARTIAL** until stability results and a separately provisioned Worker/MT5 interactive runtime satisfy the applicable gates. No merge, tag, public release or real trade was performed.
+Windows 11 and Windows Server compatibility remain **NOT TESTED**. The Windows 10 installation, Session 0 Service startup, Agent health, authorized and rejected Management requests, installed WPF smoke, Service recovery settings, 987-second stability sample and one automatic recovery cycle have real VM evidence. The release remains **PARTIAL** until a separately provisioned Worker/MT5 interactive runtime and the untested lifecycle/platform checks satisfy the applicable gates. No merge, tag, public release or real trade was performed.
 
 ## Raw evidence location
 
