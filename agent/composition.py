@@ -15,6 +15,7 @@ from agent.core.agent import Agent
 from agent.infrastructure.http_server_host import HTTPServerHost
 from agent.infrastructure.logging_observability import LoggingOperationalObservability
 from agent.infrastructure.composite_host import CompositeHostingPort
+from agent.infrastructure.idle_host import IdleHostingPort
 from agent.infrastructure.management_named_pipe import ManagementNamedPipeServer, build_status
 
 
@@ -57,8 +58,9 @@ def compose_agent(
 
     application = ApplicationBoundary(dispatcher, authenticator, authorizer, observability)
     transport = HTTPTransportAdapter(application, max_request_bytes=config.http.max_request_bytes)
-    http_hosting = hosting or HTTPServerHost(
-        lambda: transport.create_server(config.http.host, config.http.port)
+    http_hosting = hosting or (
+        HTTPServerHost(lambda: transport.create_server(config.http.host, config.http.port))
+        if config.http.enabled else IdleHostingPort()
     )
     management_pipe = ManagementNamedPipeServer(
         lambda: build_status(agent), config.management.allowed_user_sids

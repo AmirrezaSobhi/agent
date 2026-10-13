@@ -35,6 +35,7 @@ namespace MT5Agent.Service
         private readonly string testWorkingDirectory;
         private Process agent;
         private IntPtr agentJob = IntPtr.Zero;
+        private EventWaitHandle agentShutdownEvent;
         private bool stopping;
         private string agentExecutable;
 
@@ -84,6 +85,11 @@ namespace MT5Agent.Service
                 workingDirectory = testWorkingDirectory ?? Path.GetDirectoryName(agentExecutable);
                 string[] allowedSids = managementSidProvider();
                 ValidateManagementSids(allowedSids);
+                string shutdownEventName = @"Local\MT5Agent.AgentShutdown." + Guid.NewGuid().ToString("N");
+                bool eventCreated;
+                agentShutdownEvent = new EventWaitHandle(false, EventResetMode.ManualReset,
+                    shutdownEventName, out eventCreated);
+                if (!eventCreated) throw new InvalidOperationException("AGENT_SHUTDOWN_EVENT_ALREADY_EXISTS");
 
                 ProcessStartInfo start = new ProcessStartInfo(agentExecutable)
                 {
@@ -94,9 +100,7 @@ namespace MT5Agent.Service
                     RedirectStandardError = true
                 };
                 if (testArguments != null) start.Arguments = testArguments;
-                start.EnvironmentVariables["MT5_AGENT_HTTP_HOST"] = "127.0.0.1";
-                start.EnvironmentVariables["MT5_AGENT_LOG_LEVEL"] = "INFO";
-                start.EnvironmentVariables["MT5_AGENT_MANAGEMENT_ALLOWED_SIDS"] = String.Join(",", allowedSids);
+                ConfigureAgentEnvironment(start, allowedSids, shutdownEventName);
 
                 lock (gate)
                 {
@@ -176,6 +180,20 @@ namespace MT5Agent.Service
             return executable;
         }
 
+        internal static void ConfigureAgentEnvironment(ProcessStartInfo start, string[] allowedSids,
+            string shutdownEventName)
+        {
+            if (start == null) throw new ArgumentNullException("start");
+            ValidateManagementSids(allowedSids);
+            if (String.IsNullOrWhiteSpace(shutdownEventName))
+                throw new ArgumentException("Agent shutdown event name is required.", "shutdownEventName");
+            start.EnvironmentVariables["MT5_AGENT_HTTP_HOST"] = "127.0.0.1";
+            start.EnvironmentVariables["MT5_AGENT_HTTP_ENABLED"] = "false";
+            start.EnvironmentVariables["MT5_AGENT_LOG_LEVEL"] = "INFO";
+            start.EnvironmentVariables["MT5_AGENT_MANAGEMENT_ALLOWED_SIDS"] = String.Join(",", allowedSids);
+            start.EnvironmentVariables["MT5_AGENT_SHUTDOWN_EVENT"] = shutdownEventName;
+        }
+
         internal static void ValidateManagementSids(string[] sids)
         {
             if (sids == null || sids.Length == 0) throw new InvalidOperationException("MANAGEMENT_CONTROL_PRINCIPAL_NOT_CONFIGURED");
@@ -219,13 +237,13 @@ namespace MT5Agent.Service
         private void StopAgentLocked()
         {
             Process current = agent;
-            if (current == null) { CloseAgentJob(); return; }
+            if (current == null) { CloseAgentJob(); CloseAgentShutdownEvent(); return; }
             agent = null;
             try
             {
                 if (!HasExited(current))
                 {
-                    current.CloseMainWindow();
+                    if (agentShutdownEvent != null) agentShutdownEvent.Set();
                     if (!current.WaitForExit(StopGracePeriodMilliseconds))
                     {
                         Append("service-host.log", "WARN graceful Agent shutdown timed out; closing owned process job.");
@@ -239,8 +257,16 @@ namespace MT5Agent.Service
             finally
             {
                 CloseAgentJob();
+                CloseAgentShutdownEvent();
                 current.Dispose();
             }
+        }
+
+        private void CloseAgentShutdownEvent()
+        {
+            EventWaitHandle current = agentShutdownEvent;
+            agentShutdownEvent = null;
+            if (current != null) current.Dispose();
         }
 
         private static bool HasExited(Process process)

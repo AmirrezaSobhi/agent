@@ -184,10 +184,11 @@ function Get-ProcessEvidence {
 
 function Start-CandidateAgent {
     param([int]$Port, [string]$ManagementAllowedSid = '')
-    $names = @('MT5_AGENT_HTTP_HOST', 'MT5_AGENT_HTTP_PORT', 'MT5_AGENT_HTTP_MAX_REQUEST_BYTES',
+    $names = @('MT5_AGENT_HTTP_ENABLED', 'MT5_AGENT_HTTP_HOST', 'MT5_AGENT_HTTP_PORT', 'MT5_AGENT_HTTP_MAX_REQUEST_BYTES',
         'MT5_AGENT_LOG_LEVEL', 'MT5_AGENT_MANAGEMENT_ALLOWED_SIDS')
     $previous = @{}
     foreach ($name in $names) { $previous[$name] = [Environment]::GetEnvironmentVariable($name, 'Process') }
+    $env:MT5_AGENT_HTTP_ENABLED = 'true'
     $env:MT5_AGENT_HTTP_HOST = '127.0.0.1'
     $env:MT5_AGENT_HTTP_PORT = [string]$Port
     $env:MT5_AGENT_HTTP_MAX_REQUEST_BYTES = '1048576'

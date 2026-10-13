@@ -36,6 +36,14 @@ namespace MT5Agent.Service.Tests
                 Run("invalid SID configuration fails closed", delegate {
                     Throws<InvalidOperationException>(delegate { AgentService.ValidateManagementSids(new[] { "S-1-not-a-sid" }); }, "MANAGEMENT_CONTROL_SID_INVALID");
                 });
+                Run("packaged Service disables development HTTP and preserves authorized Management IPC", delegate {
+                    ProcessStartInfo start = new ProcessStartInfo(fixture);
+                    AgentService.ConfigureAgentEnvironment(start, new[] { "S-1-5-21-1-2-3-1001" }, "Local\\MT5Agent.AgentShutdown.test");
+                    Equal("false", start.EnvironmentVariables["MT5_AGENT_HTTP_ENABLED"]);
+                    Equal("127.0.0.1", start.EnvironmentVariables["MT5_AGENT_HTTP_HOST"]);
+                    Equal("S-1-5-21-1-2-3-1001", start.EnvironmentVariables["MT5_AGENT_MANAGEMENT_ALLOWED_SIDS"]);
+                    Equal("Local\\MT5Agent.AgentShutdown.test", start.EnvironmentVariables["MT5_AGENT_SHUTDOWN_EVENT"]);
+                });
                 Run("missing SID configuration fails closed", delegate {
                     Throws<InvalidOperationException>(delegate { AgentService.ValidateManagementSids(new string[0]); }, "MANAGEMENT_CONTROL_PRINCIPAL_NOT_CONFIGURED");
                 });
