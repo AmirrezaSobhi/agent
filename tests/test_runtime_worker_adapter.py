@@ -123,6 +123,7 @@ def test_agent_stays_alive_degraded_when_worker_is_unavailable_and_recovers():
     assert healthy.runtime_state == "MT5_CONNECTED"
     assert healthy.runtime["worker_available"] is True
     assert healthy.runtime["worker_identity"]["session_id"] == 1
+    assert healthy.runtime["worker_session_id"] == 1
     assert client.operations.count("initialize_readonly") == 1
 
 

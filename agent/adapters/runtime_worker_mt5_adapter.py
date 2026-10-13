@@ -147,6 +147,11 @@ class RuntimeWorkerMT5Adapter:
         )
         health = {key: result[key] for key in allowed if key in result}
         health["worker_identity"] = identity
+        # Management health exposes only the non-sensitive session number from
+        # the authenticated Worker identity, not its account, SID, or PID.
+        session_id = worker.get("session_id")
+        if isinstance(session_id, int) and not isinstance(session_id, bool):
+            health["worker_session_id"] = session_id
         return health
 
     def _health_request(self) -> dict[str, object]:
