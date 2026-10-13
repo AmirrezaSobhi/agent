@@ -125,10 +125,36 @@ and MT5 terminal PID 7944 remained in Session 1 under `MT5RuntimeUser`.
   Documentation follow-up Pipeline #86 passed Windows tests, WPF Management
   tests, and Desktop package verification, but Linux tests failed before test
   execution when the same endpoint timed out fetching `Pillow==12.3.0`; the
-  build and Installer stages were consequently skipped. No replacement
-  Installer was produced, and no CI source, package source, or quality gate was
-  changed. Therefore this correction has **not** been validated in a Windows
-  binary.
+  build and Installer stages were consequently skipped. Pipeline #87 repeated
+  that same failure; Windows tests, WPF Management, and Desktop package
+  verification passed, while build and Installer stages were skipped. Job #894
+  shows five connection timeouts to `package-mirror.liara.ir` followed by “No
+  matching distribution found” before pytest ran. No replacement Installer was
+  produced, and no CI source, package source, or quality gate was changed.
+  Therefore this correction has **not** been validated in a Windows binary.
+- After the operator powered the dedicated VMs back on, a fresh read-only audit
+  at 22:01Z confirmed Windows 10 Pro 19045 x64, active `MT5RuntimeUser` Session
+  1, Service Automatic/LocalSystem in Session 0, Worker task Running, and the
+  preserved runtime configuration (`ControlPrincipal=SYSTEM`, existing
+  `RuntimePrincipal`, terminal path and pipe). Worker PID 6276 brought up the
+  existing terminal as PID 7308 under Session 1; Worker PID 6276 is its parent.
+  Service PID 2940 and Agent packaged parent/child 3560/3696 were in Session 0.
+  An authorized Admin `status.get` request returned fresh Worker-ready and
+  MT5-connected health; the installed binary still returned
+  `worker_session_id: null`. No credentials, accounts, profiles or trading
+  data were queried.
+- Post-boot integrated soak ran from 22:01:59.188Z to 22:17:33.039Z: **32/32**
+  authorized Management samples were `FRESH`, Worker-ready and `MT5_CONNECTED`
+  with zero probe/health errors over 15m34s. Latency was 25.56–58.01 ms
+  (median 25.99 ms; p95 57.23 ms). Service PID 2940 and Agent PIDs 3560/3696
+  remained in Session 0; Worker PID 6276 and terminal PID 7308 remained in
+  Session 1, both owned by `MT5RuntimeUser`, with no duplicate Worker or
+  terminal observed. During the interval, Worker CPU rose 0.203→0.562 s and
+  working set ranged 6.22–19.62 MiB; terminal CPU rose 7.516→10.547 s and
+  working set ranged 16.19–159.25 MiB; Service CPU remained 0.078 s and
+  working set ranged 17.70–18.39 MiB. Agent child CPU rose 0.062→0.094 s and
+  its working set ranged 25.55–25.59 MiB. This separate post-boot soak
+  preserved the previous samples and summary.
 - No account identifier, balance, order, quote, credentials or secrets were
   requested. Trading capability remains `UNSUPPORTED`; no trade was executed.
 
@@ -144,11 +170,11 @@ process was active, the Worker task remained Running, and Service recovery
 settings still included 5 s/15 s restart actions plus non-crash failures
 enabled.
 
-Windows 11/Server compatibility, RDP disconnect/logoff, WPF UI behavior, a
-separate Worker-unavailable injection, and a Worker/terminal OS-parent topology
-after Worker restart remain **NOT TESTED**. MT5 stayed running across the
-supported Worker API shutdown and has CIM ParentPid 6852 (the prior Worker),
-even though the replacement Worker PID 7032 successfully reconnected to it;
-the terminal was intentionally not terminated to preserve the existing user
-session. The local health-reporting fix is not present in the installed
-Pipeline #84 binary. Do not use this report as release approval.
+Windows 11/Server compatibility, RDP disconnect/logoff, WPF UI behavior, and a
+separate Worker-unavailable injection remain **NOT TESTED**. During the earlier
+supported Worker API shutdown/restart, MT5 stayed running and had CIM ParentPid
+6852 (the prior Worker), even though replacement Worker PID 7032 reconnected;
+the terminal was intentionally not terminated to preserve the active session.
+After the normal machine boot, the current terminal PID 7308 was a child of the
+current Worker PID 6276. The local health-reporting fix is not present in the
+installed Pipeline #84 binary. Do not use this report as release approval.
