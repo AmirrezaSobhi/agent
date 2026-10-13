@@ -79,3 +79,13 @@ def test_ci_preserves_health_provenance_and_requires_matching_live_session():
     assert "$finalHealth.runtime.worker_session_id -ne $worker.session_id" in CI
     assert "$runtime.worker_session_id -ne $runtime.worker.session_id" in CI
     assert "smoke-mt5-runtime-system" in CI
+
+
+def test_system_runtime_smoke_does_not_collide_with_the_installed_management_pipe():
+    system_smoke = re.search(r"(?ms)^        'smoke-mt5-runtime-system' \{(?P<body>.*?)^        'package' \{", CI)
+    assert system_smoke
+    body = system_smoke.group("body")
+    assert "Start-CandidateAgent -Port $port" in body
+    assert "ManagementAllowedSid" not in body
+    assert "management-ipc-smoke" not in body
+    assert "installed Service owns the fixed Management pipe" in body

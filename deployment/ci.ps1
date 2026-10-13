@@ -475,10 +475,12 @@ try {
             $inspection = Test-CandidateCLI
             $preflight = Assert-WorkerTaskAndPreflight -RuntimeConfiguration $runtimeConfiguration -Inspection $inspection
             $port = Get-FreeLoopbackPort
-            $managementSid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value
             $script:CandidateProcess = $null
             try {
-                $script:CandidateProcess = Start-CandidateAgent -Port $port -ManagementAllowedSid $managementSid
+                # The installed Service owns the fixed Management pipe. Keep the candidate
+                # isolated on loopback HTTP while this LocalSystem smoke checks its
+                # authenticated Worker boundary; do not collide with or broaden that pipe.
+                $script:CandidateProcess = Start-CandidateAgent -Port $port
                 $agentEvidence = Get-ProcessEvidence -ProcessId $script:CandidateProcess.Id
                 if ($agentEvidence.session_id -ne 0 -or $agentEvidence.principal -ine $preflight.Caller) {
                     throw 'Candidate Agent process identity/session differs from the Session 0 control caller'
@@ -493,10 +495,6 @@ try {
                     $worker.session_id -ne $runtime.terminal_session_id -or $runtime.mt5_connected -ne $true) {
                     throw 'Live Worker and terminal health identity/session validation failed'
                 }
-                $managementEvidencePath = Join-Path $reportRoot 'management-ipc-live-smoke.txt'
-                & './src/desktop/MT5Agent.Desktop.Tests/bin/Release/MT5Agent.Desktop.Tests.exe' `
-                    '--management-ipc-smoke' $managementEvidencePath 'live-runtime'
-                if ($LASTEXITCODE -ne 0) { throw 'WPF client to live Agent/Worker/MT5 Management Pipe smoke failed' }
                 $terminal = Get-ProcessEvidence -ProcessId ([int]$runtime.terminal_pid)
                 if ($terminal.principal -ine $preflight.RuntimePrincipal -or $terminal.sid -ine $worker.sid -or
                     $terminal.session_id -ne $worker.session_id -or

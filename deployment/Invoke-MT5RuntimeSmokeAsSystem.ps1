@@ -357,7 +357,7 @@ try {
         throw 'LocalSystem smoke result, caller identity, provenance, or scheduled-task exit status is invalid'
     }
 
-    foreach ($name in @('mt5-runtime.json', 'management-ipc-live-smoke.txt', 'task.stdout.log', 'task.stderr.log')) {
+    foreach ($name in @('mt5-runtime.json', 'task.stdout.log', 'task.stderr.log')) {
         $source = Join-Path $stagePath "reports\$name"
         if (Test-Path -LiteralPath $source -PathType Leaf) { Copy-Item -LiteralPath $source -Destination (Join-Path $reportDestination $name) -Force }
     }
