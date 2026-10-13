@@ -43,7 +43,11 @@ classified the installed `BUILTIN\Users:(RX)` ACE as writable and failed before
 creating the task. Read-only `icacls` evidence showed the product root is
 inherited from TrustedInstaller/System/Administrators with Users read/execute.
 The check was corrected to enumerate specific mutating rights without changing
-the machine ACL. The corrected check still needs a fresh Windows Pipeline run.
+the machine ACL. A second attempt then exposed the inherited `CREATOR OWNER`
+ACE, which is marked `Inherit Only`; it was not translatable to a local SID by
+the runner token. The root check now skips inherit-only entries and treats an
+untranslatable effective ACE with any mutating right as unsafe. The corrected
+check still needs a fresh Windows Pipeline run.
 
 Inputs are copied under `Program Files\MT5Agent\CiRuntimeSmoke\<pipeline>_<job>`
 with an explicit, non-inheriting DACL granting Full Control only to LocalSystem

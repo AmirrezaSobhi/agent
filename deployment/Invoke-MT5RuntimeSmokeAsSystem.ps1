@@ -161,6 +161,7 @@ if (($baseItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0)
     throw 'Installed product root cannot be a reparse point'
 }
 $baseAcl = Get-Acl -LiteralPath $programFilesRoot
+$trustedWriteSids = @('S-1-5-18', 'S-1-5-32-544', (Get-AccountSid -Account 'NT SERVICE\TrustedInstaller'))
 $untrustedSids = @('S-1-1-0', 'S-1-5-11', 'S-1-5-32-545', $runtimeSid)
 $untrustedWriteRights = @(
     [System.Security.AccessControl.FileSystemRights]::WriteData,
@@ -173,12 +174,18 @@ $untrustedWriteRights = @(
     [System.Security.AccessControl.FileSystemRights]::TakeOwnership
 )
 foreach ($rule in $baseAcl.Access) {
-    $sid = $rule.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier]).Value
+    if (($rule.PropagationFlags -band [System.Security.AccessControl.PropagationFlags]::InheritOnly) -ne 0) {
+        continue
+    }
+    $sid = $null
+    try { $sid = $rule.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier]).Value }
+    catch { $sid = $null }
     $matchingWriteRights = @($untrustedWriteRights | Where-Object {
         ($rule.FileSystemRights -band $_) -eq $_
     })
-    if ($sid -in $untrustedSids -and $rule.AccessControlType -eq [System.Security.AccessControl.AccessControlType]::Allow -and
-        $matchingWriteRights.Count -gt 0) {
+    if ($rule.AccessControlType -eq [System.Security.AccessControl.AccessControlType]::Allow -and
+        $matchingWriteRights.Count -gt 0 -and
+        ($sid -in $untrustedSids -or $sid -notin $trustedWriteSids)) {
         throw 'Product root grants write/delete/ACL-change rights to an unprivileged principal; refusing privileged execution'
     }
 }

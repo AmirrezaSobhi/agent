@@ -51,6 +51,9 @@ def test_product_root_acl_check_does_not_confuse_read_execute_with_write_access(
     assert "FileSystemRights]::WriteAttributes" in COORDINATOR
     assert "FileSystemRights]::ChangePermissions" in COORDINATOR
     assert "($rule.FileSystemRights -band $_) -eq $_" in COORDINATOR
+    assert "PropagationFlags]::InheritOnly" in COORDINATOR
+    assert "catch { $sid = $null }" in COORDINATOR
+    assert "$sid -notin $trustedWriteSids" in COORDINATOR
     assert "$writeMask" not in COORDINATOR
 
 
