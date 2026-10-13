@@ -124,7 +124,9 @@ class RuntimeWorkerMT5Adapter:
         session_id = worker.get("session_id")
         pid = worker.get("pid")
         account = worker.get("account")
-        if (not isinstance(pid, int) or pid <= 0 or not isinstance(session_id, int)
+        # bool is an int subclass in Python; reject it so a JSON true cannot be
+        # misreported as a validated Session 1 identifier.
+        if (type(pid) is not int or pid <= 0 or type(session_id) is not int
                 or session_id <= 0 or not isinstance(account, str) or not account):
             raise RuntimeWorkerError("RUNTIME_WORKER_IDENTITY_INVALID")
         if (self._expected_worker_principal is not None

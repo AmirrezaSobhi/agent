@@ -1,9 +1,12 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet('metadata', 'validate', 'test', 'build', 'smoke-invalid', 'smoke-control-plane', 'smoke-mt5-runtime', 'package')]
+    [ValidateSet('metadata', 'validate', 'test', 'build', 'smoke-invalid', 'smoke-control-plane', 'smoke-mt5-runtime', 'smoke-mt5-runtime-system', 'package')]
     [string]$Task,
     [string]$PythonExecutable = 'python',
-    [string]$ArtifactName = ''
+    [string]$ArtifactName = '',
+    [string]$SourceCommit = '',
+    [string]$PipelineId = '',
+    [string]$RuntimeSmokeJobId = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -22,12 +25,19 @@ $env:ARTIFACT_NAME = $ArtifactName
 if ($env:CI_COMMIT_TAG -and $env:CI_COMMIT_TAG -cne "v$version") {
     throw "Tag $env:CI_COMMIT_TAG does not match source version v$version"
 }
-$sourceCommit = (& git -C $repoRoot rev-parse HEAD)
-if ($LASTEXITCODE -ne 0) { throw 'Cannot determine source commit' }
+if ($SourceCommit) {
+    $sourceCommit = $SourceCommit
+} else {
+    $sourceCommit = (& git -C $repoRoot rev-parse HEAD 2>$null)
+    if ($LASTEXITCODE -ne 0) { throw 'Cannot determine source commit' }
+}
+if ($sourceCommit -notmatch '^[0-9a-f]{40}$') { throw 'Source commit must be a full Git SHA-1' }
 if ($env:CI_COMMIT_SHA -and $env:CI_COMMIT_SHA -ne $sourceCommit) {
     throw 'Checkout HEAD does not match CI_COMMIT_SHA'
 }
-$pipelineId = [string]$env:CI_PIPELINE_ID
+$pipelineId = if ($PipelineId) { $PipelineId } else { [string]$env:CI_PIPELINE_ID }
+if ($pipelineId -and $pipelineId -notmatch '^\d+$') { throw 'Pipeline ID must be numeric' }
+$RuntimeSmokeJobId = if ($RuntimeSmokeJobId) { $RuntimeSmokeJobId } else { [string]$env:CI_JOB_ID }
 $exePath = Join-Path $repoRoot "dist\$ArtifactName.exe"
 $reportRoot = Join-Path $repoRoot 'reports'
 $buildEvidencePath = Join-Path $reportRoot 'build.json'
@@ -312,6 +322,18 @@ function Assert-WorkerTaskAndPreflight {
     return [pscustomobject]@{ Caller = $currentIdentity; RuntimePrincipal = $expectedRuntime; Task = $task; Worker = $identity }
 }
 
+if ($Task -eq 'smoke-mt5-runtime-system') {
+    $identity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+    $sid = $identity.User.Value
+    $session = (Get-Process -Id $PID -ErrorAction Stop).SessionId
+    if ($sid -ne 'S-1-5-18' -or $identity.Name -ine 'NT AUTHORITY\SYSTEM' -or $session -ne 0) {
+        throw 'Privileged MT5 runtime smoke requires LocalSystem in Session 0'
+    }
+    if (-not $SourceCommit -or -not $PipelineId -or -not $RuntimeSmokeJobId -or $RuntimeSmokeJobId -notmatch '^\d+$') {
+        throw 'Scheduled runtime smoke requires explicit source, pipeline, and smoke job provenance'
+    }
+}
+
 Push-Location $repoRoot
 try {
     New-Item -ItemType Directory -Path $reportRoot -Force | Out-Null
@@ -436,6 +458,12 @@ try {
             finally { Stop-CandidateAgent -Process $script:CandidateProcess; $script:CandidateProcess = $null }
         }
         'smoke-mt5-runtime' {
+            & (Join-Path $PSScriptRoot 'Invoke-MT5RuntimeSmokeAsSystem.ps1') `
+                -RepoRoot $repoRoot -ArtifactName $ArtifactName -SourceCommit $sourceCommit `
+                -PipelineId $pipelineId -RuntimeSmokeJobId $RuntimeSmokeJobId
+            if ($LASTEXITCODE -ne 0) { throw 'LocalSystem MT5 runtime smoke coordinator failed' }
+        }
+        'smoke-mt5-runtime-system' {
             $build = Assert-BuildEvidence
             $runtimeConfiguration = Get-ConfiguredRuntime
             $inspection = Test-CandidateCLI
@@ -496,7 +524,11 @@ try {
                 $finalHealth = $finalResponse.data
                 if ($finalHealth.agent_state -ne 'AGENT_RUNNING' -or $finalHealth.runtime_state -ne 'MT5_CONNECTED' -or
                     $finalHealth.runtime.mt5_connected -ne $true -or
-                    $finalHealth.runtime.worker_identity.pid -ne $worker.pid) {
+                    $finalHealth.runtime.worker_identity.pid -ne $worker.pid -or
+                    ($finalHealth.runtime.worker_session_id -isnot [int] -and
+                        $finalHealth.runtime.worker_session_id -isnot [long]) -or
+                    $finalHealth.runtime.worker_session_id -le 0 -or
+                    $finalHealth.runtime.worker_session_id -ne $worker.session_id) {
                     throw 'Persistent final health or Worker identity changed after safe reads'
                 }
                 $terminalBuild = $finalHealth.runtime.terminal_build
@@ -511,6 +543,7 @@ try {
                     agent = $agentEvidence
                     worker = [ordered]@{ principal = $worker.account; pid = $worker.pid; sid = $worker.sid
                         session_id = $worker.session_id; protocol_version = $runtime.protocol_version }
+                    worker_session_id = $finalHealth.runtime.worker_session_id
                     terminal = [ordered]@{ pid = $terminal.pid; principal = $terminal.principal; sid = $terminal.sid
                         session_id = $terminal.session_id; path = $terminal.executable; build = $terminalBuild }
                     runtime_state = $finalHealth.runtime_state
@@ -551,6 +584,7 @@ try {
                 $runtime.symbols_total_success -ne $true -or $runtime.terminal_version_success -ne $true -or
                 $runtime.account_information_success -ne $true -or $runtime.agent.session_id -ne 0 -or
                 $runtime.worker.protocol_version -ne '1' -or $runtime.worker.session_id -le 0 -or
+                $runtime.worker_session_id -ne $runtime.worker.session_id -or
                 $runtime.terminal.session_id -ne $runtime.worker.session_id -or
                 $runtime.terminal.principal -ine $runtime.worker.principal -or
                 $runtime.terminal.sid -ine $runtime.worker.sid -or
