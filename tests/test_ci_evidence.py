@@ -157,6 +157,30 @@ def run_task(checkout, task, **variables):
 
 
 @requires_ci_tools
+@pytest.mark.skipif(os.name != "nt", reason="Process exit-code capture uses Windows Process APIs")
+def test_candidate_command_captures_zero_and_nonzero_windows_exit_codes(checkout):
+    path, env = checkout
+    script = path / "candidate-command-exit-codes.ps1"
+    script.write_text(f"""
+$ErrorActionPreference = 'Stop'
+. '{path / 'deployment/ci.ps1'}' -Task metadata
+$repoRoot = '{path}'
+$reportRoot = '{path / 'reports'}'
+$exePath = $env:ComSpec
+$zero = Invoke-CandidateCommand -Name 'exit-zero' -Arguments @('/d', '/c', 'exit 0')
+$seven = Invoke-CandidateCommand -Name 'exit-seven' -Arguments @('/d', '/c', 'exit 7')
+if ($zero.ExitCode -ne 0 -or $seven.ExitCode -ne 7) {{
+    throw "Windows child exit-code capture failed: zero=$($zero.ExitCode), seven=$($seven.ExitCode)"
+}}
+Write-Output 'WINDOWS_PROCESS_EXIT_CODES_PASS'
+""", encoding="utf-8")
+    result = subprocess.run([PWSH, "-NoProfile", "-File", str(script)],
+                            env=env, text=True, capture_output=True, timeout=30)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "WINDOWS_PROCESS_EXIT_CODES_PASS" in result.stdout
+
+
+@requires_ci_tools
 def test_metadata_accepts_matching_tag(checkout):
     result = run_task(checkout, "metadata", CI_COMMIT_TAG=f"v{__version__}")
     assert result.returncode == 0, result.stderr

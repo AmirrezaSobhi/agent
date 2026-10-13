@@ -90,8 +90,13 @@ function Invoke-CandidateCommand {
             throw "$Name exceeded its bounded inspection timeout"
         }
         $process.WaitForExit()
+        $process.Refresh()
+        if (-not $process.HasExited) {
+            throw "$Name process did not reach an exited state after its bounded wait"
+        }
+        $exitCode = [int]$process.ExitCode
         return [pscustomobject]@{
-            ExitCode = $process.ExitCode
+            ExitCode = $exitCode
             Output = if (Test-Path -LiteralPath $stdout) { Get-Content -LiteralPath $stdout -Raw } else { '' }
             ErrorOutput = if (Test-Path -LiteralPath $stderr) { Get-Content -LiteralPath $stderr -Raw } else { '' }
         }

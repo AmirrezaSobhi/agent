@@ -46,6 +46,8 @@ def test_privileged_payload_is_committed_hash_checked_and_acl_protected():
     assert "management-ipc-build.json" in PIPELINE
     assert "exit=$($versionResult.ExitCode)" in CI
     assert "actual=$actualVersionOutput" in CI
+    assert "$process.Refresh()" in CI
+    assert "$exitCode = [int]$process.ExitCode" in CI
 
 
 def test_product_root_acl_check_does_not_confuse_read_execute_with_write_access():
