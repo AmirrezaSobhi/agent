@@ -85,11 +85,6 @@ namespace MT5Agent.Service
                 workingDirectory = testWorkingDirectory ?? Path.GetDirectoryName(agentExecutable);
                 string[] allowedSids = managementSidProvider();
                 ValidateManagementSids(allowedSids);
-                string shutdownEventName = @"Local\MT5Agent.AgentShutdown." + Guid.NewGuid().ToString("N");
-                bool eventCreated;
-                agentShutdownEvent = new EventWaitHandle(false, EventResetMode.ManualReset,
-                    shutdownEventName, out eventCreated);
-                if (!eventCreated) throw new InvalidOperationException("AGENT_SHUTDOWN_EVENT_ALREADY_EXISTS");
 
                 ProcessStartInfo start = new ProcessStartInfo(agentExecutable)
                 {
@@ -100,7 +95,6 @@ namespace MT5Agent.Service
                     RedirectStandardError = true
                 };
                 if (testArguments != null) start.Arguments = testArguments;
-                ConfigureAgentEnvironment(start, allowedSids, shutdownEventName);
 
                 lock (gate)
                 {
@@ -110,6 +104,12 @@ namespace MT5Agent.Service
                         return;
                     }
                     if (agent != null) StopAgentLocked();
+                    string shutdownEventName = @"Local\MT5Agent.AgentShutdown." + Guid.NewGuid().ToString("N");
+                    bool eventCreated;
+                    agentShutdownEvent = new EventWaitHandle(false, EventResetMode.ManualReset,
+                        shutdownEventName, out eventCreated);
+                    if (!eventCreated) throw new InvalidOperationException("AGENT_SHUTDOWN_EVENT_ALREADY_EXISTS");
+                    ConfigureAgentEnvironment(start, allowedSids, shutdownEventName);
                     stopping = false;
                     agent = new Process { StartInfo = start, EnableRaisingEvents = true };
                     agent.OutputDataReceived += (s, e) => Append("agent.stdout.log", e.Data);
