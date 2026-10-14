@@ -1,5 +1,17 @@
 # GitLab Release Publication and GitHub Synchronization
 
+**v0.1.5 internal-channel update:** `MT5_RELEASE_CHANNEL` defaults to `internal`.
+GitHub publication and reconciliation require an explicit `public` channel in
+both CI rules and the CLI before any credential/network use. The existing
+GitLab push mirror is unchanged and remains separate from binary/Release
+publication. The unified v0.1.5 publisher is internal-only and uses a mandatory
+manual job with exact Installer verification and real Windows acceptance.
+Independent MR approval is checked through a separately approved read-only
+credential; protected authorization files bind the exact final commit without
+a source-file self-hash cycle. See the [current runbook](releases/v0.1.5-release-unblock-runbook.md).
+The historical automatic-publication description below applies to the earlier
+standalone publisher, not authorization for a v0.1.5 GitHub Release.
+
 **Architecture:** GitLab is the only release source of truth. A Maintainer's
 intentional creation of a protected stable semantic-version tag is the release
 trigger. The tag pipeline runs every required CI gate, publishes the exact

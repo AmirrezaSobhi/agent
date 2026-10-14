@@ -22,6 +22,15 @@ HTTP composition and not the internal MT5 Worker pipe; see
 
 ## Assets and principals
 
+The unified internal publisher additionally verifies native MR approval by the
+configured distinct human Release Owner, active project membership and the
+exact merged-main commit. The approval credential is GET-only in code and
+cannot follow redirects. Installer/Manifest/Sidecar, component and verifier
+receipts, and a real Windows acceptance file must all agree before Registry
+writes. Protected credential/file-variable configuration and any TLS/Trust
+changes require explicit infrastructure authorization; no such settings are
+created by source tests. See the [publication runbook](../releases/v0.1.5-release-unblock-runbook.md).
+
 Assets: broker credentials and sessions, account identifiers, trading
 commands/results, machine configuration, local enrollment keys, policy,
 runtime process, support data, update artifacts, audit records, and billing

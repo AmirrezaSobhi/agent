@@ -28,6 +28,8 @@ workflow:
 
 variables:
   PYTHON_EXECUTABLE: 'python'
+  # External publication requires a separately authorized public channel.
+  MT5_RELEASE_CHANNEL: 'internal'
   # MT5_AGENT_WORKER_PRINCIPAL is local Runner policy and is intentionally not
   # defined here. Each Windows host configures its designated principal locally.
   PIP_DISABLE_PIP_VERSION_CHECK: '1'
@@ -57,6 +59,8 @@ validate:windows:
   extends: .windows-python-job
   stage: validate
   script:
+    - '& $env:PYTHON_EXECUTABLE ./tools/check_product_version.py'
+    - 'if ($LASTEXITCODE -ne 0) { throw "Product version contracts are inconsistent" }'
     - '& ./deployment/ci.ps1 -Task validate -PythonExecutable $env:PYTHON_EXECUTABLE'
 
 test:linux:
@@ -287,9 +291,6 @@ installer:build:
   tags:
     - windows-self-hosted-no-mt5
   timeout: 35 minutes
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "feat/v0.1.5-desktop-integration"'
-    - when: never
   needs:
     - job: package:windows
       artifacts: false
@@ -343,15 +344,14 @@ installer:build:
       - dist/installer/MT5Agent-Setup-v0.1.5-windows-x64.sha256
       - reports/service-install-script-tests.txt
       - reports/service-host-tests.txt
+      - reports/desktop-build.json
+      - reports/worker-build.json
 
 installer:verify:
   stage: installer_verify
   tags:
     - windows-self-hosted-no-mt5
   timeout: 10 minutes
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "feat/v0.1.5-desktop-integration"'
-    - when: never
   needs:
     - job: installer:build
       artifacts: true
@@ -407,9 +407,6 @@ worker:build:
   tags:
     - windows-self-hosted-no-mt5
   timeout: 25 minutes
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "feat/v0.1.5-desktop-integration"'
-    - when: never
   needs:
     - job: test:windows
       artifacts: false
@@ -432,19 +429,20 @@ worker:build:
       if ($LASTEXITCODE -ne 0) { throw 'Worker build icon generation failed' }
       & $workerPython -m PyInstaller --clean --noconfirm --distpath ./dist/worker --workpath ./.ci-worker-work ./deployment/RuntimeWorker.spec
       if ($LASTEXITCODE -ne 0) { throw 'Interactive Worker executable build failed' }
-      $worker = Get-Item -LiteralPath './dist/worker/MT5AgentWorker-v0.1.3.exe' -ErrorAction Stop
+      $version = & ./deployment/Get-MT5AgentVersion.ps1
+      $worker = Get-Item -LiteralPath "./dist/worker/MT5AgentWorker-v$version.exe" -ErrorAction Stop
       $archiveViewer = Join-Path (Join-Path $PWD '.ci-worker-build-venv') 'Scripts\pyi-archive_viewer.exe'
       if (-not (Test-Path -LiteralPath $archiveViewer)) { throw 'Worker PyInstaller archive viewer is missing.' }
       $archiveOutput = (& $archiveViewer -r $worker.FullName 2>&1 | Out-String)
       if ($LASTEXITCODE -ne 0 -or $archiveOutput -notmatch '(?i)MetaTrader5' -or $archiveOutput -notmatch '(?i)numpy' -or $archiveOutput -notmatch '(?i)interactive_mt5_worker') { throw 'Frozen Worker archive is missing Python, MT5 dependencies, or its entry point.' }
-      $report = [ordered]@{ schema_version=1; product_version='0.1.3'; package_version='0.1.5'; source_commit=$env:CI_COMMIT_SHA; pipeline_id=$env:CI_PIPELINE_ID; build_job_id=$env:CI_JOB_ID; filename=$worker.Name; size_bytes=[long]$worker.Length; sha256=(Get-FileHash $worker.FullName -Algorithm SHA256).Hash.ToLowerInvariant(); python_runtime_bundled=$true; mt5_dependency_bundled=$true; archive_inspection_success=$true; interactive_session_required=$true; terminal_included=$false }
+      $report = [ordered]@{ schema_version=1; product_version=$version; package_version=$version; source_commit=$env:CI_COMMIT_SHA; pipeline_id=$env:CI_PIPELINE_ID; build_job_id=$env:CI_JOB_ID; filename=$worker.Name; size_bytes=[long]$worker.Length; sha256=(Get-FileHash $worker.FullName -Algorithm SHA256).Hash.ToLowerInvariant(); python_runtime_bundled=$true; mt5_dependency_bundled=$true; archive_inspection_success=$true; interactive_session_required=$true; terminal_included=$false }
       New-Item -ItemType Directory -Force './reports' | Out-Null
       $report | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath './reports/worker-build.json' -Encoding utf8
   artifacts:
     name: 'MT5Agent-Worker-$CI_COMMIT_SHORT_SHA-$CI_PIPELINE_ID'
     expire_in: 30 days
     paths:
-      - dist/worker/MT5AgentWorker-v0.1.3.exe
+      - dist/worker/MT5AgentWorker-v*.exe
       - reports/worker-build.json
 
 smoke:invalid-configuration:
@@ -559,8 +557,16 @@ release:gitlab-publish:
   needs:
     - job: package:windows
       artifacts: true
+    - job: installer:build
+      artifacts: true
+    - job: installer:verify
+      artifacts: true
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_TAG =~ /^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/ && $CI_COMMIT_REF_PROTECTED == "true"'
+      # Hold publication until the exact tag artifact has real Windows evidence
+      # and the independent Owner has supplied protected authorization files.
+      when: manual
+      allow_failure: false
     - when: never
   retry:
     max: 2
@@ -581,7 +587,7 @@ release:github-sync:
     - job: release:gitlab-publish
       artifacts: false
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_TAG =~ /^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/ && $CI_COMMIT_REF_PROTECTED == "true"'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_TAG =~ /^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/ && $CI_COMMIT_REF_PROTECTED == "true" && $MT5_RELEASE_CHANNEL == "public"'
     - when: never
   retry:
     max: 2
@@ -599,7 +605,7 @@ release:github-reconcile:
     - linux-source-unit
   needs: []
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"'
+    - if: '$CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true" && $MT5_RELEASE_CHANNEL == "public"'
       when: manual
       allow_failure: true
     - when: never

@@ -8,7 +8,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
-$version = '0.1.5'
+$version = & (Join-Path $repo 'deployment\Get-MT5AgentVersion.ps1')
 $arch = 'windows-x64'
 $stage = Join-Path $repo 'deployment\installer\stage'
 if ([IO.Path]::IsPathRooted($OutputPath)) {
@@ -18,8 +18,8 @@ if ([IO.Path]::IsPathRooted($OutputPath)) {
 }
 if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $stage, $output | Out-Null
-$agent = Get-ChildItem -LiteralPath $AgentPath -File -Filter 'MT5Agent-v*.exe' | Select-Object -First 1
-$worker = Get-ChildItem -LiteralPath $WorkerPath -File -Filter 'MT5AgentWorker-v*.exe' | Select-Object -First 1
+$agent = Get-Item -LiteralPath (Join-Path $AgentPath "MT5Agent-v$version.exe") -ErrorAction Stop
+$worker = Get-Item -LiteralPath (Join-Path $WorkerPath "MT5AgentWorker-v$version.exe") -ErrorAction Stop
 foreach ($item in @($agent, $worker)) { if (-not $item) { throw 'Agent or bundled interactive Worker executable is missing.' } }
 $desktopExe = Join-Path $DesktopPath 'MT5Agent.Desktop.exe'
 $serviceExe = Join-Path $ServicePath 'MT5Agent.Service.exe'
@@ -90,12 +90,13 @@ $manifest = [ordered]@{
   mt5='external existing terminal only; no MT5 installer redistributed'
   source_commit=$env:CI_COMMIT_SHA; pipeline_id=$env:CI_PIPELINE_ID; installer_build_job_id=$env:CI_JOB_ID
   component_build_jobs=[ordered]@{desktop=$env:DESKTOP_BUILD_JOB_ID;agent=$env:AGENT_BUILD_JOB_ID;worker=$env:WORKER_BUILD_JOB_ID;service=$env:CI_JOB_ID}
+  component_versions=[ordered]@{agent=$version;worker=$version;desktop="$version.0";service="$version.0";runtime_protocol='1';management_protocol='1'}
   setup_filename=(Split-Path -Leaf $setupFile); setup_size_bytes=[long](Get-Item $setupFile).Length
   setup_sha256=(Get-FileHash $setupFile -Algorithm SHA256).Hash.ToLowerInvariant()
   signing='unsigned internal artifact; public distribution prohibited'; files=$payload
 }
-$manifestPath = Join-Path $output 'MT5Agent-Setup-v0.1.5-windows-x64.manifest.json'
+$manifestPath = Join-Path $output "MT5Agent-Setup-v$version-windows-x64.manifest.json"
 $manifest | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $manifestPath -Encoding utf8
-$sumPath = Join-Path $output 'MT5Agent-Setup-v0.1.5-windows-x64.sha256'
+$sumPath = Join-Path $output "MT5Agent-Setup-v$version-windows-x64.sha256"
 Set-Content -LiteralPath $sumPath -Value "$($manifest.setup_sha256)  $(Split-Path -Leaf $setupFile)" -Encoding ascii
 Write-Host "Built $setupFile SHA-256 $($manifest.setup_sha256)"

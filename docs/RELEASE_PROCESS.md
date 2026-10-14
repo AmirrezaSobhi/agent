@@ -58,6 +58,17 @@ accounts, tasks, Autologon, pipe ACLs, or machine security settings.
 
 ## Current status
 
+**Unblock implementation (2026-10-14):** the feature branch now uses canonical
+product/Core version `0.1.5` and a unified Installer publisher. Required
+Worker/Installer jobs also run on staging/main/tag workflows. Publication is
+held by a mandatory manual job until exact-artifact Windows acceptance and
+independent native MR approval are available. TLS and approved protected
+credential/file-variable configuration remain prerequisites; no sensitive
+infrastructure settings were changed. See the
+[current runbook](releases/v0.1.5-release-unblock-runbook.md) for the protected
+authorization-file design, live approval API checks and internal-only channel.
+The earlier audit below describes the pre-unblock source, not current code.
+
 **v0.1.5 internal candidate (2026-10-14):** operational Pipeline #98 and
 documentation follow-up #99 passed 14/14 jobs each. Promotion/publication is
 BLOCKED: this GitLab is HTTP-only; the independent Release Owner variable and

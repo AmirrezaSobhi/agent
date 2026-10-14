@@ -26,7 +26,7 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 PROJECT_ID = "1"
 PROJECT_PATH = "root/agent"
 PACKAGE_NAME = "mt5-agent"
-SEMVER_TAG = re.compile(r"^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
+SEMVER_TAG = re.compile(r"^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$", re.ASCII)
 COMMIT = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 
 
@@ -46,6 +46,8 @@ class _StripJobTokenRedirectHeaders(HTTPRedirectHandler):
     """Never forward the project job token to redirected object storage."""
 
     def redirect_request(self, request, response, code, message, headers, new_url):
+        if urlsplit(new_url).scheme.lower() != 'https':
+            raise PublishError('Release transport redirect must remain HTTPS')
         redirected = super().redirect_request(request, response, code, message, headers, new_url)
         old = urlsplit(request.full_url)
         new = urlsplit(new_url)
@@ -55,6 +57,11 @@ class _StripJobTokenRedirectHeaders(HTTPRedirectHandler):
                     if name.lower() in ("job-token", "authorization", "private-token"):
                         del collection[name]
         return redirected
+
+
+class _DenyApprovalRedirects(HTTPRedirectHandler):
+    def redirect_request(self, *args, **kwargs):
+        raise PublishError('Independent approval API reads must not be redirected')
 
 
 @dataclass(frozen=True)
@@ -102,6 +109,12 @@ def validate_environment(env: dict[str, str]) -> dict[str, str]:
             parsed.path.rstrip("/") != "/api/v4"):
         raise PublishError("CI_API_V4_URL must be this project's HTTPS GitLab API")
     values["version"] = ".".join(tag_match.groups())
+    if tuple(map(int, tag_match.groups())) >= (0, 1, 5):
+        if env.get('MT5_RELEASE_CHANNEL', 'internal') != 'internal':
+            raise PublishError('Unified Installer publication is restricted to the internal channel')
+        for name in ('MT5_RELEASE_AUTHORIZATION_FILE', 'MT5_RELEASE_INSTALLER_ACCEPTANCE_FILE',
+                     'MT5_RELEASE_APPROVAL_TOKEN'):
+            values[name] = _need(env, name)
     return values
 
 
@@ -208,7 +221,10 @@ def validate_local(env: dict[str, str], root: Path) -> tuple[list[Asset], dict[s
         raise PublishError("Release eligibility/build-once evidence failed")
     notes_path = root / "docs/releases" / f"{tag}-release-notes.md"
     notes = _text(notes_path, "versioned release notes")
-    auth_path = root / "docs/releases" / f"{tag}-authorization.json"
+    # Protected CI file variables can bind the exact final commit without the
+    # impossible self-reference of a commit storing its own hash in source.
+    unified = tuple(map(int, version.split('.'))) >= (0, 1, 5)
+    auth_path = Path(env['MT5_RELEASE_AUTHORIZATION_FILE']) if unified else root / "docs/releases" / f"{tag}-authorization.json"
     approval = _read_json(auth_path, "release authorization record")
     owner_id = int(env["MT5_RELEASE_OWNER_USER_ID"])
     approver_id = approval.get("approved_by_user_id")
@@ -247,34 +263,171 @@ def validate_local(env: dict[str, str], root: Path) -> tuple[list[Asset], dict[s
         "- Control-plane smoke: passed; Agent remained running in degraded no-Worker mode\n"
         "- Interactive MT5 integration: passed; connected state and safe read checks passed\n"
         "- Build-once invariant: passed; the tested executable was packaged without rebuilding\n"
-        f"- Risk decision record: `{auth_path.relative_to(root).as_posix()}`\n"
+        "- Risk decision record: verified independent Release Owner authorization\n"
     )
     assets_data: list[tuple[str, bytes]] = [(exe_name, data), ("release-notes.md", notes.encode("utf-8")),
                                              ("release-acceptance.md", acceptance.encode("utf-8"))]
+    if unified:
+        if ('INTERNAL / PRE-PRODUCTION' not in notes or
+                'UNSIGNED — NOT APPROVED FOR PUBLIC DISTRIBUTION' not in notes):
+            raise PublishError('Unified Release Notes must disclose internal scope and unsigned artifact')
+        assets_data = unified_installer_assets(env, root, build, approval, notes, acceptance)
     sums = "".join(f"{hashlib.sha256(content).hexdigest()}  {name}\n" for name, content in assets_data).encode()
     assets_data.insert(1, ("SHA256SUMS.txt", sums))
     assets = [Asset(name, content, hashlib.sha256(content).hexdigest()) for name, content in assets_data]
     # Ensure the executable itself has exactly the package evidence digest.
-    assert assets[0].sha256 == digest
+    if not unified:
+        assert assets[0].sha256 == digest
     return assets, approval
 
 
+def unified_installer_assets(env, root, build, approval, notes, acceptance):
+    """Bind the current Installer, its components, verifier and real-Windows receipt."""
+    version, sha, pipeline = env['version'], env['CI_COMMIT_SHA'], env['CI_PIPELINE_ID']
+    name = f'MT5Agent-Setup-v{version}-windows-x64.exe'
+    directory = root / 'dist/installer'
+    manifest_name = name[:-4] + '.manifest.json'
+    sidecar_name = name[:-4] + '.sha256'
+    manifest = _read_json(directory / manifest_name, 'unified Installer manifest')
+    verify = _read_json(root / 'reports/unified-installer-verification.json', 'Installer verification receipt')
+    desktop = _read_json(root / 'reports/desktop-build.json', 'Desktop build receipt')
+    worker = _read_json(root / 'reports/worker-build.json', 'Worker build receipt')
+    try:
+        binary = (directory / name).read_bytes()
+        manifest_bytes = (directory / manifest_name).read_bytes()
+        sidecar = (directory / sidecar_name).read_bytes()
+    except OSError:
+        raise PublishError('Unified Installer assets are incomplete') from None
+    digest = hashlib.sha256(binary).hexdigest()
+    if (type(manifest.get('schema_version')) is not int or manifest['schema_version'] != 1 or manifest.get('product') != 'MT5Agent' or
+            manifest.get('version') != version or manifest.get('architecture') != 'x64' or
+            manifest.get('source_commit') != sha or str(manifest.get('pipeline_id')) != pipeline or
+            manifest.get('setup_filename') != name or manifest.get('setup_sha256') != digest or
+            type(manifest.get('setup_size_bytes')) is not int or manifest['setup_size_bytes'] != len(binary)):
+        raise PublishError('Unified Installer manifest identity or bytes do not match this pipeline')
+    try:
+        sidecar_text = sidecar.decode('utf-8-sig').strip()
+    except UnicodeError:
+        raise PublishError('Invalid Installer sidecar encoding') from None
+    if sidecar_text != f'{digest}  {name}':
+        raise PublishError('Installer sidecar does not match its bytes')
+    for key, expected in {'schema_version':1, 'status':'PASS', 'source_commit':sha,
+                          'pipeline_id':pipeline, 'installer':name, 'sha256':digest,
+                          'installer_size_bytes':len(binary),
+                          'manifest_sha256':hashlib.sha256(manifest_bytes).hexdigest(),
+                          'sidecar_sha256':hashlib.sha256(sidecar).hexdigest()}.items():
+        if type(verify.get(key)) is not type(expected) or verify[key] != expected:
+            raise PublishError(f'Installer verifier has inconsistent {key}')
+    for key in ('installer_build_job_id', 'installer_verify_job_id'):
+        if not re.fullmatch(r'[1-9]\d*', str(verify.get(key, ''))):
+            raise PublishError('Installer verifier job provenance is invalid')
+    if str(manifest.get('installer_build_job_id')) != str(verify['installer_build_job_id']):
+        raise PublishError('Installer build/verify jobs do not agree')
+    jobs = manifest.get('component_build_jobs')
+    if not isinstance(jobs, dict) or set(jobs) != {'agent', 'worker', 'desktop', 'service'}:
+        raise PublishError('Installer component build job inventory is invalid')
+    for component, receipt in (('agent',build), ('desktop',desktop), ('worker',worker)):
+        if (receipt.get('source_commit') != sha or str(receipt.get('pipeline_id')) != pipeline or
+                not re.fullmatch(r'[1-9]\d*', str(jobs[component])) or
+                str(receipt.get('build_job_id')) != str(jobs[component])):
+            raise PublishError('Installer component belongs to an unrelated build')
+    if str(jobs['service']) != str(verify['installer_build_job_id']):
+        raise PublishError('Service must be built in the Installer build job')
+    files = manifest.get('files')
+    expected = {f'Agent/MT5Agent-v{version}.exe':build['candidate_sha256'],
+                f'Worker/MT5AgentWorker-v{version}.exe':worker.get('sha256'),
+                'Desktop/MT5Agent.Desktop.exe':desktop.get('desktop_executable_sha256'),
+                'Service/MT5Agent.Service.exe':None,
+                'Support/Install-MT5AgentService.ps1':None,
+                'Support/Save-MT5AgentUserSettings.ps1':None,
+                'Support/Set-MT5RuntimeConfiguration.ps1':None,
+                'Worker/Register-PackagedMT5Worker.ps1':None,
+                'Worker/Unregister-PackagedMT5Worker.ps1':None}
+    if not isinstance(files,list) or len(files) != len(expected) or any(not isinstance(f,dict) for f in files):
+        raise PublishError('Installer payload inventory is incomplete')
+    if {f.get('path') for f in files} != set(expected):
+        raise PublishError('Installer payload has duplicate, unsafe or unexpected paths')
+    for f in files:
+        if (type(f.get('size_bytes')) is not int or f['size_bytes'] <= 0 or
+                not isinstance(f.get('sha256'),str) or not re.fullmatch(r'[0-9a-f]{64}',f['sha256']) or
+                (expected[f['path']] is not None and f['sha256'] != expected[f['path']])):
+            raise PublishError('Installer payload hash or metadata does not match tested components')
+    if (worker.get('product_version') != version or worker.get('package_version') != version or
+            desktop.get('product_version') != version or manifest.get('service_identity') != 'LocalSystem' or
+            manifest.get('signing') != 'unsigned internal artifact; public distribution prohibited'):
+        raise PublishError('Installer version, identity or internal signing policy is inconsistent')
+    for key, value in {'python_runtime_bundled':True,'mt5_dependency_bundled':True,
+                       'archive_inspection_success':True,'interactive_session_required':True,
+                       'terminal_included':False}.items():
+        if worker.get(key) is not value:
+            raise PublishError('Worker build/archive gate is missing or failed')
+    if manifest.get('component_versions') != {'agent':version,'worker':version,
+            'desktop':version+'.0','service':version+'.0','runtime_protocol':'1','management_protocol':'1'}:
+        raise PublishError('Installer component version contract is inconsistent')
+    live = _read_json(Path(env['MT5_RELEASE_INSTALLER_ACCEPTANCE_FILE']), 'real Windows Installer acceptance')
+    identity = {'schema_version':1, 'status':'PASS', 'source_commit':sha, 'pipeline_id':pipeline,
+                'installer':name, 'sha256':digest, 'installer_size_bytes':len(binary),
+                'installer_build_job_id':str(verify['installer_build_job_id']),
+                'installer_verify_job_id':str(verify['installer_verify_job_id']),
+                'installer_exit_code':0, 'service_session_id':0, 'agent_session_id':0,
+                'freshness':'FRESH', 'mt5_connected':True, 'no_trading':True}
+    for key, value in identity.items():
+        if type(live.get(key)) is not type(value) or live[key] != value:
+            raise PublishError(f'Real Windows acceptance is missing or inconsistent: {key}')
+    sid = live.get('worker_session_id')
+    if (type(sid) is not int or sid <= 0 or type(live.get('mt5_session_id')) is not int or
+            live['mt5_session_id'] != sid or type(live.get('health_worker_session_id')) is not int or
+            live['health_worker_session_id'] != sid or type(live.get('soak_seconds')) is not int or
+            live['soak_seconds'] < 900 or type(live.get('soak_samples')) is not int or
+            live['soak_samples'] < 30 or type(live.get('soak_failed_samples')) is not int or
+            live['soak_failed_samples'] != 0 or not _valid_timestamp(live.get('captured_at'))):
+        raise PublishError('Real Windows session/stability acceptance is invalid')
+    provenance = dict(identity, component_build_jobs=jobs,
+                      manifest_sha256=hashlib.sha256(manifest_bytes).hexdigest(),
+                      sidecar_sha256=hashlib.sha256(sidecar).hexdigest())
+    acceptance += '\nINTERNAL / PRE-PRODUCTION\nUNSIGNED — NOT APPROVED FOR PUBLIC DISTRIBUTION\n'
+    acceptance += f'\nUnified Installer: `{name}`\nSHA-256: `{digest}`\n'
+    normalized_live = dict(identity, **{k:live[k] for k in ('worker_session_id','mt5_session_id',
+                          'health_worker_session_id','soak_seconds','soak_samples','soak_failed_samples','captured_at')})
+    normalized_approval = {k:approval[k] for k in ('schema_version','tag','commit_sha',
+                           'approved_by_user_id','approved_at','approval_reference')}
+    normalized_approval['release_blocking_risks'] = [
+        {k:r[k] for k in ('id','disposition','reference','approved_by_user_id','approved_at','approval_reference')}
+        for r in approval['release_blocking_risks']]
+    return [(name,binary),(manifest_name,manifest_bytes),(sidecar_name,sidecar),
+            ('release-provenance.json',json.dumps(provenance,sort_keys=True).encode()),
+            ('windows-acceptance.json',json.dumps(normalized_live,sort_keys=True).encode()),
+            ('release-authorization.json',json.dumps(normalized_approval,sort_keys=True).encode()),
+            ('release-notes.md',notes.encode()),('release-acceptance.md',acceptance.encode())]
+
+
 class GitLabAPI:
-    def __init__(self, api: str, project_id: str, token: str, *, timeout: int = 30, retries: int = 4):
+    def __init__(self, api: str, project_id: str, token: str, *, timeout: int = 30, retries: int = 4,
+                 authentication_header: str = 'JOB-TOKEN'):
+        parsed = urlsplit(api)
+        if (parsed.scheme != 'https' or parsed.hostname != 'gitlab.local' or parsed.username or
+                parsed.password or parsed.query or parsed.fragment or parsed.path.rstrip('/') != '/api/v4'):
+            raise PublishError('Release API requires the authorized HTTPS GitLab endpoint')
+        if authentication_header not in ('JOB-TOKEN', 'PRIVATE-TOKEN'):
+            raise PublishError('Unsupported Release API authentication')
         self.base = api.rstrip("/") + f"/projects/{quote(project_id, safe='')}"
         self.token = token
+        self.authentication_header = authentication_header
         self.timeout = timeout
         self.retries = retries
-        self.opener = build_opener(_StripJobTokenRedirectHeaders())
+        self.opener = build_opener(_DenyApprovalRedirects() if authentication_header == 'PRIVATE-TOKEN'
+                                  else _StripJobTokenRedirectHeaders())
 
     def request(self, method: str, path: str, data: bytes | None = None,
                 content_type: str | None = None) -> tuple[int, dict[str, str], bytes]:
+        if self.authentication_header == 'PRIVATE-TOKEN' and method != 'GET':
+            raise PublishError('The independent approval credential is read-only')
         url = self.base + path
         # Only GET is blindly retried. A timed-out upload may already have
         # succeeded; a later job retry re-reads the Registry before acting.
         attempts = self.retries if method == "GET" else 1
         for attempt in range(attempts):
-            headers = {"JOB-TOKEN": self.token, "Accept": "application/json"}
+            headers = {self.authentication_header: self.token, "Accept": "application/json"}
             if content_type:
                 headers["Content-Type"] = content_type
             req = Request(url, data=data, headers=headers, method=method)
@@ -352,6 +505,26 @@ class GitLabAPI:
         if (not isinstance(approval_mr, dict) or approval_mr.get("state") != "merged" or
                 approval_mr.get("target_branch") != "main"):
             raise PublishError("Release authorization merge request is not merged into main")
+
+    def assert_independent_owner_approval(self, reference: str, owner_id: int, sha: str) -> None:
+        match = re.fullmatch(r'https://gitlab\.local/root/agent/-/merge_requests/(\d+)', reference)
+        if not match:
+            raise PublishError('Invalid independent approval reference')
+        mr_path = f'/merge_requests/{match.group(1)}'
+        mr = self.json('GET', mr_path)
+        member = self.json('GET', f'/members/all/{owner_id}')
+        approvals = self.json('GET', mr_path + '/approvals')
+        if (not isinstance(mr,dict) or mr.get('state') != 'merged' or mr.get('target_branch') != 'main' or
+                mr.get('merge_commit_sha') != sha or not isinstance(member,dict) or
+                type(member.get('id')) is not int or member['id'] != owner_id or
+                type(member.get('access_level')) is not int or member['access_level'] < 30 or
+                member.get('state') != 'active' or member.get('bot') is True or
+                not isinstance(approvals,dict) or not isinstance(approvals.get('approved_by'),list)):
+            raise PublishError('Independent approval identity or merged commit cannot be verified')
+        if not any(isinstance(a,dict) and isinstance(a.get('user'),dict) and
+                   type(a['user'].get('id')) is int and a['user']['id']==owner_id
+                   for a in approvals['approved_by']):
+            raise PublishError('Configured independent Release Owner has not approved this merge request')
 
     def package_versions(self, version: str) -> list[dict[str, Any]]:
         query = urlencode({"package_type": "generic", "package_name": PACKAGE_NAME,
@@ -489,15 +662,24 @@ def _verify_and_prepare_package(api: GitLabAPI, version: str, assets: list[Asset
     return uploaded
 
 
-def publish(env: dict[str, str], root: Path, *, dry_run: bool, api: GitLabAPI | None = None) -> dict[str, Any]:
+def publish(env: dict[str, str], root: Path, *, dry_run: bool, api: GitLabAPI | None = None,
+            approval_api: GitLabAPI | None = None) -> dict[str, Any]:
     values = validate_environment(env)
     tag, sha, version = values["CI_COMMIT_TAG"], values["CI_COMMIT_SHA"], values["version"]
     assets, approval = validate_local(values, root)
     notes = next(asset.data.decode("utf-8") for asset in assets if asset.name == "release-notes.md")
     title = f"MT5Agent {tag}"
+    unified = tuple(map(int, version.split('.'))) >= (0,1,5)
+    if unified:
+        title += ' — Windows Desktop Integration'
     client = api or GitLabAPI(values["CI_API_V4_URL"], values["CI_PROJECT_ID"], values["CI_JOB_TOKEN"])
     client.assert_tag_and_main(tag, sha)
     client.assert_merged_authorization_mr(approval["approval_reference"])
+    if unified:
+        reviewer = approval_api or GitLabAPI(values['CI_API_V4_URL'], values['CI_PROJECT_ID'],
+                    values['MT5_RELEASE_APPROVAL_TOKEN'], authentication_header='PRIVATE-TOKEN')
+        reviewer.assert_independent_owner_approval(approval['approval_reference'],
+                    int(values['MT5_RELEASE_OWNER_USER_ID']), sha)
     existing = client.release(tag)
     if existing is not None:
         # Detect immutable-release conflicts before the first package write.

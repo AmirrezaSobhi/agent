@@ -4,7 +4,7 @@ $ErrorActionPreference = 'Stop'
 $root = [IO.Path]::GetFullPath($InstallRoot)
 $expectedRoot = [IO.Path]::GetFullPath((Join-Path $env:ProgramFiles 'MT5Agent'))
 if (-not [string]::Equals($root, $expectedRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'INSTALL_ROOT_MUST_BE_PROTECTED_PROGRAM_FILES_PATH' }
-$worker = Join-Path $root 'Worker\MT5AgentWorker-v0.1.3.exe'
+$worker = Join-Path $root 'Worker\MT5AgentWorker-v0.1.5.exe'
 if (-not (Test-Path -LiteralPath $worker -PathType Leaf)) { throw 'BUNDLED_WORKER_EXECUTABLE_MISSING' }
 $config = Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\MT5Agent\Runtime' -ErrorAction Stop
 foreach ($name in @('RuntimePrincipal','ControlPrincipal','TerminalPath','ProfilePath','WorkerInstallPath','WorkerDataPath')) {

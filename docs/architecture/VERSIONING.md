@@ -1,44 +1,30 @@
-# Product and component versioning — v0.1.5 candidate
+# Product version authority — v0.1.5
 
-The product/Installer and Desktop version are `0.1.5` (`0.1.5.0` for WPF
-assembly metadata). The Python Core's reported version and Agent/Worker
-executable names retain the `0.1.3` component line. Runtime/Management protocol
-version 1 is separate from both. A component filename does not identify its
-exact source build: the pipeline manifest and SHA-256 do.
+`agent/__init__.py::__version__` is the canonical stable release version:
+`0.1.5`. Agent CLI/Diagnostics, PyInstaller Agent/Worker names and receipts
+use it. Desktop and Installer builders read the same authority through
+`deployment/Get-MT5AgentVersion.ps1`. The Service/Worker path and .NET metadata
+mirrors are checked by `tools/check_product_version.py` before required CI.
+Desktop/Service metadata is `0.1.5.0`; pipe protocols stay at version 1.
 
-The documented candidate policy retains these component names to preserve the
-existing Service, scheduled-task, runtime and uninstall path contracts. It
-does not rename an installed executable or imply the old `v0.1.3` release binary
-is packaged: Pipeline #98's exact hashes identify the updated components.
-The preinstalled interactive Python Worker was reused; a manifest check of
-the bundled Worker executable is not proof that this packaged Worker ran.
+The Service now launches `Agent/MT5Agent-v0.1.5.exe`; packaged Worker
+registration targets `Worker/MT5AgentWorker-v0.1.5.exe`. Service registration
+itself still points to `Service/MT5Agent.Service.exe`, so an in-place upgrade
+does not rename the SCM service. Existing separately provisioned interactive
+Python Workers may be reused only after actual protocol/SID/session validation.
+A manifest check of the bundled Worker is not proof that that executable ran.
 
-## Existing dependency contracts
+Pipeline #98 is historical: its Agent/Worker names retained `0.1.3`. It remains
+archived and must not be represented as evidence for the newly versioned
+binaries. New binary-affecting changes require a new Installer/hash and real
+Windows validation. Old product files are not blindly deleted from a VM.
 
-- `agent/__init__.py` and Python package metadata report `0.1.3`.
-- `deployment/ci.ps1` derives build names and version receipts from that field.
-- `deployment/service/Program.cs` launches `MT5Agent-v0.1.3.exe`.
-- Installer/Worker provisioning scripts and manifests consume those exact
-  component paths; Registry/Task configuration is machine-local.
-- Desktop and Installer independently record product version `0.1.5`.
-- The legacy tag/publisher contract assumes product and Core versions are
-  equal. `v0.1.5` is therefore currently rejected by tag validation and the
-  publisher, which also publishes only a standalone Agent executable.
+Stable Tag validation still requires exact agreement with the canonical
+source version; malformed tags and unrelated commit/pipeline receipts fail.
+The unified publisher validates all current-pipeline component hashes,
+Installer/Manifest/Sidecar, build/verify job provenance and a real Windows
+acceptance receipt for those exact Installer bytes. It does not relabel a
+Branch artifact as a Tag-pipeline artifact.
 
-## Release defect and required resolution
-
-The component naming is runtime-compatible in the tested installation, but
-the official product release contract remains **BLOCKED**. A product publisher
-must validate the product version, component versions, complete Installer
-manifest, checksums, test receipts, protected-main lineage and independent
-approval together. Existing Core version/hash gates must remain effective;
-merely deleting the tag/version comparison is not a solution.
-
-The exact #98 Installer remains the frozen operational candidate. Its manifest
-must retain source commit `54f47a6dad8541984b3930051cb6610f85bb95cc` and Pipeline
-98. Any future promotion of that candidate must explicitly preserve this
-provenance rather than relabel it as a Main/Tag build. Binary-affecting changes
-require a new verified artifact and appropriate real Windows validation.
-No version/path code changes were made by the blocked release audit.
-
-See the [final release audit](../evidence/v0.1.5/V0.1.5_FINAL_RELEASE_REPORT.md).
+See the [publication runbook](../releases/v0.1.5-release-unblock-runbook.md)
+and [release report](../evidence/v0.1.5/V0.1.5_FINAL_RELEASE_REPORT.md).

@@ -8,7 +8,7 @@ namespace MT5Agent.Service.Tests
 {
     internal static class Program
     {
-        private const string AgentName = "MT5Agent-v0.1.3.exe";
+        private const string AgentName = "MT5Agent-v0.1.5.exe";
         private static int passed;
 
         private static int Main()

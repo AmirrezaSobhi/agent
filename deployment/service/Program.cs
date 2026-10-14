@@ -20,7 +20,7 @@ namespace MT5Agent.Service
 
     internal sealed class AgentService : ServiceBase
     {
-        private const string AgentExecutableName = "MT5Agent-v0.1.3.exe";
+        private const string AgentExecutableName = "MT5Agent-v0.1.5.exe";
         private const int StopGracePeriodMilliseconds = 8000;
         private const int StartupObservationMilliseconds = 1200;
         private const int ServiceSpecificError = 1066;
