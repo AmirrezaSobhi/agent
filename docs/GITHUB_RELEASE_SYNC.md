@@ -1,3 +1,19 @@
+# Current v0.1.5 internal publication policy
+
+This section supersedes the historical standalone four-asset/public sync policy below for v0.1.5. GitLab remains the source of truth. The default channel is `internal`; GitHub Release jobs/CLI are denied before credentials or network access unless an independently authorized public channel is configured. Repository source mirroring is separate and preserved.
+
+The unified publisher uses HTTPS with normal trust/hostname verification and uploads nine immutable Generic Package assets: Installer, Manifest, SHA-256 Sidecar, SHA256SUMS, provenance, real-Windows acceptance, independent authorization, release notes and acceptance report. Exact Tag/pipeline/component/Build/Verify IDs and hashes must agree; the installed Windows binary and ≥900s/≥30-sample soak must match those same bytes. Build Once → Test Same Artifact → Release Same Artifact.
+
+`CI_JOB_TOKEN` is used only for the scoped package/release path. A separate protected, masked, hidden `read_api` bot credential reads the actual human Owner membership, MR approval and native immutable JSON Note. The Owner must differ from the Tag actor; MR merge SHA must equal the Tag SHA. A Maintainer may transport the Owner's exact Note into a protected file but cannot manufacture decisions. The Owner's native Note ID is added as metadata; edited notes, fake authors, changed JSON and missing approvals fail closed.
+
+The protected Tag publication job is manual and mandatory. It remains held until exact-artifact Windows validation succeeds. Every asset is downloaded and hashed from Registry before Release creation, then Release metadata/assets are read back. Releases must state INTERNAL / PRE-PRODUCTION and UNSIGNED — NOT APPROVED FOR PUBLIC DISTRIBUTION. Windows 10 evidence does not establish Windows 11/Server support.
+
+See [the current runbook](releases/v0.1.5-release-unblock-runbook.md) and [actual release evidence](evidence/v0.1.5/V0.1.5_FINAL_RELEASE_REPORT.md).
+
+---
+
+## Historical standalone/public workflow — versions before v0.1.5
+
 # GitLab Release Publication and GitHub Synchronization
 
 **v0.1.5 internal-channel update:** `MT5_RELEASE_CHANNEL` defaults to `internal`.

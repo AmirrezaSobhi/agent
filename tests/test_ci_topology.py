@@ -6,6 +6,22 @@ import re
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def test_invalid_configuration_producer_emits_publisher_version_contract():
+    source = (ROOT / "deployment/ci.ps1").read_text(encoding="utf-8")
+    invalid = source.split("        'smoke-invalid' {", 1)[1].split("        'smoke-control-plane' {", 1)[0]
+    receipt = invalid.split("invalid-configuration.json", 1)[1]
+    assert "candidate_version = $version" in receipt
+
+
+def test_packaging_checks_invalid_configuration_receipt_before_release_eligibility():
+    source = (ROOT / "deployment/ci.ps1").read_text(encoding="utf-8")
+    package = source.split("        'package' {", 1)[1]
+    assert "'invalid-configuration.json'" in package
+    assert "foreach ($receipt in @($invalid, $control, $runtime))" in package
+    assert "$receipt.candidate_version -ne $version" in package
+    assert "$invalid.actual_exit -ne 2" in package
+
+
 def _job_block(source: str, name: str) -> str:
     match = re.search(
         rf"(?ms)^{re.escape(name)}:\n(.*?)(?=^[A-Za-z0-9_.:-]+:|\Z)",
