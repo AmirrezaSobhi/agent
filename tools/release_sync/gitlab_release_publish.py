@@ -235,6 +235,8 @@ def validate_local(env: dict[str, str], root: Path) -> tuple[list[Asset], dict[s
             not isinstance(approval.get("approval_reference"), str) or
             not re.fullmatch(r"https://gitlab\.local/root/agent/-/merge_requests/\d+", approval["approval_reference"])):
         raise PublishError("Release authorization must match the tag/commit and the configured independent Release Owner")
+    if unified and (type(approval.get('approval_note_id')) is not int or approval['approval_note_id'] <= 0):
+        raise PublishError('Independent Owner authorization note is required')
     risks = approval.get("release_blocking_risks")
     if not isinstance(risks, list) or not any(isinstance(risk, dict) and risk.get("id") == "KI-009" for risk in risks):
         raise PublishError("Authorization must explicitly disposition the known release-blocking risk KI-009")
@@ -526,6 +528,35 @@ class GitLabAPI:
                    for a in approvals['approved_by']):
             raise PublishError('Configured independent Release Owner has not approved this merge request')
 
+    def assert_owner_authorization_note(self, approval: dict[str, Any], owner_id: int) -> None:
+        """Only the human Owner can attest record contents via an unedited native MR note.
+
+        Maintainers may transport that record into protected variables, but cannot
+        manufacture its risk decisions. The server-assigned note ID is metadata,
+        excluded from the body to avoid another self-reference cycle.
+        """
+        note_id = approval.get('approval_note_id')
+        reference = approval.get('approval_reference', '')
+        match = re.fullmatch(r'https://gitlab\.local/root/agent/-/merge_requests/(\d+)', reference)
+        if type(note_id) is not int or note_id <= 0 or not match:
+            raise PublishError('Independent Owner authorization note is required')
+        note = self.json('GET', f'/merge_requests/{match.group(1)}/notes/{note_id}')
+        if (not isinstance(note, dict) or type(note.get('id')) is not int or note.get('id') != note_id or
+                not isinstance(note.get('author'), dict) or
+                type(note['author'].get('id')) is not int or note['author']['id'] != owner_id or
+                note['author'].get('bot') is True or note.get('system') is not False or
+                not _valid_timestamp(note.get('created_at')) or
+                note.get('updated_at') != note.get('created_at') or note.get('last_edited_at')):
+            raise PublishError('Owner authorization note is missing, edited or has an incorrect author')
+        try:
+            body = json.loads(note.get('body', ''))
+        except (ValueError, TypeError):
+            raise PublishError('Owner authorization note must contain the exact JSON record') from None
+        expected = {k: v for k, v in approval.items() if k != 'approval_note_id'}
+        canonical = lambda value: json.dumps(value, sort_keys=True, separators=(',', ':'))
+        if canonical(body) != canonical(expected):
+            raise PublishError('Protected authorization record differs from the real Owner note')
+
     def package_versions(self, version: str) -> list[dict[str, Any]]:
         query = urlencode({"package_type": "generic", "package_name": PACKAGE_NAME,
                            "package_version": version})
@@ -680,6 +711,7 @@ def publish(env: dict[str, str], root: Path, *, dry_run: bool, api: GitLabAPI | 
                     values['MT5_RELEASE_APPROVAL_TOKEN'], authentication_header='PRIVATE-TOKEN')
         reviewer.assert_independent_owner_approval(approval['approval_reference'],
                     int(values['MT5_RELEASE_OWNER_USER_ID']), sha)
+        reviewer.assert_owner_authorization_note(approval, int(values['MT5_RELEASE_OWNER_USER_ID']))
     existing = client.release(tag)
     if existing is not None:
         # Detect immutable-release conflicts before the first package write.

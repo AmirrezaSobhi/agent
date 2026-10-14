@@ -22,7 +22,7 @@ def unified(fixture_root, env):
         r=json.loads(path.read_text());r['candidate_version']=version;r['candidate_filename']='MT5Agent-v0.1.5.exe'
         if path.name=='build.json': r['build_job_id']='10'
         path.write_text(json.dumps(r))
-    auth=json.loads((root/'docs/releases/v0.1.4-authorization.json').read_text());auth['tag']=tag
+    auth=json.loads((root/'docs/releases/v0.1.4-authorization.json').read_text());auth['tag']=tag;auth['approval_note_id']=93
     auth_path=root/'protected-authorization.json';auth_path.write_text(json.dumps(auth))
     (root/'docs/releases/v0.1.5-release-notes.md').write_text('# MT5Agent v0.1.5\nINTERNAL / PRE-PRODUCTION\nUNSIGNED — NOT APPROVED FOR PUBLIC DISTRIBUTION\n', encoding='utf-8')
     installer=b'tested unified installer';name='MT5Agent-Setup-v0.1.5-windows-x64.exe'
@@ -85,6 +85,8 @@ class UnifiedAPI(FakeAPI):
 
 
 class Approved:
+    def assert_owner_authorization_note(self,approval,owner):
+        assert approval['approval_note_id']==93 and owner==23
     def assert_independent_owner_approval(self,reference,owner,sha):
         assert reference.endswith('/42') and owner==23 and sha==SHA
 
@@ -183,3 +185,21 @@ def test_corrupt_registry_readback_never_creates_release(unified):
     api=Corrupt()
     with pytest.raises(p.PublishError):p.publish(env,root,dry_run=False,api=api,approval_api=Approved())
     assert not any(action=='release' for action,_ in api.mutations)
+
+
+@pytest.mark.parametrize('change', ['missing_id', 'wrong_author', 'edited', 'system', 'altered_body', 'invalid_json'])
+def test_owner_record_cannot_be_forged_or_changed_by_variable_writer(change):
+    approval={'schema_version':1,'approval_reference':'https://gitlab.local/root/agent/-/merge_requests/42',
+              'approval_note_id':93,'commit_sha':SHA,'approved_by_user_id':23}
+    body={k:v for k,v in approval.items() if k!='approval_note_id'}
+    note={'id':93,'author':{'id':23},'system':False,'created_at':'2026-10-14T05:00:00Z',
+          'updated_at':'2026-10-14T05:00:00Z','body':json.dumps(body)}
+    if change=='missing_id':approval.pop('approval_note_id')
+    elif change=='wrong_author':note['author']['id']=1
+    elif change=='edited':note['updated_at']='2026-10-14T05:01:00Z'
+    elif change=='system':note['system']=True
+    elif change=='altered_body':note['body']=json.dumps({**body,'commit_sha':'b'*40})
+    else:note['body']='not json'
+    client=p.GitLabAPI('https://gitlab.local/api/v4','1','synthetic',authentication_header='PRIVATE-TOKEN')
+    client.json=lambda method,path:note
+    with pytest.raises(p.PublishError):client.assert_owner_authorization_note(approval,23)
