@@ -24,7 +24,7 @@ def unified(fixture_root, env):
         path.write_text(json.dumps(r))
     auth=json.loads((root/'docs/releases/v0.1.4-authorization.json').read_text());auth['tag']=tag
     auth_path=root/'protected-authorization.json';auth_path.write_text(json.dumps(auth))
-    (root/'docs/releases/v0.1.5-release-notes.md').write_text('# MT5Agent v0.1.5\nINTERNAL / PRE-PRODUCTION\nUNSIGNED — NOT APPROVED FOR PUBLIC DISTRIBUTION\n')
+    (root/'docs/releases/v0.1.5-release-notes.md').write_text('# MT5Agent v0.1.5\nINTERNAL / PRE-PRODUCTION\nUNSIGNED — NOT APPROVED FOR PUBLIC DISTRIBUTION\n', encoding='utf-8')
     installer=b'tested unified installer';name='MT5Agent-Setup-v0.1.5-windows-x64.exe'
     directory=root/'dist/installer';directory.mkdir()
     (directory/name).write_bytes(installer)
