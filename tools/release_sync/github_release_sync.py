@@ -512,6 +512,8 @@ def run_from_environment(*, dry_run: bool = False, tag_override: str | None = No
         raise SyncError("CI_COMMIT_SHA is missing or invalid")
     if os.environ.get("CI_COMMIT_REF_PROTECTED", "false").lower() != "true":
         raise SyncError("CI_COMMIT_REF_PROTECTED must be true before protected credentials are used")
+    if os.environ.get("MT5_RELEASE_CHANNEL") != "public":
+        raise SyncError("GitHub publication requires an explicitly authorized public release channel")
 
     github_token = os.environ.get("GITHUB_RELEASE_TOKEN", "")
     if not github_token:

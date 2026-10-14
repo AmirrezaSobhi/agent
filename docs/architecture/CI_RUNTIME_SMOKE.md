@@ -1,0 +1,108 @@
+# Secure LocalSystem Runtime Smoke
+
+`smoke:mt5-runtime` must exercise the same Service-to-Worker boundary used in
+production. The MT5 runner's GitLab Runner service currently runs as an
+Administrator account, while the installed Worker accepts only its configured
+`ControlPrincipal` (`NT AUTHORITY\SYSTEM`, SID `S-1-5-18`). The CI test must not
+change that identity or widen the Worker pipe ACL.
+
+## Execution flow
+
+```mermaid
+sequenceDiagram
+    participant CI as GitLab Runner (elevated Session 0)
+    participant Stage as Protected Program Files stage
+    participant Task as One-shot Scheduled Task (LocalSystem, Session 0)
+    participant Agent as Candidate Agent
+    participant Worker as Existing interactive Worker
+    participant MT5 as Existing MetaTrader 5
+    CI->>CI: Verify commit, build receipt, and test executable receipt
+    CI->>Stage: Copy allowlisted inputs; verify copied hashes
+    CI->>Task: Register fixed PowerShell entrypoint and fixed arguments
+    Task->>Task: Verify SYSTEM SID, Session 0, stage ACL, context receipt, and payload hashes
+    Task->>Agent: Start candidate with a fixed ephemeral Management endpoint
+    Agent->>Worker: Authenticated Runtime IPC as configured ControlPrincipal
+    Worker->>MT5: Existing initialized terminal; read-only requests only
+    Task-->>CI: Structured result, provenance, task exit status, and evidence
+    CI->>Task: Remove only the task created by this job
+    CI->>Stage: Remove only this job's stage after task exit
+```
+
+The coordinator checks that the installed `ControlPrincipal` resolves to
+LocalSystem, that `RuntimePrincipal` is a distinct SID, and that the
+Administrator runner cannot open the Worker pipe (the expected denial is
+WinError 5). It serializes runtime jobs with a GitLab `resource_group` and a
+machine-wide mutex. The task name and entry point are fixed by the coordinator;
+there is no caller-supplied command or script argument.
+
+The product-root ACL check evaluates individual write, append, delete, owner,
+and DACL-change rights. It does not bitmask a composite `Write`/`Modify` value,
+because composite Windows rights share bits with the valid `Read & Execute`
+permission. On the first Pipeline #91 attempt, the composite mask falsely
+classified the installed `BUILTIN\Users:(RX)` ACE as writable and failed before
+creating the task. Read-only `icacls` evidence showed the product root is
+inherited from TrustedInstaller/System/Administrators with Users read/execute.
+The check was corrected to enumerate specific mutating rights without changing
+the machine ACL. A second attempt then exposed the inherited `CREATOR OWNER`
+ACE, which is marked `Inherit Only`; it was not translatable to a local SID by
+the runner token. The root check now skips inherit-only entries and treats an
+untranslatable effective ACE with any mutating right as unsafe. The corrected
+check still needs a fresh Windows Pipeline run.
+
+Pipeline #93 passed that preflight and reached the scheduled test action. Its
+child wrote the expected version text (`0.1.3`) but the `--version` contract
+still failed; the captured stderr contains no further detail because the
+candidate check previously reported only a generic message. This smoke attempt
+did not reach Worker IPC. The coordinator removes its own scheduled task and
+protected stage on failure; the task was confirmed absent afterward. The next
+revision reports the child exit code and actual version text, and preserves the
+raw structured task result on failures as well as successes.
+
+Inputs are copied under `Program Files\MT5Agent\CiRuntimeSmoke\<pipeline>_<job>`
+with an explicit, non-inheriting DACL granting Full Control only to LocalSystem
+and Administrators. The installed product directory must itself be non-reparse
+and not writable by unprivileged principals. Source scripts are compared with
+the selected commit's Git blob before and after copy. The candidate executable
+and WPF Management test client are checked against same-pipeline build receipts
+before and after copy. The System task independently validates the protected
+context receipt, file hashes, registry identity policy, its own SID, and
+Session 0 before it can run the fixed smoke operation.
+
+The task has a strict 12-minute scheduler limit and the coordinator has an
+11-minute result deadline. A missing, stale, malformed, failed, or mismatched
+result fails closed. On completion, the job validates task exit status and
+copies evidence back before removing its own scheduled task and stage. A task
+that cannot be confirmed stopped leaves its protected stage in place for
+investigation rather than deleting files it may still be using. Pipeline
+serialization plus a global mutex prevents two jobs from controlling the same
+interactive Worker/MT5 session concurrently.
+
+The System smoke permits only the existing non-trading health and terminal
+read operations (`mt5.get_symbols_total`, `mt5.get_terminal_version`, and
+`mt5.get_account_information`). The candidate Agent does not create a second
+instance of the installed Service's fixed Management pipe. After the System
+task returns a validated receipt, the coordinator runs the same-pipeline
+Management client only if its exact SID is already present in the installed
+Management allowlist; it does not edit that allowlist. This keeps the
+LocalSystem-to-Worker check separate from an authorized Management client
+check. Unsupported trading operations remain rejected by the Worker protocol.
+The test does not start, stop, or reconfigure the existing Worker or MetaTrader
+terminal.
+
+## Verification status
+
+**PASS — Pipeline #98, Job #1055 (`smoke:mt5-runtime`).** The protected task ran
+on `win10-mt5-runner` as LocalSystem SID `S-1-5-18` in Session 0. The receipt
+validated the source/build/test hashes, protected payload, configured
+ControlPrincipal and separate RuntimePrincipal, and fixed non-trading read
+operations against the existing Worker in Session 1. It reported
+`AGENT_RUNNING`, `WORKER_READY`, `MT5_CONNECTED`, and `FRESH`; the unauthorized
+Administrator pipe probe was denied. CI does not by itself prove installation
+or desktop-session behavior.
+
+The exact verified Installer from Pipeline #98 (Build #1058, Verify #1059) was
+then installed on the dedicated integration VM and independently validated.
+Live installed Management Health reported `worker_session_id=1`; a clean
+901-second soak passed 31/31 samples. The installation and runtime evidence is
+documented in
+[`pipeline98-final-validation-20261014.md`](../evidence/v0.1.5/pipeline98-final-validation-20261014.md).

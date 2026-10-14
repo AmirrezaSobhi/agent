@@ -1,0 +1,4 @@
+NetworkService negative probe did not execute. Task Scheduler reported
+LastTaskResult 2147942405 (0x80070005) and PowerShell printed "Access is denied."
+No probe output file, caller SID, or pipe connection result was produced. This is
+not evidence that the Management pipe DACL rejected NetworkService.

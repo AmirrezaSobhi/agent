@@ -1,0 +1,12 @@
+SCREENSHOT dashboard-dark bounds=1180x760
+SCREENSHOT runtime bounds=1180x760
+NAVIGATION Runtime PASS
+SCREENSHOT settings-light bounds=1180x760
+NAVIGATION Settings PASS
+SCREENSHOT logs bounds=1180x760
+NAVIGATION Logs PASS
+SCREENSHOT diagnostics bounds=1180x760
+NAVIGATION Diagnostics PASS
+SCREENSHOT about bounds=1180x760
+NAVIGATION About PASS
+CLOSE_UI PASS

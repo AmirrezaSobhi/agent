@@ -1,0 +1,72 @@
+Phase 5 Windows 10 SCM / Management Pipe integration evidence
+Date: 2026-10-08
+Host: WINDOW10-TEST / Windows 10 Pro 22H2 x64, build 19045.6466
+Interactive user: WINDOW10-TEST\Administrator, SID S-1-5-21-950479549-2068523145-3370569714-500, console Session 1
+Service identity: LocalSystem, SID S-1-5-18, Session 0
+
+This is an isolated test harness, not the product Service installer. The
+Product Owner explicitly authorized temporary SCM installation and rollback.
+The service was named MT5AgentPhase5Test, demand-start, and was hosted by the
+test-only .NET Framework ServiceBase source at
+tests/windows/Phase5ServiceHarness.cs. Its child ran the real Python Agent Core
+from tests/windows/phase5_service_agent.py. The RuntimeWorkerMT5Adapter was
+constructed with PHASE5_TEST_RUNTIME_DISABLED; no Registry runtime
+configuration, Worker pipe, MT5 terminal, trading account, HTTP listener, or
+trading capability was used. Management IPC remained the real
+\\.\pipe\MT5Agent.Management.v1 implementation.
+
+Observed results:
+- SCM service creation: SUCCESS; StartMode Manual; ServiceStartName LocalSystem.
+- Service start: RUNNING. Service child process token SID S-1-5-18, Session 0.
+- Authorized Admin request: status.get result OK, Agent lifecycle RUNNING,
+  worker_available false, MT5 connected false, Runtime configuration error
+  explicit. logs.query returned only fixed Agent Management events.
+- WPF UI Automation ran on the interactive desktop while this Service was
+  active. Dashboard showed authenticated local management connected and Agent
+  responsive; Worker/MT5 disconnected with the explicit disabled-runtime
+  error. The Logs view rendered the bounded in-memory events. See
+  dashboard-live-service.png, logs-live-service.png, and
+  ui-automation-live-service.txt.
+- WPF UI test process exited through its cleanup while the SCM Service still
+  reported RUNNING (SCM PID 2468 on the first run). This confirms UI exit did
+  not stop the Service for this test configuration.
+- Stop: SCM reached STOPPED; the Python child was absent and the Management Pipe
+  probe failed with Win32 error 2 (file/pipe not found).
+- Restart: SCM returned RUNNING under a new service process PID; a subsequent
+  authorized status.get and logs.query both returned OK. The test did not run a
+  Worker, so no Worker lifecycle or Session 1 MT5 behavior is claimed.
+- LocalSystem negative: caller TokenUser was S-1-5-18. It could connect using
+  the Service-process DACL ACE, but status.get and logs.query both returned
+  UNAUTHORIZED under the explicit SID allowlist.
+- NetworkService DACL-negative attempt: Task Scheduler reported
+  0x80070005 before the client process wrote its SID/result. This is not a
+  successful pipe DACL test and remains open. No system logon right or ACL was
+  changed to force it.
+- Existing Worker ACL experiment: 2/2 gated tests passed separately in
+  Session 0; actual caller S-1-5-18, target Administrator SID above, duplicate
+  launch rejected, cleanup succeeded, DACL rollback hash verified in
+  worker-acl-dacl-rollback.json.
+
+IPC measurements (the Python client ran as the allowed Administrator user;
+the Service was the temporary harness described above):
+- status.get: N=30; median 0.32 ms; P95 (nearest-rank) 32.89 ms; min 0.17 ms;
+  max 33.15 ms; 30/30 OK.
+- logs.query: N=10; median 0.30 ms; P95 (nearest-rank) 31.57 ms; up to 10
+  fixed events returned per response.
+- These are small local IPC samples, not WPF Dashboard refresh, production
+  service load, a long soak, or a 100-cycle recovery measurement. Raw probe
+  output is management-performance-probe.json.
+
+Rollback: SCM Service was stopped and deregistered; service child was absent;
+temporary wrapper, test reports/logs/context and temporary tasks were removed.
+The pywin32 service-host file moved by an initial failed test-only install was
+restored to the venv package path. Its copied helper DLL under Program Files
+was hash-matched to the venv source and removed after confirming it was created
+by that attempt. The final SCM query returned service-not-installed. No account,
+host security policy, existing Agent configuration, active MT5 session, or VM
+disk/snapshot was modified.
+
+Limitations: no productized SCM adapter/installer exists; this evidence proves
+only the tested .NET SCM wrapper -> real Python Agent Core -> real read-only
+Management Pipe path. The Management response correctly leaves
+service_state UNKNOWN because Agent Core itself does not query SCM.

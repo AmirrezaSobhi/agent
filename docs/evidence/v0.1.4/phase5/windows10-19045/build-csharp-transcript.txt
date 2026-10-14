@@ -1,0 +1,26 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20261008221837
+Username: WINDOW10-TEST\Administrator
+RunAs User: WINDOW10-TEST\Administrator
+Configuration Name: 
+Machine: WINDOW10-TEST (Microsoft Windows NT 10.0.19045.0)
+Host Application: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\Administrator\AppData\Local\Temp\mt5agent-phase5-build-tests.ps1
+Process ID: 7052
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+MSBUILD_VERSION: 4.8.9037.0
+TARGETING_PACK_PRESENT: True
+
+
+**********************
+Windows PowerShell transcript end
+End time: 20261008221845
+**********************

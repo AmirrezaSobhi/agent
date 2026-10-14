@@ -66,12 +66,14 @@ material. Start with:
 - [Known issues](docs/KNOWN_ISSUES.md)
 - [Changelog](CHANGELOG.md)
 
-## Scope
+## Desktop and setup status
 
-This repository does not yet provide a customer installer, a generally
-provisioned Windows Service, a supported trading interface, or a completed
-commercial release process. The lab runtime account uses a dedicated standard
-user and Sysinternals Autologon; credentials remain local to the machine and
-must never enter the repository or CI evidence. MT5 Agent must not manage
-BitLocker, TPM, Secure Boot, or recovery keys; those remain the machine owner's
-responsibility.
+The v0.1.5 development branch builds a unified internal Windows Setup
+(`MT5Agent-Setup-v0.1.5-windows-x64.exe`) containing the Desktop, Python Agent,
+Service host, and bundled Python MT5 Worker. See
+[installer design, setup, and CI artifact instructions](deployment/installer/README.md).
+The package is not a public release: live install/upgrade/repair/uninstall
+validation in a disposable Windows 10 VM remains outstanding, and the Worker
+requires a separately configured standard interactive account and MT5 profile.
+No trading operation is included. MT5Agent must not manage BitLocker, TPM,
+Secure Boot, or recovery keys; those remain the machine owner's responsibility.

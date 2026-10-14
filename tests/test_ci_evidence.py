@@ -137,6 +137,7 @@ def checkout(tmp_path):
         account_information_field_count=8,
         agent={"session_id": 0},
         worker={"principal": "HOST\\MT5RuntimeUser", "sid": "S-1-5-21-1", "session_id": 1, "protocol_version": "1"},
+        worker_session_id=1,
         terminal={"principal": "HOST\\MT5RuntimeUser", "sid": "S-1-5-21-1", "session_id": 1},
     )))
     env = {k: v for k, v in os.environ.items() if not k.startswith("CI_") and k != "ARTIFACT_NAME"}
@@ -153,6 +154,30 @@ def run_task(checkout, task, **variables):
         capture_output=True,
         timeout=30,
     )
+
+
+@requires_ci_tools
+@pytest.mark.skipif(os.name != "nt", reason="Process exit-code capture uses Windows Process APIs")
+def test_candidate_command_captures_zero_and_nonzero_windows_exit_codes(checkout):
+    path, env = checkout
+    script = path / "candidate-command-exit-codes.ps1"
+    script.write_text(f"""
+$ErrorActionPreference = 'Stop'
+. '{path / 'deployment/ci.ps1'}' -Task metadata
+$repoRoot = '{path}'
+$reportRoot = '{path / 'reports'}'
+$exePath = $env:ComSpec
+$zero = Invoke-CandidateCommand -Name 'exit-zero' -Arguments @('/d', '/c', 'exit 0')
+$seven = Invoke-CandidateCommand -Name 'exit-seven' -Arguments @('/d', '/c', 'exit 7')
+if ($zero.ExitCode -ne 0 -or $seven.ExitCode -ne 7) {{
+    throw "Windows child exit-code capture failed: zero=$($zero.ExitCode), seven=$($seven.ExitCode)"
+}}
+Write-Output 'WINDOWS_PROCESS_EXIT_CODES_PASS'
+""", encoding="utf-8")
+    result = subprocess.run([PWSH, "-NoProfile", "-File", str(script)],
+                            env=env, text=True, capture_output=True, timeout=30)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "WINDOWS_PROCESS_EXIT_CODES_PASS" in result.stdout
 
 
 @requires_ci_tools
@@ -202,6 +227,9 @@ def test_package_preserves_single_validated_binary(checkout):
     ("mt5-runtime", "commit_sha", "stale"),
     ("mt5-runtime", "pipeline_id", "other-pipeline"),
     ("mt5-runtime", "candidate_sha256_after", "tampered"),
+    ("mt5-runtime", "worker_session_id", None),
+    ("mt5-runtime", "worker_session_id", True),
+    ("mt5-runtime", "worker_session_id", 2),
     ("mt5-runtime", "account_information_success", False),
     ("mt5-runtime", "terminal", {"principal": "HOST\\MT5RuntimeUser", "sid": "S-1-5-21-1", "session_id": 2}),
 ])

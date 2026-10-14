@@ -160,7 +160,8 @@ class ReleaseSyncTests(unittest.TestCase):
         env = {"CI_COMMIT_TAG": "v0.1.3", "CI_COMMIT_SHA": "a" * 40,
                "CI_COMMIT_REF_PROTECTED": "true", "CI_JOB_TOKEN": "job-token",
                "CI_API_V4_URL": "https://gitlab.local/api/v4", "CI_PROJECT_ID": "1",
-               "CI_PROJECT_PATH": "root/agent", "CI_PIPELINE_SOURCE": "push"}
+               "CI_PROJECT_PATH": "root/agent", "CI_PIPELINE_SOURCE": "push",
+               "MT5_RELEASE_CHANNEL": "public"}
         with patch.dict("os.environ", env, clear=True):
             with self.assertRaisesRegex(SyncError, "GITHUB_RELEASE_TOKEN"):
                 run_from_environment()

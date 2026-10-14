@@ -1,0 +1,21 @@
+{
+    "host":  "WINDOW10-TEST",
+    "utc":  "2026-10-08T19:41:41.2536821Z",
+    "session":  1,
+    "app_exe":  "C:\\Users\\Administrator\\AppData\\Local\\Temp\\mt5agent-phase5-ui\\src\\desktop\\MT5Agent.Desktop\\bin\\Release\\MT5Agent.Desktop.exe",
+    "pid":  7560,
+    "launch_requested":  true,
+    "window_title":  "MT5Agent",
+    "initial_screenshot":  "C:\\Users\\Administrator\\AppData\\Local\\Temp\\mt5agent-phase5-ui\\interactive-tray-exit.png",
+    "close_to_tray_checkbox":  "On",
+    "preferences_save_invoked":  true,
+    "alive_after_close_to_tray":  true,
+    "main_window_hidden":  true,
+    "tray_icon_candidates":  0,
+    "tray_icon_automation":  "not exposed by Windows 10 UIA; visible NotifyIcon confirmed at screenshot coordinate",
+    "tray_menu_opened_for_restore":  false,
+    "tray_menu_opened_for_exit":  false,
+    "result":  "PARTIAL",
+    "cleanup_killed_unexited_ui":  true,
+    "finished_utc":  "2026-10-08T19:41:46.7150131Z"
+}

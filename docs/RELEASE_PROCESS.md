@@ -58,6 +58,32 @@ accounts, tasks, Autologon, pipe ACLs, or machine security settings.
 
 ## Current status
 
+**Unblock implementation (2026-10-14):** the feature branch now uses canonical
+product/Core version `0.1.5` and a unified Installer publisher. Required
+Worker/Installer jobs also run on staging/main/tag workflows. Publication is
+held by a mandatory manual job until exact-artifact Windows acceptance and
+independent native MR approval are available. TLS and approved protected
+credential/file-variable configuration remain prerequisites; no sensitive
+infrastructure settings were changed. See the
+[current runbook](releases/v0.1.5-release-unblock-runbook.md) for the protected
+authorization-file design, live approval API checks and internal-only channel.
+The earlier audit below describes the pre-unblock source, not current code.
+
+**v0.1.5 internal candidate (2026-10-14):** operational Pipeline #98 and
+documentation follow-up #99 passed 14/14 jobs each. Promotion/publication is
+BLOCKED: this GitLab is HTTP-only; the independent Release Owner variable and
+approval are unavailable; the legacy tag/publisher requires Core version equal
+to product tag and cannot publish the unified Installer. Stable tags also
+trigger GitHub sync, outside the authorized internal-only scope. No gates were
+removed and no Tag or Release was created. See the
+[final audit](evidence/v0.1.5/V0.1.5_FINAL_RELEASE_REPORT.md) and
+[component version inventory](architecture/VERSIONING.md).
+
+The #98 artifact is frozen as a validated candidate, not silently reattributed
+to a different commit or pipeline. Its Job assets expire on 2026-11-12 and
+therefore are not durable official Release assets. A protected local evidence
+archive was made; permanent GitLab asset publication/readback remains blocked.
+
 **v0.1.3 is released.** The GitLab Release was published on 2026-10-06 at
 02:58:30 UTC from tag `v0.1.3`, commit
 `970c04712853295fd065094b11a2bd541b5a9db8`. Tag Pipeline #16 passed all eight

@@ -1,0 +1,53 @@
+{
+  "caller_sid": "S-1-5-21-950479549-2068523145-3370569714-500",
+  "logs_response": {
+    "code": "OK",
+    "correlation_id": "c7cab37e-a30a-4334-9ac9-995c61a9c2e4",
+    "data": {
+      "count": 1,
+      "events": [
+        {
+          "code": "STATUS_OBSERVED",
+          "message": "Read-only Agent status was observed.",
+          "severity": "INFO",
+          "source": "Agent Management",
+          "timestamp_utc": "2026-10-08T19:06:07.868733Z"
+        }
+      ],
+      "source": "Agent Management"
+    },
+    "message": "Status observed.",
+    "observed_at_utc": null,
+    "protocol_version": 1,
+    "request_id": "4205a1ad-766f-4205-b8de-d94ba6dff474",
+    "result": "ok"
+  },
+  "outcome": "response_received",
+  "status_response": {
+    "code": "OK",
+    "correlation_id": "357b7c14-ac33-4908-8ad3-a7a1fc7764a9",
+    "data": {
+      "agent_lifecycle_state": "RUNNING",
+      "agent_state": "AGENT_RUNNING",
+      "central_state": "NOT_CONFIGURED",
+      "error_code": "RUNTIME_CONFIGURATION_UNAVAILABLE",
+      "freshness": "FRESH",
+      "mt5_connected": false,
+      "mt5_state": "DISCONNECTED",
+      "observed_at_utc": "2026-10-08T19:06:07.868733Z",
+      "runtime_state": "RUNTIME_UNAVAILABLE",
+      "service_state": "UNKNOWN",
+      "source_identity": "MT5Agent.AgentCore",
+      "trading_authorized": "UNKNOWN",
+      "trading_capability": "UNSUPPORTED",
+      "trading_readiness": "UNAVAILABLE",
+      "worker_available": false,
+      "worker_state": "DISCONNECTED"
+    },
+    "message": "Status observed.",
+    "observed_at_utc": "2026-10-08T19:06:07.868733Z",
+    "protocol_version": 1,
+    "request_id": "174683ea-f2ca-4ea2-b592-583497fbe57b",
+    "result": "ok"
+  }
+}
