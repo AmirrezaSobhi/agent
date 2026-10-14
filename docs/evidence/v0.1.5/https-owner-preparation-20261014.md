@@ -117,3 +117,53 @@ JSON نامعتبر افزوده شد. تست‌های مصنوعی Parser/Publi
 محسوب نمی‌شوند. آزمون مثبت عملی فقط پس از اقدام مستقل Owner انجام می‌شود.
 
 **تا آن زمان هیچ Merge به protected branches، Tag یا Release مجاز به اجرا نیست.**
+
+
+## نتیجهٔ واقعی پس از HTTPS و مسیر اقدام Owner
+
+- Commit کد کنترل Note: `7f5c709649b8ff55150479085c5d2d7a889adec6`.
+- Pipeline **#104 PASS، ۱۴/۱۴ Job جاری**؛ Runtime #1139 PASS؛ Build نهایی
+  #1158 / Verify #1143. Job اولیهٔ Build #1142، بعد از ساخت موفق، هنگام
+  Upload Artifact به دلیل 502 و Unix socket connection refused در Restart
+  کوتاه Pumaِ مرحلهٔ تکمیل Trust داخلی شکست خورد. همهٔ Readiness checkها
+  سپس ok شدند و فقط همان Job Retry شد؛ شکست تاریخی حذف نشد.
+- Pipeline خودکار MR **#105 PASS، ۱۴/۱۴**؛ Build #1156 / Verify #1157.
+  ایجاد MR مطابق سیاست موجود این Pipeline را خودکار ایجاد کرد؛ تست‌های
+  موفق به‌صورت دستی تکرار یا گیت‌ها غیرفعال نشدند.
+- Artifact #104: `b71751e57d6777fff54283fa61ea44f9a274af0eb23647cc46d5ecbc48aebac7`.
+- Artifact #105: `2c7fa012bd36ddf5c5ddfba98c4954ded0ddd11f726a7d8558fc07103858d8ae`.
+  هر دو در CI Verify شدند و **نصب نشده‌اند**؛ شواهد Windows #102 به آنها
+  نسبت داده نشد. تغییر اخیر Publisher/مستندات است و Runtime نصب‌شده حفظ شد.
+
+CA علاوه بر Trust سیستم GitLab، در مسیر رسمی Omnibus
+`/etc/gitlab/trusted-certs/mt5agent-gitlab-local-root-ca.crt` نیز ثبت شد؛
+Ruby داخلی Trust Store مستقل دارد. Root CA همان Fingerprint تأییدشده است.
+Reader سپس با TLS verification معمولی، GET اعضا و Approvals را با HTTP 200
+انجام داد؛ Role Owner=30، approved_by=[]، Authorization File absent.
+**نتیجهٔ منفی عملی: FAIL_CLOSED — no actual Owner approval.**
+
+MR واقعی برای بررسی:
+[!6 — Feature به Develop](https://gitlab.local/root/agent/-/merge_requests/6)
+
+این MR Draft و opened است؛ Approvals خالی و Merge انجام نشده است. نقش Owner
+can_create_group=false و projects_limit=0 دارد؛ ورود واقعی هنوز ثبت نشده است.
+
+اقدام مستقیم مالک محصول:
+
+1. فایل activation.json خصوصی ذکرشده را فقط روی mani-pc باز کنید؛ رمز/Token
+   را در Chat یا Artifact نفرستید.
+2. با username=release-owner وارد `https://gitlab.local/users/sign_in` شوید
+   و رمز موقت را در ورود اول تغییر دهید. از حساب root برای Approval استفاده نکنید.
+3. Diff، شواهد، CI و محدودیت‌های internal/unsigned/Windows 10 و KI-009 را
+   در MR !6 بررسی کنید. فقط در صورت پذیرش واقعی، خودتان Approve را بزنید
+   و تصمیم ریسک‌ها را در Comment خودتان ثبت کنید.
+4. این Approval اولیه برای ادامهٔ Promotion است؛ Approval/Note نهایی باید
+   بعداً با MR Main، Commit نهایی و Artifact دقیق Tag منطبق شود. Codex آن
+   تأیید نهایی را صادر یا به‌جای شما ثبت نمی‌کند.
+
+آرشیو غیرمحرمانهٔ شواهد جدید:
+`/home/mani/MT5Agent-Release-Evidence/v0.1.5-https-owner-20261014/`
+
+هیچ تغییر Main/Staging/Develop، Tag، GitLab Release یا انتشار GitHub انجام نشد.
+وضعیت انتشار **BLOCKED — RELEASE NOT PUBLISHED** است؛ مانع باقی‌مانده اقدام
+انسانی Owner و گیت‌های بعد از آن است، نه نبود HTTPS یا هویت مستقلِ آماده‌شده.
