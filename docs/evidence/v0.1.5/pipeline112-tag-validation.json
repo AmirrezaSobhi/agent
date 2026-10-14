@@ -94,5 +94,34 @@
   "windows_product_error_events": 0,
   "publisher_contract_gate": "FAIL: missing candidate_version in actual invalid-configuration receipt",
   "published": false,
-  "tag_moved": false
+  "tag_moved": false,
+  "receipt_fix": {
+    "commit": "49b9320ca9a15d792cec23727d09ae80d876ba80",
+    "pipeline": 114,
+    "gates": "14/14 PASS",
+    "actual_receipt_version": "0.1.5",
+    "package_job": 1283,
+    "pytest": {
+      "test:linux": {
+        "tests": 412,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 49
+      },
+      "test:windows": {
+        "tests": 420,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 2
+      }
+    },
+    "installed": false
+  },
+  "github": {
+    "source_tag_mirrored": true,
+    "tag_object": "d84dd257031cacfb76f863c093b714f2c8bf26d0",
+    "tag_commit": "66696abf116e47a5cbe542f797b2e1c9d5d436bf",
+    "release_lookup_http": 404,
+    "external_asset_publication": false
+  }
 }
