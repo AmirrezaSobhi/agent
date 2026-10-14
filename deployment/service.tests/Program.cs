@@ -90,14 +90,19 @@ namespace MT5Agent.Service.Tests
                     Contains(log, "Win32Exception");
                 });
                 Run("unexpected child exit is recorded as service failure", delegate {
-                    AgentService host = Create(service, logs, "/c ping 127.0.0.1 -n 3 >nul & exit 7");
+                    // Earlier lifecycle cases can write the same message. Only
+                    // evidence from this host may complete its asynchronous wait.
+                    File.AppendAllText(Path.Combine(logs, "service-host.log"),
+                        "ERROR Agent child exited unexpectedly; stale earlier-host evidence." + Environment.NewLine);
+                    string crashLogs = Path.Combine(root, "UnexpectedExitLogs");
+                    AgentService host = Create(service, crashLogs, "/c ping 127.0.0.1 -n 3 >nul & exit 7");
                     host.StartForTest();
                     DateTime deadline = DateTime.UtcNow.AddSeconds(10);
-                    string logPath = Path.Combine(logs, "service-host.log");
-                    while (DateTime.UtcNow < deadline && (!File.Exists(logPath) || !File.ReadAllText(logPath).Contains("Agent child exited unexpectedly")))
+                    string logPath = Path.Combine(crashLogs, "service-host.log");
+                    while (DateTime.UtcNow < deadline && (host.ExitCode == 0 || !File.Exists(logPath) || !File.ReadAllText(logPath).Contains("Agent child exited unexpectedly")))
                         Thread.Sleep(100);
                     Contains(File.ReadAllText(logPath), "Agent child exited unexpectedly");
-                    if (host.ExitCode == 0) throw new Exception("Unexpected child exit left service ExitCode healthy.");
+                    if (host.ExitCode != 7) throw new Exception("Unexpected child exit did not preserve exit code 7.");
                 });
                 Console.WriteLine("SERVICE_TEST_SUMMARY passed=" + passed + " failed=0");
                 return 0;
