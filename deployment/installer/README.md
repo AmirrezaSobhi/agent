@@ -19,7 +19,19 @@ the user does not install Python. MetaTrader 5 itself is never redistributed.
 - Service `MT5Agent` runs as LocalSystem because the existing Worker launcher
   requires Session 0 token/session APIs. The service starts only the fixed
   Agent executable below its protected install root and tracks that process
-  tree in a kill-on-close Job Object. SCM's default ACL is kept.
+  tree in a kill-on-close Job Object. The deployed layout is `Service` and
+  `Agent` as sibling directories under the install root; the Service resolves
+  the Agent from the parent of its own `Service` directory. SCM's default ACL
+  is kept.
+- Startup validation errors and the original exception with stack are written
+  to `%ProgramData%\MT5Agent\Logs\service-host.log` before the failure is
+  returned to SCM. A child that exits shortly after launch is treated as a
+  startup failure; an unexpected later exit is logged and transitions the
+  service to a failed/stopped state. Stop waits briefly, then closes only the
+  Service-owned process Job Object to reap the Agent process tree. CI exercises
+  this process lifecycle with disposable child processes but does not register
+  a Service or run under Session 0; live SCM/Session 0 validation remains for
+  the dedicated Windows test VM.
 - The Agent Management Pipe allowlist is seeded from the Windows SID that
   launched elevated Setup. Pipe ACL and token SID validation remain enforced;
   all other callers are denied by default.
@@ -32,6 +44,28 @@ the user does not install Python. MetaTrader 5 itself is never redistributed.
   original non-elevated user's settings, even when UAC credentials came from a
   different administrator account. The profile path and Runtime Principal still need
   explicit provisioning before a live Worker task can safely be registered.
+- The Service installer uses Windows PowerShell 5.1 `New-Service`, `Set-Service`,
+  and `Start-Service` APIs instead of constructing `sc.exe create` arguments.
+  It verifies the registered binary, LocalSystem identity, automatic start mode,
+  and Running state. Service diagnostics are written to
+  `%ProgramData%\MT5Agent\Logs\service-install.log`; exception message, error
+  identifier, source line, and stack are recorded with credential-like values
+  redacted. SCM recovery is set to two automatic restarts (5 seconds, then 15
+  seconds) with a one-day reset period, then no further automatic restart;
+  non-crash failures are included. `sc.exe qfailure` and `qfailureflag` outputs
+  are checked before Setup reports service installation as successful.
+- Service and configured Worker registration are required operations. Inno
+  Setup checks their actual child-process exit codes and fails both interactive
+  and silent installation if either operation fails. The required-operation
+  state is also returned through Inno's `GetCustomSetupExitCode`, since a
+  Pascal-script exception alone does not guarantee a nonzero process exit code.
+  Its own setup log records the operation and exit code. Because these checks run after Inno has finalized
+  the uninstall record, a failed operation intentionally leaves the application
+  files and Uninstall entry available for diagnosis and repair/uninstall. Setup
+  does not delete user configuration, logs, or MT5 data as an automatic rollback.
+  Re-running installation is idempotent for a matching Service binary and
+  preserves existing Management Pipe allowlist entries; a Service name/path or
+  account collision is refused.
 - Desktop preferences remain per-user. Setup does not modify account data,
   MT5 profiles, trading permissions, or credentials. Uninstall removes the
   MT5Agent service and application files but preserves configuration and logs.
@@ -54,7 +88,7 @@ machine-configuration script from an elevated PowerShell session:
 $root = 'C:\Program Files\MT5Agent'
 & "$root\maintenance\Set-MT5RuntimeConfiguration.ps1" `
   -RuntimePrincipal "$env:COMPUTERNAME\MT5RuntimeUser" `
-  -ControlPrincipal "$env:COMPUTERNAME\MT5ControlUser" `
+  -ControlPrincipal 'NT AUTHORITY\SYSTEM' `
   -TerminalPath 'C:\Program Files\MetaTrader 5\terminal64.exe' `
   -ProfilePath 'C:\Users\MT5RuntimeUser\AppData\Roaming\MetaQuotes\Terminal\<instance>' `
   -WorkerInstallPath "$root\Worker"
@@ -70,6 +104,16 @@ the configured terminal/profile are valid. Sign in interactively as that
 account for the Worker to start. No credentials are stored; the Installer does
 not create the account or enable Autologon.
 
+The packaged Service runs as LocalSystem: its runtime ControlPrincipal must
+resolve to `NT AUTHORITY\SYSTEM`, while RuntimePrincipal remains a distinct
+standard interactive user. The example above reflects this installed topology.
+Close the Desktop, including its tray instance, before an in-place upgrade;
+`/NOCLOSEAPPLICATIONS` cannot clear a held Desktop file lock. Preserve settings
+and record Installer PID, numeric exit, timestamps, logs and fresh health.
+See the [#98 upgrade evidence](../../docs/evidence/v0.1.5/pipeline98-final-validation-20261014.md).
+Uninstall/remove-data behavior is described by the scripts but was not
+operationally validated on that exact artifact.
+
 ## CI artifact
 
 `installer:build` publishes:
@@ -81,11 +125,26 @@ not create the account or enable Autologon.
 Download all three from the `installer:build` job artifacts in the develop
 pipeline. The downstream `installer:verify` job consumes those exact artifacts
 and checks commit/pipeline/build provenance, required payload records, and the
-SHA-256. Setup is unsigned and internal only. The CI verifier does not perform
-an install or remove a Service on its persistent runner.
+SHA-256. Before publishing the package, `installer:build` compiles a disposable
+smoke setup from the same `MT5AgentWizard.issinc` used by the product and runs
+it with `/SILENT` and `/VERYSILENT`. The test requires exit code zero, an Inno
+log, and an initialization marker in each mode. Its setup has no product
+payload, Service commands, or MT5 actions and writes only under a unique
+temporary directory. Interactive UI behavior is not exercised by this
+noninteractive CI check. Setup is unsigned and internal only. The CI verifier
+does not install the product or remove a Service on its persistent runner.
 
 ## Validation and limitations
 
+- The MT5 path Wizard creates its `InputDirWizardPage` field with `Add` before
+  reading `Values[0]`. Silent runs skip the UI page entirely and safely detect
+  only the conventional MT5 path if its executable exists. The same shared
+  `MT5AgentWizard.issinc` is used by the product and CI smoke setup.
+- Windows CI exercises mocked Service creation success, a simulated SCM failure
+  with detailed log output, and retry from a stopped partially installed Service.
+  A separate Inno smoke setup verifies required-operation exit-code handling in
+  `/SILENT` and `/VERYSILENT`. It does not register a real Service on the shared
+  build runner; live Service installation remains a disposable-VM validation.
 - Windows 10 x64 build and packaging are CI targets. A disposable Windows 10 VM
   was not available for clean install/upgrade/repair/uninstall validation, so
   live SCM lifecycle and installer installation remain deferred.

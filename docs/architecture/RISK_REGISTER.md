@@ -59,3 +59,15 @@ evidence bundle](../evidence/v0.1.4/phase5/windows10-19045/).
 Phase 6 must not claim commercial readiness from successful package validation.
 Public publication remains separately gated by signing, Product Owner approval,
 Windows lifecycle policy, and any remaining customer deployment requirements.
+
+## v0.1.5 release audit addendum — 2026-10-14
+
+The actual #98 in-place installation, Session 0/1 runtime integration, secure
+IPC, Service restart and clean soak supersede earlier pending evidence only
+for their measured scope. Removal, broad recovery/interactive lifecycle,
+additional OS coverage, and commercial signing are still open.
+Release risks REL-015-01–05 (TLS, independent approval, product/component tag,
+Installer provenance/publisher, external sync) are BLOCKED in the
+[final release report](../evidence/v0.1.5/V0.1.5_FINAL_RELEASE_REPORT.md).
+No risk acceptance or ADR status was fabricated. The operator-requested MT5
+price-data restart is not classified as a product defect.

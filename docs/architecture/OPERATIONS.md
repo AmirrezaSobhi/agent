@@ -5,6 +5,18 @@ evidence is linked in [Implementation Baseline](IMPLEMENTATION_BASELINE.md).
 
 ## Installation and maintenance
 
+**v0.1.5 current implementation:** the unified elevated Inno Installer installs
+product files and the LocalSystem Service; existing MT5 and separately
+provisioned standard-user Worker remain external. Use the
+[Installer runbook](../../deployment/installer/README.md) and retain hash,
+preflight, Installer PID/exit/timestamps/logs, component hashes and live health.
+Pipeline #98's in-place installation and Service restart are tested; generic
+uninstall/rollback, reboot, RDP/logoff and exhaustive UI lifecycle are not
+asserted. Close the product Desktop before upgrading: a hidden tray process
+can retain a file lock. Preserve user settings and avoid terminating MT5.
+The Product Owner's MT5 restart to apply price data is an operator-directed
+event, recorded separately from a clean soak or product defect.
+
 **v0.1.4 Option A:** deliver a reproducible WPF build and a testable user-scope
 deployment package for a machine where Agent Service/Runtime are already
 installed and provisioned. Document .NET Framework 4.8-or-later prerequisite,

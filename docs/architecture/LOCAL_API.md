@@ -16,9 +16,11 @@ this composition for privileged management or route WPF requests through it.
 
 The existing `\\.\pipe\MT5Agent.Runtime.v1` remains the Agent-to-interactive-
 Worker MT5 runtime boundary. WPF never connects to it. The implemented Desktop
-management endpoint is `\\.\pipe\MT5Agent.Management.v1`, hosted alongside
-the existing HTTP host in the Agent lifecycle, with a separate protocol,
-DACL, caller-token SID validation, and allowlist authorization.
+management endpoint is `\\.\pipe\MT5Agent.Management.v1`, hosted in the
+Agent lifecycle with a separate protocol, DACL, caller-token SID validation,
+and allowlist authorization. The packaged Windows Service disables the HTTP
+listener; the HTTP adapter remains available to explicit development/test
+compositions only.
 
 ## Preferred transport and identity model
 

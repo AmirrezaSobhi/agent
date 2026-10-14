@@ -11,8 +11,11 @@ class HTTPTransportConfig:
     host: str = "127.0.0.1"
     port: int = 8080
     max_request_bytes: int = 1024 * 1024
+    enabled: bool = True
 
     def __post_init__(self) -> None:
+        if not isinstance(self.enabled, bool):
+            raise ConfigurationError("http enabled must be a boolean")
         if not isinstance(self.host, str) or not self.host.strip():
             raise ConfigurationError("http host must be a non-empty string")
         if not isinstance(self.port, int) or isinstance(self.port, bool) or not 1 <= self.port <= 65535:

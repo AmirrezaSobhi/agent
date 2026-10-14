@@ -57,8 +57,6 @@ Name: "{autoprograms}\MT5Agent\MT5Agent Desktop"; Filename: "{app}\Desktop\MT5Ag
 Name: "{autodesktop}\MT5Agent Desktop"; Filename: "{app}\Desktop\MT5Agent.Desktop.exe"; WorkingDir: "{app}\Desktop"; Tasks: desktopicon
 
 [Run]
-Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File ""{app}\maintenance\Install-MT5AgentService.ps1"" -Action Install -InstallRoot ""{app}"""; Flags: runhidden waituntilterminated; StatusMsg: "Installing the MT5Agent Windows Service..."
-Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File ""{app}\Worker\Register-PackagedMT5Worker.ps1"" -InstallRoot ""{app}"""; Flags: runhidden waituntilterminated; StatusMsg: "Registering the preconfigured interactive Worker..."; Check: HasRuntimeProvisioning
 Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File ""{app}\maintenance\Save-MT5AgentUserSettings.ps1"" -InstallPath ""{app}"" -TerminalPath ""{code:GetTerminalPath}"""; Flags: runasoriginaluser runhidden waituntilterminated; StatusMsg: "Saving Desktop settings for the current Windows user..."
 
 [UninstallRun]
@@ -67,22 +65,7 @@ Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile
 
 [Code]
 var Mt5Page: TInputDirWizardPage;
-
-procedure InitializeWizard;
-var Candidate: string;
-begin
-  Mt5Page := CreateInputDirPage(wpSelectDir,
-    'MetaTrader 5 path', 'Optional path to an existing MetaTrader 5 terminal',
-    'MT5 is not included. This records the terminal path for the installing user; it does not start or connect MT5. A standard Runtime Principal and matching terminal profile are configured separately before the Worker can run.', False, '');
-  Candidate := ExpandConstant('{autopf}\MetaTrader 5');
-  if FileExists(AddBackslash(Candidate) + 'terminal64.exe') then
-    Mt5Page.Values[0] := Candidate;
-end;
-
-function HasTerminalPath: Boolean;
-begin
-  Result := (Mt5Page.Values[0] <> '') and FileExists(AddBackslash(Mt5Page.Values[0]) + 'terminal64.exe');
-end;
+#include "MT5AgentWizard.issinc"
 
 function HasRuntimeProvisioning: Boolean;
 var RuntimePrincipal, TerminalPath, ProfilePath, WorkerInstallPath: string;
@@ -95,22 +78,22 @@ begin
     FileExists(TerminalPath) and DirExists(ProfilePath);
 end;
 
-function GetTerminalPath(Param: string): string;
-begin
-  Result := '';
-  if Mt5Page.Values[0] <> '' then
-    Result := AddBackslash(Mt5Page.Values[0]) + 'terminal64.exe';
-end;
+#include "RequiredPowerShell.issinc"
 
-function NextButtonClick(CurPageID: Integer): Boolean;
+procedure CurStepChanged(CurStep: TSetupStep);
+var Params, InstallRoot: string;
 begin
-  Result := True;
-  if CurPageID = Mt5Page.ID then begin
-    if Mt5Page.Values[0] <> '' then begin
-      if not FileExists(AddBackslash(Mt5Page.Values[0]) + 'terminal64.exe') then begin
-        MsgBox('The selected folder does not contain terminal64.exe. Choose a valid existing MT5 folder or clear the field to configure it later.', mbError, MB_OK);
-        Result := False;
-      end;
+  if CurStep = ssPostInstall then begin
+    InstallRoot := ExpandConstant('{app}');
+    Params := '-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "' +
+      InstallRoot + '\maintenance\Install-MT5AgentService.ps1" -Action Install -InstallRoot "' +
+      InstallRoot + '"';
+    RunRequiredPowerShell('MT5Agent Service installation', Params, InstallRoot);
+
+    if HasRuntimeProvisioning then begin
+      Params := '-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "' +
+        InstallRoot + '\Worker\Register-PackagedMT5Worker.ps1" -InstallRoot "' + InstallRoot + '"';
+      RunRequiredPowerShell('MT5Agent interactive Worker registration', Params, InstallRoot);
     end;
   end;
 end;

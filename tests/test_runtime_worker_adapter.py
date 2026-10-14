@@ -4,6 +4,7 @@ from agent.composition import compose_agent
 from agent.contracts.configuration import AgentConfig
 from agent.contracts.models import Command
 from agent.core.agent import Agent
+import pytest
 
 
 class FakeRuntimeClient:
@@ -18,6 +19,9 @@ class FakeRuntimeClient:
         self.read_none = False
         self.disconnected = False
         self.fail_next = None
+        self.worker_pid = 902
+        self.worker_session_id = 1
+        self.reported_health_session_id = 999
 
     def request(self, envelope, *, timeout_ms):
         assert 1 <= timeout_ms <= 120_000
@@ -47,6 +51,9 @@ class FakeRuntimeClient:
                 "terminal_owner": "HOST\\MT5RuntimeUser",
                 "terminal_session_id": 1,
                 "terminal_path": r"C:\Program Files\MetaTrader 5",
+                # This field is intentionally untrusted; only the authenticated
+                # Worker identity envelope may supply worker_session_id.
+                "worker_session_id": self.reported_health_session_id,
                 "last_successful_mt5_operation": "initialize" if self.initialized else None,
                 "last_mt5_error": [1, "Success"],
                 "protocol_version": "1",
@@ -75,7 +82,7 @@ class FakeRuntimeClient:
             "ok": True,
             "version": "2" if self.bad_version else "1",
             "request_id": "wrong" if self.bad_correlation else envelope["request_id"],
-            "worker": {"pid": 902, "session_id": 1, "account": "HOST\\MT5RuntimeUser",
+            "worker": {"pid": self.worker_pid, "session_id": self.worker_session_id, "account": "HOST\\MT5RuntimeUser",
                        "sid": "S-1-5-21-1001", "protocol_version": "1"},
             "result": result,
         }
@@ -123,7 +130,33 @@ def test_agent_stays_alive_degraded_when_worker_is_unavailable_and_recovers():
     assert healthy.runtime_state == "MT5_CONNECTED"
     assert healthy.runtime["worker_available"] is True
     assert healthy.runtime["worker_identity"]["session_id"] == 1
+    assert healthy.runtime["worker_session_id"] == 1
     assert client.operations.count("initialize_readonly") == 1
+
+
+@pytest.mark.parametrize("session_id", [True, False, 0, -1, "1", None])
+def test_invalid_authenticated_worker_session_id_never_reaches_management_health(session_id):
+    client = FakeRuntimeClient()
+    client.worker_session_id = session_id
+    adapter = RuntimeWorkerMT5Adapter(client=client, retry_backoff_seconds=0)
+
+    assert adapter.connect() is False
+    health = adapter.health_details
+
+    assert health["worker_available"] is False
+    assert health["last_error_code"] == "RUNTIME_WORKER_IDENTITY_INVALID"
+    assert "worker_session_id" not in health
+
+
+def test_management_session_id_comes_from_validated_worker_identity_not_health_payload():
+    client = FakeRuntimeClient()
+    client.reported_health_session_id = 77
+    adapter = RuntimeWorkerMT5Adapter(client=client)
+
+    inspection = adapter.inspect_runtime()
+
+    assert inspection["worker_session_id"] == 1
+    assert inspection["worker_identity"]["session_id"] == 1
 
 
 def test_inspect_runtime_reports_uninitialized_worker_without_initializing_mt5():

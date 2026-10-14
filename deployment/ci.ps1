@@ -1,9 +1,12 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet('metadata', 'validate', 'test', 'build', 'smoke-invalid', 'smoke-control-plane', 'smoke-mt5-runtime', 'package')]
+    [ValidateSet('metadata', 'validate', 'test', 'build', 'smoke-invalid', 'smoke-control-plane', 'smoke-mt5-runtime', 'smoke-mt5-runtime-system', 'package')]
     [string]$Task,
     [string]$PythonExecutable = 'python',
-    [string]$ArtifactName = ''
+    [string]$ArtifactName = '',
+    [string]$SourceCommit = '',
+    [string]$PipelineId = '',
+    [string]$RuntimeSmokeJobId = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -22,12 +25,19 @@ $env:ARTIFACT_NAME = $ArtifactName
 if ($env:CI_COMMIT_TAG -and $env:CI_COMMIT_TAG -cne "v$version") {
     throw "Tag $env:CI_COMMIT_TAG does not match source version v$version"
 }
-$sourceCommit = (& git -C $repoRoot rev-parse HEAD)
-if ($LASTEXITCODE -ne 0) { throw 'Cannot determine source commit' }
+if ($SourceCommit) {
+    $sourceCommit = $SourceCommit
+} else {
+    $sourceCommit = (& git -C $repoRoot rev-parse HEAD 2>$null)
+    if ($LASTEXITCODE -ne 0) { throw 'Cannot determine source commit' }
+}
+if ($sourceCommit -notmatch '^[0-9a-f]{40}$') { throw 'Source commit must be a full Git SHA-1' }
 if ($env:CI_COMMIT_SHA -and $env:CI_COMMIT_SHA -ne $sourceCommit) {
     throw 'Checkout HEAD does not match CI_COMMIT_SHA'
 }
-$pipelineId = [string]$env:CI_PIPELINE_ID
+$pipelineId = if ($PipelineId) { $PipelineId } else { [string]$env:CI_PIPELINE_ID }
+if ($pipelineId -and $pipelineId -notmatch '^\d+$') { throw 'Pipeline ID must be numeric' }
+$RuntimeSmokeJobId = if ($RuntimeSmokeJobId) { $RuntimeSmokeJobId } else { [string]$env:CI_JOB_ID }
 $exePath = Join-Path $repoRoot "dist\$ArtifactName.exe"
 $reportRoot = Join-Path $repoRoot 'reports'
 $buildEvidencePath = Join-Path $reportRoot 'build.json'
@@ -80,8 +90,13 @@ function Invoke-CandidateCommand {
             throw "$Name exceeded its bounded inspection timeout"
         }
         $process.WaitForExit()
+        $process.Refresh()
+        if (-not $process.HasExited) {
+            throw "$Name process did not reach an exited state after its bounded wait"
+        }
+        $exitCode = [int]$process.ExitCode
         return [pscustomobject]@{
-            ExitCode = $process.ExitCode
+            ExitCode = $exitCode
             Output = if (Test-Path -LiteralPath $stdout) { Get-Content -LiteralPath $stdout -Raw } else { '' }
             ErrorOutput = if (Test-Path -LiteralPath $stderr) { Get-Content -LiteralPath $stderr -Raw } else { '' }
         }
@@ -92,7 +107,8 @@ function Invoke-CandidateCommand {
 function Get-CandidateDiagnostics {
     $versionResult = Invoke-CandidateCommand -Name 'version' -Arguments @('--version')
     if ($versionResult.ExitCode -ne 0 -or $versionResult.Output.Trim() -cne $version) {
-        throw 'Candidate --version failed or disagrees with source metadata'
+        $actualVersionOutput = if ($versionResult.Output) { $versionResult.Output.Trim() } else { '<empty>' }
+        throw "Candidate --version contract failed: exit=$($versionResult.ExitCode); expected=$version; actual=$actualVersionOutput"
     }
     $result = Invoke-CandidateCommand -Name 'diagnostics' -Arguments @('--diagnose', '--json') -TimeoutMilliseconds 30000
     try { $inspection = $result.Output | ConvertFrom-Json -ErrorAction Stop }
@@ -184,10 +200,11 @@ function Get-ProcessEvidence {
 
 function Start-CandidateAgent {
     param([int]$Port, [string]$ManagementAllowedSid = '')
-    $names = @('MT5_AGENT_HTTP_HOST', 'MT5_AGENT_HTTP_PORT', 'MT5_AGENT_HTTP_MAX_REQUEST_BYTES',
+    $names = @('MT5_AGENT_HTTP_ENABLED', 'MT5_AGENT_HTTP_HOST', 'MT5_AGENT_HTTP_PORT', 'MT5_AGENT_HTTP_MAX_REQUEST_BYTES',
         'MT5_AGENT_LOG_LEVEL', 'MT5_AGENT_MANAGEMENT_ALLOWED_SIDS')
     $previous = @{}
     foreach ($name in $names) { $previous[$name] = [Environment]::GetEnvironmentVariable($name, 'Process') }
+    $env:MT5_AGENT_HTTP_ENABLED = 'true'
     $env:MT5_AGENT_HTTP_HOST = '127.0.0.1'
     $env:MT5_AGENT_HTTP_PORT = [string]$Port
     $env:MT5_AGENT_HTTP_MAX_REQUEST_BYTES = '1048576'
@@ -309,6 +326,18 @@ function Assert-WorkerTaskAndPreflight {
         throw 'Pre-existing configured terminal does not share the Worker session'
     }
     return [pscustomobject]@{ Caller = $currentIdentity; RuntimePrincipal = $expectedRuntime; Task = $task; Worker = $identity }
+}
+
+if ($Task -eq 'smoke-mt5-runtime-system') {
+    $identity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+    $sid = $identity.User.Value
+    $session = (Get-Process -Id $PID -ErrorAction Stop).SessionId
+    if ($sid -ne 'S-1-5-18' -or $identity.Name -ine 'NT AUTHORITY\SYSTEM' -or $session -ne 0) {
+        throw 'Privileged MT5 runtime smoke requires LocalSystem in Session 0'
+    }
+    if (-not $SourceCommit -or -not $PipelineId -or -not $RuntimeSmokeJobId -or $RuntimeSmokeJobId -notmatch '^\d+$') {
+        throw 'Scheduled runtime smoke requires explicit source, pipeline, and smoke job provenance'
+    }
 }
 
 Push-Location $repoRoot
@@ -435,15 +464,23 @@ try {
             finally { Stop-CandidateAgent -Process $script:CandidateProcess; $script:CandidateProcess = $null }
         }
         'smoke-mt5-runtime' {
+            & (Join-Path $PSScriptRoot 'Invoke-MT5RuntimeSmokeAsSystem.ps1') `
+                -RepoRoot $repoRoot -ArtifactName $ArtifactName -SourceCommit $sourceCommit `
+                -PipelineId $pipelineId -RuntimeSmokeJobId $RuntimeSmokeJobId
+            if ($LASTEXITCODE -ne 0) { throw 'LocalSystem MT5 runtime smoke coordinator failed' }
+        }
+        'smoke-mt5-runtime-system' {
             $build = Assert-BuildEvidence
             $runtimeConfiguration = Get-ConfiguredRuntime
             $inspection = Test-CandidateCLI
             $preflight = Assert-WorkerTaskAndPreflight -RuntimeConfiguration $runtimeConfiguration -Inspection $inspection
             $port = Get-FreeLoopbackPort
-            $managementSid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value
             $script:CandidateProcess = $null
             try {
-                $script:CandidateProcess = Start-CandidateAgent -Port $port -ManagementAllowedSid $managementSid
+                # The installed Service owns the fixed Management pipe. Keep the candidate
+                # isolated on loopback HTTP while this LocalSystem smoke checks its
+                # authenticated Worker boundary; do not collide with or broaden that pipe.
+                $script:CandidateProcess = Start-CandidateAgent -Port $port
                 $agentEvidence = Get-ProcessEvidence -ProcessId $script:CandidateProcess.Id
                 if ($agentEvidence.session_id -ne 0 -or $agentEvidence.principal -ine $preflight.Caller) {
                     throw 'Candidate Agent process identity/session differs from the Session 0 control caller'
@@ -458,10 +495,6 @@ try {
                     $worker.session_id -ne $runtime.terminal_session_id -or $runtime.mt5_connected -ne $true) {
                     throw 'Live Worker and terminal health identity/session validation failed'
                 }
-                $managementEvidencePath = Join-Path $reportRoot 'management-ipc-live-smoke.txt'
-                & './src/desktop/MT5Agent.Desktop.Tests/bin/Release/MT5Agent.Desktop.Tests.exe' `
-                    '--management-ipc-smoke' $managementEvidencePath 'live-runtime'
-                if ($LASTEXITCODE -ne 0) { throw 'WPF client to live Agent/Worker/MT5 Management Pipe smoke failed' }
                 $terminal = Get-ProcessEvidence -ProcessId ([int]$runtime.terminal_pid)
                 if ($terminal.principal -ine $preflight.RuntimePrincipal -or $terminal.sid -ine $worker.sid -or
                     $terminal.session_id -ne $worker.session_id -or
@@ -495,7 +528,11 @@ try {
                 $finalHealth = $finalResponse.data
                 if ($finalHealth.agent_state -ne 'AGENT_RUNNING' -or $finalHealth.runtime_state -ne 'MT5_CONNECTED' -or
                     $finalHealth.runtime.mt5_connected -ne $true -or
-                    $finalHealth.runtime.worker_identity.pid -ne $worker.pid) {
+                    $finalHealth.runtime.worker_identity.pid -ne $worker.pid -or
+                    ($finalHealth.runtime.worker_session_id -isnot [int] -and
+                        $finalHealth.runtime.worker_session_id -isnot [long]) -or
+                    $finalHealth.runtime.worker_session_id -le 0 -or
+                    $finalHealth.runtime.worker_session_id -ne $worker.session_id) {
                     throw 'Persistent final health or Worker identity changed after safe reads'
                 }
                 $terminalBuild = $finalHealth.runtime.terminal_build
@@ -510,6 +547,7 @@ try {
                     agent = $agentEvidence
                     worker = [ordered]@{ principal = $worker.account; pid = $worker.pid; sid = $worker.sid
                         session_id = $worker.session_id; protocol_version = $runtime.protocol_version }
+                    worker_session_id = $finalHealth.runtime.worker_session_id
                     terminal = [ordered]@{ pid = $terminal.pid; principal = $terminal.principal; sid = $terminal.sid
                         session_id = $terminal.session_id; path = $terminal.executable; build = $terminalBuild }
                     runtime_state = $finalHealth.runtime_state
@@ -518,8 +556,7 @@ try {
                     account_information_success = $true; account_information_field_count = $accountFieldCount
                     final_health = 'AGENT_RUNNING + MT5_CONNECTED'
                 })
-                Write-Output (Get-Content -LiteralPath $managementEvidencePath -Raw)
-                Write-Output "Runtime integration passed; Worker and terminal identity/session verified; MT5 safe-read checks passed; SHA256=$afterHash"
+                Write-Output "Runtime integration passed; Worker session=$($worker.session_id); Worker and terminal identity/session verified; MT5 safe-read checks passed; SHA256=$afterHash"
             }
             finally { Stop-CandidateAgent -Process $script:CandidateProcess; $script:CandidateProcess = $null }
         }
@@ -550,6 +587,9 @@ try {
                 $runtime.symbols_total_success -ne $true -or $runtime.terminal_version_success -ne $true -or
                 $runtime.account_information_success -ne $true -or $runtime.agent.session_id -ne 0 -or
                 $runtime.worker.protocol_version -ne '1' -or $runtime.worker.session_id -le 0 -or
+                ($runtime.worker_session_id -isnot [int] -and $runtime.worker_session_id -isnot [long]) -or
+                $runtime.worker_session_id -le 0 -or
+                $runtime.worker_session_id -ne $runtime.worker.session_id -or
                 $runtime.terminal.session_id -ne $runtime.worker.session_id -or
                 $runtime.terminal.principal -ine $runtime.worker.principal -or
                 $runtime.terminal.sid -ine $runtime.worker.sid -or

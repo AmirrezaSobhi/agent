@@ -36,6 +36,10 @@ does not supersede historical release evidence. Status labels are normative:
    [Windows compatibility matrix](WINDOWS_COMPATIBILITY.md), and [glossary](GLOSSARY.md).
    Phase 6 package and release evidence: [Distribution](DISTRIBUTION.md) and
    [Release Checklist](RELEASE_CHECKLIST.md).
+   The current v0.1.5 candidate gates are recorded in
+   [v0.1.5 Release Readiness](V0.1.5_RELEASE_READINESS.md).
+   The privileged live-runtime CI identity boundary is documented in
+   [Secure LocalSystem Runtime Smoke](CI_RUNTIME_SMOKE.md).
 8. [Architecture ADRs](adr/README.md) (17 records; one superseded historical ADR).
 
 ## Existing source records

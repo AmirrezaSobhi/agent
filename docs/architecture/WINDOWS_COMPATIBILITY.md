@@ -71,3 +71,25 @@ Windows 11 x64, Windows Server 2022 Desktop Experience and Windows Server 2025
 Desktop Experience remain exactly `DEFERRED — PRODUCT OWNER VALIDATION`; no
 compatibility pass is inferred from the Windows 10 result. Their deferral does
 not block Phase 6 implementation completion.
+
+## v0.1.5 installed-product validation
+
+Latest candidate: Pipeline #98 passed real in-place installation and secure
+Service/Agent-to-interactive-Worker/MT5 integration on Windows 10 Pro x64 build
+19045, including 31/31 clean samples over 901 seconds. This is the tested
+Windows 10 scope; Windows 11, Server 2022 and Server 2025 remain NOT TESTED.
+See [exact artifact evidence](../evidence/v0.1.5/pipeline98-final-validation-20261014.md)
+and the [release audit](../evidence/v0.1.5/V0.1.5_FINAL_RELEASE_REPORT.md).
+The earlier Pipeline #82 installation below is historical and had no Worker.
+
+Pipeline #82's exact Installer was installed on the dedicated `WIN10-INSTALLER`
+VM running Windows 10 Pro x64 build 19045. The Installer exited 0; the Service
+and Agent started in Session 0, SCM Recovery settings were read back, one
+controlled Agent termination recovered automatically, the Management pipe and
+Session 1 WPF client were exercised, and closing the WPF client left the
+Service running. Worker/MT5 remained `NOT CONFIGURED`, so this result does not
+establish end-to-end trading-runtime readiness. A 987-second stability sample
+passed for the observed scope. See the
+[Pipeline #82 Windows installation report](../evidence/v0.1.5/windows10-19045/pipeline82-real-install.md)
+for exact artifact identity, test limits and evidence. Windows 11 and both
+Server rows above remain `DEFERRED — PRODUCT OWNER VALIDATION`.
