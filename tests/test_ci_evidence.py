@@ -121,6 +121,9 @@ def checkout(tmp_path):
         archive_forbidden_module_matches=[],
     )
     (tmp_path / "reports/build.json").write_text(json.dumps(build))
+    (tmp_path / "reports/invalid-configuration.json").write_text(json.dumps(dict(
+        common, test="invalid-configuration", status="PASS", expected_exit=2, actual_exit=2,
+    )), encoding="utf-8")
     (tmp_path / "reports/control-plane.json").write_text(json.dumps(dict(
         common, test="control-plane-degraded-startup", status="PASS",
         health="AGENT_RUNNING_DEGRADED", runtime_state="RUNTIME_UNAVAILABLE", worker_available=False,
@@ -213,6 +216,26 @@ def test_package_preserves_single_validated_binary(checkout):
 
 
 @requires_ci_tools
+@pytest.mark.parametrize("missing", ["receipt", "candidate_version"])
+def test_package_rejects_missing_invalid_configuration_evidence(checkout, missing):
+    path, _ = checkout
+    receipt = path / "reports/invalid-configuration.json"
+    if missing == "receipt":
+        receipt.unlink()
+    else:
+        data = json.loads(receipt.read_text(encoding="utf-8"))
+        del data["candidate_version"]
+        receipt.write_text(json.dumps(data), encoding="utf-8")
+    binary = path / f"dist/MT5Agent-v{__version__}.exe"
+    before = binary.read_bytes()
+    result = run_task(checkout, "package")
+    assert result.returncode != 0
+    assert binary.read_bytes() == before
+    assert not (path / "reports/release-evidence.json").exists()
+    assert not (path / "sha256.txt").exists()
+
+
+@requires_ci_tools
 @pytest.mark.parametrize("receipt, field, value", [
     ("build", "commit_sha", "stale"),
     ("build", "pipeline_id", "other-pipeline"),
@@ -221,6 +244,12 @@ def test_package_preserves_single_validated_binary(checkout):
     ("build", "metatrader5_present_in_build_environment", True),
     ("build", "numpy_present_in_build_environment", True),
     ("build", "archive_forbidden_module_matches", ["numpy"]),
+    ("invalid-configuration", "candidate_version", "0.0.0"),
+    ("invalid-configuration", "candidate_sha256", "tampered"),
+    ("invalid-configuration", "pipeline_id", "other-pipeline"),
+    ("invalid-configuration", "status", "FAIL"),
+    ("invalid-configuration", "expected_exit", 0),
+    ("invalid-configuration", "actual_exit", 0),
     ("control-plane", "candidate_sha256", "tampered"),
     ("control-plane", "status", "FAIL"),
     ("control-plane", "worker_available", True),
