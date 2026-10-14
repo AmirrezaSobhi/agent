@@ -426,6 +426,7 @@ try {
                 $build = Assert-BuildEvidence
                 Write-JsonEvidence -Path (Join-Path $reportRoot 'invalid-configuration.json') -Value ([ordered]@{
                     schema_version = '1'; test = 'invalid-configuration'; status = 'PASS'; expected_exit = 2; actual_exit = $result.ExitCode
+                    candidate_version = $version
                     candidate_filename = $build.candidate_filename; candidate_sha256 = $build.candidate_sha256
                     commit_sha = $sourceCommit; pipeline_id = $pipelineId
                 })
@@ -567,15 +568,19 @@ try {
             if (Test-Path -LiteralPath $releaseEvidencePath) { Remove-Item -LiteralPath $releaseEvidencePath }
             $build = Assert-BuildEvidence
             $binaryHash = Get-BinaryHash
+            $invalid = Get-Content -LiteralPath (Join-Path $reportRoot 'invalid-configuration.json') -Raw | ConvertFrom-Json
             $control = Get-Content -LiteralPath (Join-Path $reportRoot 'control-plane.json') -Raw | ConvertFrom-Json
             $runtime = Get-Content -LiteralPath (Join-Path $reportRoot 'mt5-runtime.json') -Raw | ConvertFrom-Json
-            foreach ($receipt in @($control, $runtime)) {
+            foreach ($receipt in @($invalid, $control, $runtime)) {
                 if ($receipt.schema_version -ne '1' -or $receipt.status -ne 'PASS' -or
                     $receipt.pipeline_id -ne $pipelineId -or $receipt.commit_sha -ne $sourceCommit -or
                     $receipt.candidate_version -ne $version -or $receipt.candidate_filename -ne "$ArtifactName.exe" -or
                     $receipt.candidate_sha256 -ne $binaryHash) {
-                    throw 'Control-plane/runtime evidence provenance does not match the packaged candidate'
+                    throw 'Smoke evidence provenance does not match the packaged candidate'
                 }
+            }
+            if ($invalid.test -ne 'invalid-configuration' -or $invalid.expected_exit -ne 2 -or $invalid.actual_exit -ne 2) {
+                throw 'Invalid-configuration evidence is incomplete or inconsistent'
             }
             if ($control.test -ne 'control-plane-degraded-startup' -or $control.health -ne 'AGENT_RUNNING_DEGRADED' -or
                 $control.worker_available -ne $false -or
