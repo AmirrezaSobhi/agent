@@ -1,0 +1,11 @@
+﻿START_1_MS=198
+START_2_MS=151.7
+START_3_MS=151.2
+START_4_MS=152.7
+START_5_MS=196.6
+STARTUP n=5 median=152.7 p95=198.0 min=151.2 max=198.0
+ENV OS=Microsoft Windows NT 10.0.19045.0 screen=1280x800 session=1
+WINDOW_DPI_X=96
+IDLE n=20 duration_s=20.2 cpu_percent_of_total_capacity=0.155 private_mb_median=55.7 private_mb_max=58.4
+OFFLINE_DASHBOARD_REFRESH n=10 timeout_or_stuck=0 completion_latency_ms n=10 median=2,018.1 p95=2,099.4 min=1,997.9 max=2,099.4
+UI_NAVIGATION_DURING_REFRESH n=10 median=27.9 p95=51.1 min=21.9 max=51.1

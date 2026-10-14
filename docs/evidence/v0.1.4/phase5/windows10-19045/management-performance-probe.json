@@ -1,0 +1,131 @@
+{
+  "caller_sid": "S-1-5-21-950479549-2068523145-3370569714-500",
+  "logs_query_round_trip": {
+    "max_ms": 31.57,
+    "median_ms": 0.3,
+    "min_ms": 0.19,
+    "n": 10,
+    "p95_ms": 31.57
+  },
+  "logs_response": {
+    "code": "OK",
+    "correlation_id": "730dd5f3-360d-4d55-a5fd-d5bd8061fa2f",
+    "data": {
+      "count": 10,
+      "events": [
+        {
+          "code": "STATUS_OBSERVED",
+          "message": "Read-only Agent status was observed.",
+          "severity": "INFO",
+          "source": "Agent Management",
+          "timestamp_utc": "2026-10-08T19:08:44.180171Z"
+        },
+        {
+          "code": "STATUS_OBSERVED",
+          "message": "Read-only Agent status was observed.",
+          "severity": "INFO",
+          "source": "Agent Management",
+          "timestamp_utc": "2026-10-08T19:08:44.129734Z"
+        },
+        {
+          "code": "STATUS_OBSERVED",
+          "message": "Read-only Agent status was observed.",
+          "severity": "INFO",
+          "source": "Agent Management",
+          "timestamp_utc": "2026-10-08T19:08:44.079338Z"
+        },
+        {
+          "code": "STATUS_OBSERVED",
+          "message": "Read-only Agent status was observed.",
+          "severity": "INFO",
+          "source": "Agent Management",
+          "timestamp_utc": "2026-10-08T19:08:43.997658Z"
+        },
+        {
+          "code": "STATUS_OBSERVED",
+          "message": "Read-only Agent status was observed.",
+          "severity": "INFO",
+          "source": "Agent Management",
+          "timestamp_utc": "2026-10-08T19:08:43.916011Z"
+        },
+        {
+          "code": "STATUS_OBSERVED",
+          "message": "Read-only Agent status was observed.",
+          "severity": "INFO",
+          "source": "Agent Management",
+          "timestamp_utc": "2026-10-08T19:08:43.834359Z"
+        },
+        {
+          "code": "STATUS_OBSERVED",
+          "message": "Read-only Agent status was observed.",
+          "severity": "INFO",
+          "source": "Agent Management",
+          "timestamp_utc": "2026-10-08T19:08:43.783771Z"
+        },
+        {
+          "code": "STATUS_OBSERVED",
+          "message": "Read-only Agent status was observed.",
+          "severity": "INFO",
+          "source": "Agent Management",
+          "timestamp_utc": "2026-10-08T19:08:43.733223Z"
+        },
+        {
+          "code": "STATUS_OBSERVED",
+          "message": "Read-only Agent status was observed.",
+          "severity": "INFO",
+          "source": "Agent Management",
+          "timestamp_utc": "2026-10-08T19:08:43.682723Z"
+        },
+        {
+          "code": "STATUS_OBSERVED",
+          "message": "Read-only Agent status was observed.",
+          "severity": "INFO",
+          "source": "Agent Management",
+          "timestamp_utc": "2026-10-08T19:08:43.600739Z"
+        }
+      ],
+      "source": "Agent Management"
+    },
+    "message": "Status observed.",
+    "observed_at_utc": null,
+    "protocol_version": 1,
+    "request_id": "a63f1dce-193a-405d-8187-aaa920f9fa19",
+    "result": "ok"
+  },
+  "outcome": "response_received",
+  "status_response": {
+    "code": "OK",
+    "correlation_id": "14e69b24-016c-4a4b-93ac-1c62f2e398ce",
+    "data": {
+      "agent_lifecycle_state": "RUNNING",
+      "agent_state": "AGENT_RUNNING",
+      "central_state": "NOT_CONFIGURED",
+      "error_code": "RUNTIME_CONFIGURATION_UNAVAILABLE",
+      "freshness": "FRESH",
+      "mt5_connected": false,
+      "mt5_state": "DISCONNECTED",
+      "observed_at_utc": "2026-10-08T19:08:44.180171Z",
+      "runtime_state": "RUNTIME_UNAVAILABLE",
+      "service_state": "UNKNOWN",
+      "source_identity": "MT5Agent.AgentCore",
+      "trading_authorized": "UNKNOWN",
+      "trading_capability": "UNSUPPORTED",
+      "trading_readiness": "UNAVAILABLE",
+      "worker_available": false,
+      "worker_state": "DISCONNECTED"
+    },
+    "message": "Status observed.",
+    "observed_at_utc": "2026-10-08T19:08:44.180171Z",
+    "protocol_version": 1,
+    "request_id": "c1b3fc6c-a113-4aec-8124-fdaa24430447",
+    "result": "ok"
+  },
+  "status_round_trip": {
+    "max_ms": 33.15,
+    "median_ms": 0.32,
+    "min_ms": 0.17,
+    "n": 30,
+    "p95_ms": 32.89
+  },
+  "status_success_count": 30
+}

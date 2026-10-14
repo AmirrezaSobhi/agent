@@ -1,0 +1,9 @@
+{
+  "process_sid": "S-1-5-18",
+  "session_id": 0,
+  "pid": 4060,
+  "python_agent_core": true,
+  "runtime_adapter": "disabled_for_phase5_test",
+  "management_pipe": "\\\\.\\pipe\\MT5Agent.Management.v1",
+  "http_listener": false
+}

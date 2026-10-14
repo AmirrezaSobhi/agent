@@ -1,0 +1,9 @@
+# REVIEW TEMPLATE ONLY. Do not apply without Product Owner infrastructure approval.
+# Certificate/full chain and private key must be supplied by the approved issuer.
+external_url 'https://gitlab.local'
+letsencrypt['enable'] = false
+nginx['redirect_http_to_https'] = true
+nginx['ssl_certificate'] = '/etc/gitlab/ssl/gitlab.local.fullchain.pem'
+nginx['ssl_certificate_key'] = '/etc/gitlab/ssl/gitlab.local.key'
+nginx['ssl_protocols'] = 'TLSv1.2 TLSv1.3'
+gitlab_rails['gitlab_shell_ssh_port'] = 2222

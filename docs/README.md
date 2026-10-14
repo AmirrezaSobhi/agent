@@ -21,6 +21,7 @@ validation on `develop`. Start with the [release notes](releases/v0.1.3-release-
 ## Runtime and deployment
 
 - [Runtime provisioning](MT5_RUNTIME_PROVISIONING.md)
+- [v0.1.5 unified Windows setup and current validation limits](../deployment/installer/README.md)
 - [Configuration](CONFIGURATION.md)
 - [Operations](OPERATIONS.md)
 - [Troubleshooting](TROUBLESHOOTING.md)

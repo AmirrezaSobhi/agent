@@ -1,0 +1,24 @@
+{
+  "caller_sid": "S-1-5-18",
+  "logs_response": {
+    "code": "UNAUTHORIZED",
+    "correlation_id": "ea631e04-ff57-45b3-a3c1-df634745f03f",
+    "data": {},
+    "message": "This Windows user is not authorized for management status.",
+    "observed_at_utc": null,
+    "protocol_version": 1,
+    "request_id": "51e35a07-da00-4685-af19-780f263feec0",
+    "result": "error"
+  },
+  "outcome": "response_received",
+  "status_response": {
+    "code": "UNAUTHORIZED",
+    "correlation_id": "33c88b26-8bb3-4a12-9e37-8a1419173a16",
+    "data": {},
+    "message": "This Windows user is not authorized for management status.",
+    "observed_at_utc": null,
+    "protocol_version": 1,
+    "request_id": "41c5a688-e3b9-400d-877a-0df57532ae8f",
+    "result": "error"
+  }
+}

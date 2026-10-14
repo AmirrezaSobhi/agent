@@ -1,0 +1,401 @@
+{
+  "schema_version": 1,
+  "candidate_status": "PASS",
+  "publication_status": "BLOCKED — RELEASE NOT PUBLISHED",
+  "source_commit": "26352ad9d710877ff5bef52d239ec3adbb20e08d",
+  "pipeline_id": 102,
+  "mandatory_ci_jobs_passed": 14,
+  "installer_build_job_id": 1114,
+  "installer_verify_job_id": 1115,
+  "runtime_smoke_job_id": 1111,
+  "artifact": {
+    "status": "PASS",
+    "pipeline": 102,
+    "commit": "26352ad9d710877ff5bef52d239ec3adbb20e08d",
+    "build": 1114,
+    "verify": 1115,
+    "sha256": "f306fdd099cc4317d6315e14347aa13140073662b6b40d1e8229e8ca975df017",
+    "size": 22459317,
+    "component_count": 9
+  },
+  "installer": {
+    "pipeline": 102,
+    "sha256": "f306fdd099cc4317d6315e14347aa13140073662b6b40d1e8229e8ca975df017",
+    "pid": 3360,
+    "exitCode": 0,
+    "processCreationError": null,
+    "startUtc": "2026-10-14T01:25:11.2880568Z",
+    "endUtc": "2026-10-14T01:25:17.6898343Z",
+    "durationSeconds": 6.4017775,
+    "log": "C:\\MT5Agent-Test\\Evidence\\Release-Unblock-Pipeline102-20261014\\installer-pipeline102.log",
+    "runtimeAfter": [
+      {
+        "ProcessId": 4332,
+        "Name": "python.exe",
+        "SessionId": 1,
+        "ExecutablePath": "C:\\ProgramData\\MT5Agent\\RuntimeWorker\\.venv\\Scripts\\python.exe"
+      },
+      {
+        "ProcessId": 6276,
+        "Name": "python.exe",
+        "SessionId": 1,
+        "ExecutablePath": "C:\\Program Files\\Python311\\python.exe"
+      },
+      {
+        "ProcessId": 6168,
+        "Name": "terminal64.exe",
+        "SessionId": 1,
+        "ExecutablePath": "C:\\Program Files\\MetaTrader 5\\terminal64.exe"
+      }
+    ],
+    "preferencesSha256": "83DCF39ADA4E05086A81F920B8778673848EA54E097A48515D37879ED94B1C2D"
+  },
+  "machine": {
+    "hostname": "WIN10-MT5-RUNNE",
+    "os": "Windows 10 Pro x64",
+    "build": 19045
+  },
+  "installed_components_match": true,
+  "component_hashes": [
+    {
+      "path": "Agent/MT5Agent-v0.1.5.exe",
+      "expected": "c34928ffb0bfb00fe380901fbd942dcb89c4bfa0c80110a6f220ced20895c03d",
+      "actual": "c34928ffb0bfb00fe380901fbd942dcb89c4bfa0c80110a6f220ced20895c03d",
+      "size": 8147831,
+      "pass": true
+    },
+    {
+      "path": "Desktop/MT5Agent.Desktop.exe",
+      "expected": "608cd31c0210712446aa0c13036ee83e952a1ab409c5cd90b83666043bdfe5c0",
+      "actual": "608cd31c0210712446aa0c13036ee83e952a1ab409c5cd90b83666043bdfe5c0",
+      "size": 161280,
+      "pass": true
+    },
+    {
+      "path": "Service/MT5Agent.Service.exe",
+      "expected": "32c9c301b44523c9a9a0a361b5e939bc5df4c131757eecbc628790e31a193e2a",
+      "actual": "32c9c301b44523c9a9a0a361b5e939bc5df4c131757eecbc628790e31a193e2a",
+      "size": 16384,
+      "pass": true
+    },
+    {
+      "path": "maintenance/Install-MT5AgentService.ps1",
+      "expected": "8c4aa147302a8fd8a8d4926b2dcdb42f733ecc0cd5b95f3453a3c782a5f3accd",
+      "actual": "8c4aa147302a8fd8a8d4926b2dcdb42f733ecc0cd5b95f3453a3c782a5f3accd",
+      "size": 16066,
+      "pass": true
+    },
+    {
+      "path": "maintenance/Save-MT5AgentUserSettings.ps1",
+      "expected": "a5325371914b64dde60ad1f2404804e8002aa1697c36d764f844d1f0b66f1051",
+      "actual": "a5325371914b64dde60ad1f2404804e8002aa1697c36d764f844d1f0b66f1051",
+      "size": 1090,
+      "pass": true
+    },
+    {
+      "path": "maintenance/Set-MT5RuntimeConfiguration.ps1",
+      "expected": "1b3b0722cf5125b699cf53dbcfd8d018d4f4dae1e461504fb7c228b736950f63",
+      "actual": "1b3b0722cf5125b699cf53dbcfd8d018d4f4dae1e461504fb7c228b736950f63",
+      "size": 7154,
+      "pass": true
+    },
+    {
+      "path": "Worker/MT5AgentWorker-v0.1.5.exe",
+      "expected": "2d783e2de31d542a0e3d769b81fb67799fa89d3845cbe2e68c5d11bbf7f4c983",
+      "actual": "2d783e2de31d542a0e3d769b81fb67799fa89d3845cbe2e68c5d11bbf7f4c983",
+      "size": 20052048,
+      "pass": true
+    },
+    {
+      "path": "Worker/Register-PackagedMT5Worker.ps1",
+      "expected": "8c3033ba4b15eb6b6964157221662b66ab571ca3fe4ac5d67ced93d4fb0f400d",
+      "actual": "8c3033ba4b15eb6b6964157221662b66ab571ca3fe4ac5d67ced93d4fb0f400d",
+      "size": 3150,
+      "pass": true
+    },
+    {
+      "path": "Worker/Unregister-PackagedMT5Worker.ps1",
+      "expected": "102d8b70fd98b8c1c218fae400fd5ed0247adb7650a8bb1782cc2a58907618d5",
+      "actual": "102d8b70fd98b8c1c218fae400fd5ed0247adb7650a8bb1782cc2a58907618d5",
+      "size": 850,
+      "pass": true
+    }
+  ],
+  "cli_version": "0.1.5",
+  "diagnostics": {
+    "agent_version": "0.1.5",
+    "caller": "WIN10-MT5-RUNNE\\Administrator",
+    "exit_code": 1,
+    "expected_runtime_denial": true
+  },
+  "health": {
+    "AgentVersion": "0.1.5",
+    "AgentState": "AGENT_RUNNING",
+    "WorkerState": "WORKER_READY",
+    "RuntimeState": "MT5_CONNECTED",
+    "Mt5State": "CONNECTED",
+    "Freshness": "FRESH",
+    "IsStale": false,
+    "WorkerSessionId": 1,
+    "WorkerProtocolVersion": "1"
+  },
+  "processes_at_final_capture": [
+    {
+      "ProcessId": 4332,
+      "ParentProcessId": 1300,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\ProgramData\\MT5Agent\\RuntimeWorker\\.venv\\Scripts\\python.exe",
+      "SessionId": 1
+    },
+    {
+      "ProcessId": 6276,
+      "ParentProcessId": 4332,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Program Files\\Python311\\python.exe",
+      "SessionId": 1
+    },
+    {
+      "ProcessId": 6168,
+      "ParentProcessId": 7868,
+      "Name": "terminal64.exe",
+      "ExecutablePath": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
+      "SessionId": 1
+    },
+    {
+      "ProcessId": 2244,
+      "ParentProcessId": 656,
+      "Name": "MT5Agent.Service.exe",
+      "ExecutablePath": "C:\\Program Files\\MT5Agent\\Service\\MT5Agent.Service.exe",
+      "SessionId": 0
+    },
+    {
+      "ProcessId": 7516,
+      "ParentProcessId": 2244,
+      "Name": "MT5Agent-v0.1.5.exe",
+      "ExecutablePath": "C:\\Program Files\\MT5Agent\\Agent\\MT5Agent-v0.1.5.exe",
+      "SessionId": 0
+    },
+    {
+      "ProcessId": 4856,
+      "ParentProcessId": 7516,
+      "Name": "MT5Agent-v0.1.5.exe",
+      "ExecutablePath": "C:\\Program Files\\MT5Agent\\Agent\\MT5Agent-v0.1.5.exe",
+      "SessionId": 0
+    },
+    {
+      "ProcessId": 6028,
+      "ParentProcessId": 7552,
+      "Name": "MT5Agent.Desktop.exe",
+      "ExecutablePath": "C:\\Program Files\\MT5Agent\\Desktop\\MT5Agent.Desktop.exe",
+      "SessionId": 1
+    }
+  ],
+  "principal": {
+    "ControlPrincipal": "NT AUTHORITY\\SYSTEM",
+    "RuntimePrincipal": "WIN10-MT5-RUNNE\\MT5RuntimeUser",
+    "TerminalPath": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
+    "ProfilePath": "C:\\Users\\MT5RuntimeUser\\AppData\\Roaming\\MetaQuotes\\Terminal\\D0E8209F77C8CF37AD8BF550E51FF075",
+    "WorkerInstallPath": "C:\\ProgramData\\MT5Agent\\RuntimeWorker"
+  },
+  "administrator_runtime_denial": {
+    "identity": "WIN10-MT5-RUNNE\\Administrator",
+    "session": 0,
+    "runtimePipeDenied": true,
+    "errorType": "System.Management.Automation.MethodInvocationException",
+    "timestamp": "2026-10-14T01:27:03.9655036Z"
+  },
+  "runtimeuser_management_denial": {
+    "identity": "WIN10-MT5-RUNNE\\MT5RuntimeUser",
+    "sid": "S-1-5-21-2457279486-2650524583-4089100399-1003",
+    "session": 1,
+    "errorChain": [
+      {
+        "code": null,
+        "type": "System.Management.Automation.MethodInvocationException"
+      },
+      {
+        "code": "ACCESS_DENIED",
+        "type": "MT5Agent.Desktop.Services.ManagementIpcException"
+      },
+      {
+        "code": null,
+        "type": "System.UnauthorizedAccessException"
+      }
+    ],
+    "denied": true,
+    "code": "ACCESS_DENIED",
+    "timestamp": "2026-10-14T01:27:04.5693795Z"
+  },
+  "service_restart": {
+    "startUtc": "2026-10-14T01:27:21.2373052Z",
+    "endUtc": "2026-10-14T01:27:24.7736056Z",
+    "before": {
+      "serviceState": "Running",
+      "servicePid": 7968,
+      "agentPids": [
+        1844,
+        4028
+      ],
+      "workerPids": [
+        4332,
+        6276
+      ],
+      "terminalPids": [
+        6168
+      ],
+      "desktopPids": []
+    },
+    "after": {
+      "serviceState": "Running",
+      "servicePid": 2244,
+      "agentPids": [
+        4856,
+        7516
+      ],
+      "workerPids": [
+        4332,
+        6276
+      ],
+      "terminalPids": [
+        6168
+      ],
+      "desktopPids": []
+    },
+    "health": {
+      "agent": "AGENT_RUNNING",
+      "worker": "WORKER_READY",
+      "mt5": "CONNECTED",
+      "freshness": "FRESH",
+      "workerSessionId": 1,
+      "error": null
+    },
+    "workerPreserved": true,
+    "terminalPreserved": true,
+    "desktopPreserved": true,
+    "accepted": true
+  },
+  "soak": {
+    "startUtc": "2026-10-14T01:27:57.4817923Z",
+    "endUtc": "2026-10-14T01:42:58.9474921Z",
+    "sampleCount": 31,
+    "sampleDurationSeconds": 900.1,
+    "allHealthPass": true,
+    "allTopologyPass": true,
+    "pidBaseline": {
+      "service": [
+        2244
+      ],
+      "agent": [
+        7516,
+        4856
+      ],
+      "worker": [
+        4332,
+        6276
+      ],
+      "terminal": [
+        6168
+      ]
+    },
+    "pidFinal": {
+      "servicePid": 2244,
+      "agentPids": [
+        7516,
+        4856
+      ],
+      "workerPids": [
+        4332,
+        6276
+      ],
+      "terminalPids": [
+        6168
+      ]
+    },
+    "managementLatencyMsMin": 25,
+    "managementLatencyMsMax": 101,
+    "cpuPercentMax": 0.849,
+    "workingSetMiBMin": 67.44,
+    "workingSetMiBMax": 72.92,
+    "privateMemoryMiBMin": 186.04,
+    "privateMemoryMiBMax": 186.58,
+    "results": "PASS only if 31 samples, >=900 seconds, health and topology all pass"
+  },
+  "events": {
+    "product_error_event_count": 0,
+    "since_utc": "2026-10-14T01:25:11.2880568Z",
+    "through_utc": "2026-10-14T01:53:45.3886043Z"
+  },
+  "cleanup": {
+    "test_tasks_remaining": [],
+    "ci_stage_remaining": false
+  },
+  "logs": {
+    "schema_version": 1,
+    "scope": "four captured MT5Agent/Installer logs; pattern scan, not a universal proof",
+    "files": [
+      "agent.stderr.log",
+      "service-install.log",
+      "service-host.log",
+      "installer-pipeline102.log"
+    ],
+    "potential_secret_assignment_count": 0,
+    "potential_secret_locations": [],
+    "new_error_or_traceback_count": 0,
+    "new_error_locations": []
+  },
+  "mt5_and_preferences_preserved": true,
+  "no_trading_by_test_workflow": true,
+  "bundled_worker_executed": false,
+  "existing_worker_reused": true,
+  "linux_tests": {
+    "passed": 353,
+    "skipped": 41
+  },
+  "windows_tests": {
+    "passed": 400,
+    "skipped": 2
+  },
+  "release_test_recheck_passed": 80,
+  "compatibility": {
+    "Windows10": "PASS for documented scope",
+    "Windows11": "NOT TESTED",
+    "Server2022": "NOT TESTED",
+    "Server2025": "NOT TESTED"
+  },
+  "raw_evidence_ubuntu": "/home/mani/MT5Agent-Release-Evidence/v0.1.5-unblock",
+  "raw_evidence_windows": "C:\\MT5Agent-Test\\Evidence\\Release-Unblock-Pipeline102-20261014",
+  "sensitive_gates": {
+    "private": true,
+    "tag_v015": false,
+    "release_v015": false,
+    "approval_owner_variable_present": false,
+    "current_variables": [],
+    "package_cleanup": {
+      "keep_n_duplicated_package_files": "all",
+      "next_run_at": null
+    },
+    "branches": {
+      "develop": "0508f970ae8b2a984c5dc428f877fa252e30cd9b",
+      "staging": "e34d6d783e42c5d2fb5f1448af5f5e01d01cf095",
+      "main": "dbca8ca7fe65ca14a95a106d215cc9fa439ac01f"
+    }
+  },
+  "github": {
+    "repository": {
+      "http": 200,
+      "default_branch": "main",
+      "sha": null
+    },
+    "main": {
+      "http": 200,
+      "default_branch": null,
+      "sha": "dbca8ca7fe65ca14a95a106d215cc9fa439ac01f"
+    },
+    "github_directory": {
+      "http": 404
+    },
+    "release015": {
+      "http": 404
+    }
+  }
+}

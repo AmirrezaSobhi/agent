@@ -1,0 +1,163 @@
+{
+    "host":  "WINDOW10-TEST",
+    "started_utc":  "2026-10-08T19:35:51.7576405Z",
+    "service_name":  "MT5AgentPhase5Test",
+    "allowlist_sid":  "S-1-5-21-950479549-2068523145-3370569714-500",
+    "service":  "RUNNING",
+    "service_process_context":  {
+                                    "process_sid":  "S-1-5-18",
+                                    "session_id":  0,
+                                    "pid":  6408,
+                                    "python_agent_core":  true,
+                                    "runtime_adapter":  "disabled_for_phase5_test",
+                                    "management_pipe":  "\\\\.\\pipe\\MT5Agent.Management.v1",
+                                    "http_listener":  false
+                                },
+    "authorized_admin_probe":  {
+                                   "caller_sid":  "S-1-5-21-950479549-2068523145-3370569714-500",
+                                   "logs_query_round_trip":  {
+                                                                 "max_ms":  0.26,
+                                                                 "median_ms":  0.23,
+                                                                 "min_ms":  0.15,
+                                                                 "n":  10,
+                                                                 "p95_ms":  0.26
+                                                             },
+                                   "logs_response":  {
+                                                         "code":  "OK",
+                                                         "correlation_id":  "7e13b317-2c11-44a3-a944-01e85ff0259e",
+                                                         "data":  {
+                                                                      "count":  10,
+                                                                      "events":  [
+                                                                                     {
+                                                                                         "code":  "STATUS_OBSERVED",
+                                                                                         "message":  "Read-only Agent status was observed.",
+                                                                                         "severity":  "INFO",
+                                                                                         "source":  "Agent Management",
+                                                                                         "timestamp_utc":  "2026-10-08T19:35:53.720663Z"
+                                                                                     },
+                                                                                     {
+                                                                                         "code":  "STATUS_OBSERVED",
+                                                                                         "message":  "Read-only Agent status was observed.",
+                                                                                         "severity":  "INFO",
+                                                                                         "source":  "Agent Management",
+                                                                                         "timestamp_utc":  "2026-10-08T19:35:53.670256Z"
+                                                                                     },
+                                                                                     {
+                                                                                         "code":  "STATUS_OBSERVED",
+                                                                                         "message":  "Read-only Agent status was observed.",
+                                                                                         "severity":  "INFO",
+                                                                                         "source":  "Agent Management",
+                                                                                         "timestamp_utc":  "2026-10-08T19:35:53.619773Z"
+                                                                                     },
+                                                                                     {
+                                                                                         "code":  "STATUS_OBSERVED",
+                                                                                         "message":  "Read-only Agent status was observed.",
+                                                                                         "severity":  "INFO",
+                                                                                         "source":  "Agent Management",
+                                                                                         "timestamp_utc":  "2026-10-08T19:35:53.568913Z"
+                                                                                     },
+                                                                                     {
+                                                                                         "code":  "STATUS_OBSERVED",
+                                                                                         "message":  "Read-only Agent status was observed.",
+                                                                                         "severity":  "INFO",
+                                                                                         "source":  "Agent Management",
+                                                                                         "timestamp_utc":  "2026-10-08T19:35:53.518361Z"
+                                                                                     },
+                                                                                     {
+                                                                                         "code":  "STATUS_OBSERVED",
+                                                                                         "message":  "Read-only Agent status was observed.",
+                                                                                         "severity":  "INFO",
+                                                                                         "source":  "Agent Management",
+                                                                                         "timestamp_utc":  "2026-10-08T19:35:53.467846Z"
+                                                                                     },
+                                                                                     {
+                                                                                         "code":  "STATUS_OBSERVED",
+                                                                                         "message":  "Read-only Agent status was observed.",
+                                                                                         "severity":  "INFO",
+                                                                                         "source":  "Agent Management",
+                                                                                         "timestamp_utc":  "2026-10-08T19:35:53.386010Z"
+                                                                                     },
+                                                                                     {
+                                                                                         "code":  "STATUS_OBSERVED",
+                                                                                         "message":  "Read-only Agent status was observed.",
+                                                                                         "severity":  "INFO",
+                                                                                         "source":  "Agent Management",
+                                                                                         "timestamp_utc":  "2026-10-08T19:35:53.335520Z"
+                                                                                     },
+                                                                                     {
+                                                                                         "code":  "STATUS_OBSERVED",
+                                                                                         "message":  "Read-only Agent status was observed.",
+                                                                                         "severity":  "INFO",
+                                                                                         "source":  "Agent Management",
+                                                                                         "timestamp_utc":  "2026-10-08T19:35:53.285045Z"
+                                                                                     },
+                                                                                     {
+                                                                                         "code":  "STATUS_OBSERVED",
+                                                                                         "message":  "Read-only Agent status was observed.",
+                                                                                         "severity":  "INFO",
+                                                                                         "source":  "Agent Management",
+                                                                                         "timestamp_utc":  "2026-10-08T19:35:53.234540Z"
+                                                                                     }
+                                                                                 ],
+                                                                      "source":  "Agent Management"
+                                                                  },
+                                                         "message":  "Status observed.",
+                                                         "observed_at_utc":  null,
+                                                         "protocol_version":  1,
+                                                         "request_id":  "11d54634-970f-4a94-a79e-a0309d055343",
+                                                         "result":  "ok"
+                                                     },
+                                   "outcome":  "response_received",
+                                   "status_response":  {
+                                                           "code":  "OK",
+                                                           "correlation_id":  "325682e9-b9aa-4f5d-8580-d384110ba4d5",
+                                                           "data":  {
+                                                                        "agent_lifecycle_state":  "RUNNING",
+                                                                        "agent_state":  "AGENT_RUNNING",
+                                                                        "central_state":  "NOT_CONFIGURED",
+                                                                        "error_code":  "RUNTIME_CONFIGURATION_UNAVAILABLE",
+                                                                        "freshness":  "FRESH",
+                                                                        "mt5_connected":  false,
+                                                                        "mt5_state":  "DISCONNECTED",
+                                                                        "observed_at_utc":  "2026-10-08T19:35:53.720663Z",
+                                                                        "runtime_state":  "RUNTIME_UNAVAILABLE",
+                                                                        "service_state":  "UNKNOWN",
+                                                                        "source_identity":  "MT5Agent.AgentCore",
+                                                                        "trading_authorized":  "UNKNOWN",
+                                                                        "trading_capability":  "UNSUPPORTED",
+                                                                        "trading_readiness":  "UNAVAILABLE",
+                                                                        "worker_available":  false,
+                                                                        "worker_state":  "DISCONNECTED"
+                                                                    },
+                                                           "message":  "Status observed.",
+                                                           "observed_at_utc":  "2026-10-08T19:35:53.720663Z",
+                                                           "protocol_version":  1,
+                                                           "request_id":  "7d2c17f4-8761-4a4d-8a44-efe840866ed5",
+                                                           "result":  "ok"
+                                                       },
+                                   "status_round_trip":  {
+                                                             "max_ms":  31.47,
+                                                             "median_ms":  0.27,
+                                                             "min_ms":  0.18,
+                                                             "n":  30,
+                                                             "p95_ms":  31.47
+                                                         },
+                                   "status_success_count":  30
+                               },
+    "authorized_pipe_open":  "identity=WINDOW10-TEST\\Administrator\ncaller_sid=S-1-5-21-950479549-2068523145-3370569714-500\nsession_id=0\npid=2632\nlayer=CreateFile/WindowsPipeDACL\noutcome=pipe_opened\npipe_sddl=D:(A;;FA;;;SY)(A;;0x12019b;;;LA)",
+    "test_account":  "MT5AgentDaclProbe",
+    "test_account_sid":  "S-1-5-21-950479549-2068523145-3370569714-1011",
+    "in_users":  true,
+    "in_administrators":  false,
+    "unauthorized_probe_stdout":  "thread_identity=WINDOW10-TEST\\MT5AgentDaclProbe\r\ncaller_sid=S-1-5-21-950479549-2068523145-3370569714-1011\r\ncaller_token_session_id=0\r\nlayer=CreateFile/WindowsPipeDACL\r\noutcome=connection_denied\r\nwin32_error=5\r\n",
+    "unauthorized_probe_stderr":  "",
+    "unauthorized_probe_exit_code":  0,
+    "probe_process_identity":  "WINDOW10-TEST\\Administrator in Session 0; CreateFile called while thread impersonates the standard account token",
+    "unauthorized_expected":  "CreateFile rejected by Windows Pipe DACL with Win32 ERROR_ACCESS_DENIED (5), before any application request",
+    "unauthorized_observed_layer":  "Windows Named Pipe DACL at CreateFile",
+    "result":  "PASS",
+    "profile_cleanup":  true,
+    "account_cleanup":  true,
+    "service_cleanup":  true,
+    "finished_utc":  "2026-10-08T19:35:55.6203440Z"
+}
