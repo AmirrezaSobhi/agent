@@ -5,6 +5,15 @@ provisioning and multi-session gates. This document is not a security
 certification. Evidence and boundaries are recorded in
 [Implementation Baseline](IMPLEMENTATION_BASELINE.md).
 
+**v0.1.5 evidence:** Pipeline #98's installed Service/Agent uses LocalSystem in
+Session 0, with a distinct standard RuntimeUser Worker/MT5 in Session 1.
+Runtime and Management negative-caller tests passed for the recorded callers.
+CI uses the [fixed-operation LocalSystem smoke](CI_RUNTIME_SMOKE.md), preserving
+SID/DACL enforcement. Internal release requires the existing HTTPS and
+independent Release Owner gates; neither was weakened during the release audit.
+See the [scope and blockers](../evidence/v0.1.5/V0.1.5_FINAL_RELEASE_REPORT.md).
+Unsigned internal artifacts establish recorded integrity, not publisher trust.
+
 **Approved client stack:** C# WPF/XAML/.NET Framework 4.8/MVVM. The UI is an
 untrusted local caller relative to the Python Agent Service. The selected
 transport proposal is a distinct Windows Named Pipe, not the current `/command`

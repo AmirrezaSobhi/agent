@@ -4,6 +4,11 @@
 commitments. Dependencies and security gates are mandatory even if release
 numbers move.
 
+v0.1.5 candidate update: Windows 10 installation and secure runtime integration
+are tested; publication remains blocked by the release gates in the
+[final audit](../evidence/v0.1.5/V0.1.5_FINAL_RELEASE_REPORT.md). This does not
+advance deferred commercial signing/OS support or change ADR statuses.
+
 | Version | Proposed theme | Dependencies / gates |
 |---|---|---|
 | v0.1.3 | Interactive Runtime Foundation | Released. Session 0 Agent, interactive Worker, authenticated Named Pipe and safe read-only MT5 operations. Customer installer is not implied. |

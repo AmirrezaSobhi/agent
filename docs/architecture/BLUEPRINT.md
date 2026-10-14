@@ -4,6 +4,16 @@
 **Repository baseline:** GitLab `origin/develop`, `d99182211696ef877171fda287dee01ef6e3fce7`, audited 2026-10-08.
 **Principle:** Design for Scale, Implement for Today.
 
+**v0.1.5 implemented/tested addendum (2026-10-14):** the unified Inno Installer,
+LocalSystem Service/Agent in Session 0, separate interactive RuntimeUser
+Worker/MT5, and read-only Management IPC are implemented. Pipeline #98's exact
+artifact passed real Windows 10 installation and integration validation.
+Commercial updater/signing and broader OS/lifecycle targets remain open.
+Release promotion is blocked by the existing publication contract and
+infrastructure/approval requirements; see the
+[release audit](../evidence/v0.1.5/V0.1.5_FINAL_RELEASE_REPORT.md).
+This addendum does not change the draft blueprint or ADR decision statuses.
+
 **Binding Product Owner decisions (2026-10-08):** C# / WPF / XAML / .NET
 Framework 4.8 / MVVM Desktop Client integrated with the existing Python Agent
 and Python MT5 Runtime Worker; Windows 10 x64, Windows 11 x64, Windows Server
@@ -188,8 +198,9 @@ and credential policy. See [Windows runtime](WINDOWS_RUNTIME.md).
 
 Installer and signed auto-update with integrity checks, staged deployment,
 health verification, rollback, and schema compatibility are target capabilities.
-Only the existing build/package/release automation is current; a customer
-installer and complete automatic updater are absent. Support collection is
+The internal v0.1.5 Installer is implemented/tested as stated in the addendum;
+a commercially approved signed installer and complete automatic updater are
+absent. Support collection is
 local-first, redacted, reviewable, and requires explicit consent before any
 future transmission. See [operations](OPERATIONS.md).
 

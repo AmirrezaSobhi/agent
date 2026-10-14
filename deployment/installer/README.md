@@ -88,7 +88,7 @@ machine-configuration script from an elevated PowerShell session:
 $root = 'C:\Program Files\MT5Agent'
 & "$root\maintenance\Set-MT5RuntimeConfiguration.ps1" `
   -RuntimePrincipal "$env:COMPUTERNAME\MT5RuntimeUser" `
-  -ControlPrincipal "$env:COMPUTERNAME\MT5ControlUser" `
+  -ControlPrincipal 'NT AUTHORITY\SYSTEM' `
   -TerminalPath 'C:\Program Files\MetaTrader 5\terminal64.exe' `
   -ProfilePath 'C:\Users\MT5RuntimeUser\AppData\Roaming\MetaQuotes\Terminal\<instance>' `
   -WorkerInstallPath "$root\Worker"
@@ -103,6 +103,16 @@ account is enabled, distinct from Control Principal, non-administrative, and
 the configured terminal/profile are valid. Sign in interactively as that
 account for the Worker to start. No credentials are stored; the Installer does
 not create the account or enable Autologon.
+
+The packaged Service runs as LocalSystem: its runtime ControlPrincipal must
+resolve to `NT AUTHORITY\SYSTEM`, while RuntimePrincipal remains a distinct
+standard interactive user. The example above reflects this installed topology.
+Close the Desktop, including its tray instance, before an in-place upgrade;
+`/NOCLOSEAPPLICATIONS` cannot clear a held Desktop file lock. Preserve settings
+and record Installer PID, numeric exit, timestamps, logs and fresh health.
+See the [#98 upgrade evidence](../../docs/evidence/v0.1.5/pipeline98-final-validation-20261014.md).
+Uninstall/remove-data behavior is described by the scripts but was not
+operationally validated on that exact artifact.
 
 ## CI artifact
 

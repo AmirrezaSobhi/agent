@@ -74,6 +74,14 @@ not block Phase 6 implementation completion.
 
 ## v0.1.5 installed-product validation
 
+Latest candidate: Pipeline #98 passed real in-place installation and secure
+Service/Agent-to-interactive-Worker/MT5 integration on Windows 10 Pro x64 build
+19045, including 31/31 clean samples over 901 seconds. This is the tested
+Windows 10 scope; Windows 11, Server 2022 and Server 2025 remain NOT TESTED.
+See [exact artifact evidence](../evidence/v0.1.5/pipeline98-final-validation-20261014.md)
+and the [release audit](../evidence/v0.1.5/V0.1.5_FINAL_RELEASE_REPORT.md).
+The earlier Pipeline #82 installation below is historical and had no Worker.
+
 Pipeline #82's exact Installer was installed on the dedicated `WIN10-INSTALLER`
 VM running Windows 10 Pro x64 build 19045. The Installer exited 0; the Service
 and Agent started in Session 0, SCM Recovery settings were read back, one
