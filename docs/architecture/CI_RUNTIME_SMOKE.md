@@ -91,9 +91,18 @@ terminal.
 
 ## Verification status
 
-The source and structural regression tests are not proof that Windows Task
-Scheduler, ACL translation, and the live Worker pipe behave as expected. Those
-claims remain pending until a feature-branch Pipeline runs the System task on
-`win10-mt5-runner` and publishes its structured receipt. After CI, deployment
-must still use the exact verified Installer from that pipeline and verify live
-Management Health and a fresh stability soak.
+**PASS — Pipeline #98, Job #1055 (`smoke:mt5-runtime`).** The protected task ran
+on `win10-mt5-runner` as LocalSystem SID `S-1-5-18` in Session 0. The receipt
+validated the source/build/test hashes, protected payload, configured
+ControlPrincipal and separate RuntimePrincipal, and fixed non-trading read
+operations against the existing Worker in Session 1. It reported
+`AGENT_RUNNING`, `WORKER_READY`, `MT5_CONNECTED`, and `FRESH`; the unauthorized
+Administrator pipe probe was denied. CI does not by itself prove installation
+or desktop-session behavior.
+
+The exact verified Installer from Pipeline #98 (Build #1058, Verify #1059) was
+then installed on the dedicated integration VM and independently validated.
+Live installed Management Health reported `worker_session_id=1`; a clean
+901-second soak passed 31/31 samples. The installation and runtime evidence is
+documented in
+[`pipeline98-final-validation-20261014.md`](../evidence/v0.1.5/pipeline98-final-validation-20261014.md).
