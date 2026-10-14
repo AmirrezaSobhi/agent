@@ -230,6 +230,8 @@ def test_permission_failure_is_not_retried_or_hidden(env, fixture_root):
 @pytest.mark.parametrize("file,mutate", [
     ("build.json", lambda x: x.update(candidate_size=999)),
     ("invalid-configuration.json", lambda x: x.update(status="FAIL")),
+    ("invalid-configuration.json", lambda x: x.pop("candidate_version")),
+    ("invalid-configuration.json", lambda x: x.update(candidate_version="0.1.3")),
     ("control-plane.json", lambda x: x.update(pipeline_id="stale")),
     ("mt5-runtime.json", lambda x: x.update(candidate_sha256_after="0" * 64)),
     ("release-evidence.json", lambda x: x.update(post_smoke_rebuild=True)),
