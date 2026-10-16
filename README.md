@@ -33,7 +33,7 @@ See [Architecture](docs/ARCHITECTURE.md) and [Action Plan](docs/ACTION_PLAN.md).
 
 ## Development and dependencies
 
-The control-plane package has no third-party runtime dependency and does not
+The control-plane package uses pinned websockets for optional native Gateway WSS and does not
 install MetaTrader5 or NumPy. Use `requirements-dev.txt` for source tests and
 build tooling. The interactive Worker has its own pinned Windows dependency
 set; direct in-process MT5 support is isolated in the explicit legacy
