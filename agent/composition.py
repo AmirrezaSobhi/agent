@@ -67,6 +67,9 @@ def compose_agent(
     )
     concrete_hosting = (http_hosting if hosting is not None else
                         CompositeHostingPort(http_hosting, management_pipe))
+    if hosting is None:
+        from agent.infrastructure.gateway_wss import configured_gateway_host
+        concrete_hosting = configured_gateway_host(concrete_hosting)
     host = ApplicationHost(
         agent,
         concrete_hosting,

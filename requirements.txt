@@ -1,2 +1,2 @@
-# The production Agent uses Python's standard library and ships with no
-# third-party runtime dependencies. See requirements-dev.txt and Worker files.
+# Optional Gateway WSS transport; vendor packages remain Worker-only.
+websockets==16.1.1

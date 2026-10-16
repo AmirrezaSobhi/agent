@@ -142,3 +142,9 @@ Verify the measured UTC offset and stability, then repeat relevant health,
 safe-read, deadline/replay, and observability validation. Do not modify host
 time, NTP, timezone, Windows Time Service, Worker/task, or MT5 configuration
 under an ordinary CI/documentation task.
+
+## Native Gateway test transport
+
+See [WSS connectivity](WSS_CONNECTIVITY.md) for opt-in configuration, expiring
+TEST-ONLY credentials, service lifecycle, bounded reconnect and VM rollback.
+This transport does not dispatch trading commands.

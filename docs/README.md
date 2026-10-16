@@ -63,3 +63,5 @@ validation on `develop`. Start with the [release notes](releases/v0.1.3-release-
 - [GitLab planning](GITLAB_PLAN.md)
 - [GitLab Wiki plan](GITLAB_WIKI_PLAN.md)
 - [ADR-001: Unattended MT5 Runtime Hosting](ADR/ADR-001-unattended-mt5-runtime-hosting.md)
+
+- [Native WSS connectivity and rollback](WSS_CONNECTIVITY.md)
