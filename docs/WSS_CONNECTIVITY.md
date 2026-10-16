@@ -8,7 +8,9 @@ No Gateway message reaches the command dispatcher or a trading API.
 ## Configuration and authentication
 
 By default the Core reads `C:\ProgramData\MT5Agent\Gateway\config.json` when
-present; `MT5_AGENT_GATEWAY_CONFIG` can select a test-specific path. Absent file
+present in a real Service-owned Core (identified by its existing shutdown event);
+`MT5_AGENT_GATEWAY_CONFIG` can explicitly select a test-specific path for console
+operation. CI candidate processes do not consume machine settings automatically. Absent file
 preserves the previous hosting behavior. Present but invalid configuration fails
 closed for WSS and retries with backoff, without stopping local management.
 
@@ -63,3 +65,45 @@ Tests in `tests/test_gateway_wss.py` cover configuration expiry, schema/identity
 correlation, redaction, reconnect/backoff, duplicate start and lifecycle cleanup.
 Real Windows service evidence is separate from the earlier independent .NET
 probe and must correlate Agent process logs with Gateway message UUIDs.
+
+## Recorded VM evidence — 2026-10-16
+
+Initial native candidate commit `e32ae2fda08fcd40aea98049b8e2c59fe667b240`
+passed the complete Agent Pipeline [154](https://gitlab.local/root/agent/-/pipelines/154).
+Portable tests passed 384 with 49 platform skips; Windows tests, clean build,
+WPF/IPC tests, MT5 read-only smoke, packaging and installer verification passed.
+Follow-up tests add response-deadline and automatic-config ownership coverage.
+
+On win10-mt5-runner, the unchanged MT5Agent Windows Service launched the native
+candidate in Session 0 (Service PID 6272 → bootloader 8508 → Core PID 756).
+The Core owned TCP `192.168.122.71:50194 → 178.239.147.37:443` and completed
+validated TLS/WSS to the current `agent-gateway-svb-forex-ai.runflare.cloud`
+domain. Agent ID is `win10-native-agent-01`. The existing independent .NET
+client was not run. Gateway remained staging revision
+`045c78032897a8816f7d7ef0cdcec361aa265297`, Runflare v5.
+
+Hello ID `27ddcf48-6e43-4a7a-886c-b7c0a73e8d2c` received a matching hello_ack;
+echo request `67aacd66-884f-4e57-806f-9f269ad23597` was correlated in both Core
+and Gateway logs. The Core answered server pings and verified its client pong.
+Controlled Service stops/restarts changed the Core PID and reauthenticated.
+A valid-format wrong credential produced InvalidStatus in the Core and
+ws_auth_rejected in the Gateway. Expired local credentials failed closed before
+network connection; increasing retry delays were observed. Restoring valid
+settings recovered normal exchanges (Core PID 8904).
+
+The first manually built candidate omitted the existing pywin32 build dependency
+and failed startup. The prewritten rollback restored the original executable
+and service successfully; installing pywin32 only in the private build venv
+corrected the build. No SCM, Worker, disk or security policy was changed.
+Original executable SHA256:
+`09040AB8305694D049BF87401028359F75EE20A8AB9050D4972DCF4F0C4B50E2`.
+Its backup and Rollback.ps1 remain in the restricted
+`C:\ProgramData\MT5AgentNativeWssTest` directory.
+
+The existing Worker brought its configured terminal online during normal Agent
+startup; the WSS transport neither starts it nor invokes any MT5 operation.
+No trade/order request was issued. Existing CI's MT5 smoke remains read-only.
+Public domain and test credentials expire; these receipts prove the timestamped
+trial, not perpetual production availability. Final process/connection, log,
+credential-redaction and reconnect evidence is recorded separately in ignored
+Server `reports/phase22-*` files to avoid putting runtime credentials in Git.

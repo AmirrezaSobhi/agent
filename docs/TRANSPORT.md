@@ -37,3 +37,11 @@ These Kafka/HTTPS adapter foundations are not the active production Agent
 request path. The current Agent runtime uses its local HTTP boundary and, on
 Windows, the Runtime Worker Named Pipe; presence of these adapters does not
 claim a deployed broker or mTLS service.
+
+## Phase 2.2 — opt-in native Gateway WSS
+
+The Service-owned Agent Core can additionally run the bounded TEST-ONLY WSS
+transport described in [Native WSS connectivity](WSS_CONNECTIVITY.md). This
+path validates the v1.0 connectivity protocol only; it is not connected to the
+HTTP command dispatcher, Worker or trading capabilities. Local IPC remains
+unchanged. This does not establish production mTLS or Kafka support.

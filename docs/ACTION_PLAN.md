@@ -98,3 +98,10 @@ passed; `CI ACCEPTED` means a live pipeline passed; `RELEASED` means a tagged
 release and its artifact provenance were verified; `PRODUCTION READY` requires
 supported provisioning, operations, security, and release evidence. Do not
 promote one status to another by inference.
+
+## Phase 2.2 internal VM integration
+
+Native Gateway WSS is an opt-in internal test addition to the 0.1.5 Core, not a
+new official release. Configuration, limits, evidence and rollback are tracked
+in [WSS connectivity](WSS_CONNECTIVITY.md). Production mTLS and expiring-domain
+replacement remain open; no remote trading capability is enabled.

@@ -216,6 +216,10 @@ class GatewayHostingPort:
 
 
 def configured_gateway_host(primary):
+    # Automatic machine configuration belongs only to the real Service-owned Core.
+    # CLI/CI candidate processes must opt in explicitly, avoiding duplicate identities.
+    if not os.environ.get("MT5_AGENT_GATEWAY_CONFIG") and not os.environ.get("MT5_AGENT_SHUTDOWN_EVENT"):
+        return primary
     default = NativePath(os.environ.get("PROGRAMDATA", "C:/ProgramData")) / "MT5Agent/Gateway/config.json"
     path = NativePath(os.environ.get("MT5_AGENT_GATEWAY_CONFIG", str(default)))
     if not path.exists():

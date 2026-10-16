@@ -141,3 +141,27 @@ def test_host_stop_and_duplicate_prevention(settings):
 def test_absent_configuration_preserves_existing_host(tmp_path,monkeypatch):
     monkeypatch.setenv('MT5_AGENT_GATEWAY_CONFIG',str(tmp_path/'absent'))
     p=Primary();assert configured_gateway_host(p) is p
+
+
+def test_pending_response_timeout(monkeypatch):
+    import types
+    import agent.infrastructure.gateway_wss as module
+    ticks=iter(range(100))
+    monkeypatch.setattr(module, "time", types.SimpleNamespace(
+        monotonic=lambda:float(next(ticks)), time=time.time))
+    h=GatewayHostingPort(Primary(), "unused")
+    class Silent(Peer):
+        def send(self,text):
+            m=json.loads(text)
+            if m["type"]=="hello": self.queue.append(frame("hello_ack", m["message_id"]))
+        def recv(self,timeout):
+            if self.queue: return json.dumps(self.queue.pop(0))
+            raise TimeoutError()
+    with pytest.raises(TimeoutError):
+        h.session(Silent(h), {"agent_id":IDENTITY,"expires_at":time.time()+100})
+
+
+def test_console_does_not_automatically_consume_machine_configuration(monkeypatch):
+    monkeypatch.delenv("MT5_AGENT_GATEWAY_CONFIG", raising=False)
+    monkeypatch.delenv("MT5_AGENT_SHUTDOWN_EVENT", raising=False)
+    p=Primary(); assert configured_gateway_host(p) is p
