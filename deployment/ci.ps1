@@ -85,6 +85,9 @@ function Invoke-CandidateCommand {
     $process = Start-Process -FilePath $exePath -ArgumentList $Arguments -WorkingDirectory $repoRoot `
         -PassThru -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr
     try {
+        # Retain the OS handle before waiting: redirected one-file candidates can
+        # otherwise expose a null ExitCode through Windows PowerShell 5.1.
+        $null = $process.Handle
         if (-not $process.WaitForExit($TimeoutMilliseconds)) {
             Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
             throw "$Name exceeded its bounded inspection timeout"
@@ -94,6 +97,7 @@ function Invoke-CandidateCommand {
         if (-not $process.HasExited) {
             throw "$Name process did not reach an exited state after its bounded wait"
         }
+        if ($null -eq $process.ExitCode) { throw "Candidate exit code is unavailable" }
         $exitCode = [int]$process.ExitCode
         return [pscustomobject]@{
             ExitCode = $exitCode

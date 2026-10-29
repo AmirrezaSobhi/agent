@@ -348,3 +348,32 @@ def test_runtime_account_field_count_handles_json_objects_under_strict_mode(tmp_
                             text=True, capture_output=True, timeout=30)
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip() == str(expected)
+
+
+@requires_ci_tools
+@pytest.mark.skipif(os.name != "nt", reason="Windows redirected process exit-code regression")
+def test_redirected_python_diagnostic_exit_code_in_windows_powershell(checkout):
+    import sys
+    path, env = checkout
+    shell = shutil.which("powershell.exe")
+    if not shell:
+        pytest.skip("Windows PowerShell is unavailable")
+    child = path / "diagnostic-child.py"
+    child.write_text('import json,sys; print(json.dumps({"ready":False})); sys.exit(1)', encoding="utf-8")
+    script = path / "redirected-exit-code.ps1"
+    script.write_text(f"""
+$ErrorActionPreference = 'Stop'
+. '{path / 'deployment/ci.ps1'}' -Task metadata
+$exePath = '{sys.executable}'
+$repoRoot = '{path}'
+$reportRoot = '{path / 'reports'}'
+$result = Invoke-CandidateCommand -Name 'synthetic-diagnostic' -Arguments @('"{child}"')
+if ($result.ExitCode -ne 1 -or ($result.Output | ConvertFrom-Json).ready -ne $false) {{
+    throw 'Redirected diagnostic exit code was lost'
+}}
+Write-Output 'REDIRECTED_DIAGNOSTIC_EXIT_PASS'
+""", encoding="utf-8")
+    result = subprocess.run([shell, "-NoProfile", "-File", str(script)], env=env,
+                            text=True, capture_output=True, timeout=30)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "REDIRECTED_DIAGNOSTIC_EXIT_PASS" in result.stdout
