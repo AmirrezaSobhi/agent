@@ -32,5 +32,5 @@ class IdentityAuthority:
         if value is None or value[2]: return AuthenticationResult(False,code="authentication_failed",message="Authentication failed.")
         return AuthenticationResult(True,SecurityContext(value[0],"credential",value[1],{"agent_id":self.identity.agent_id}))
     def authorize(self,context,command):
-        permitted=("command:"+command.command_type in context.permissions or "class:read" in context.permissions and command.command_type.startswith(("agent.","mt5.get_")))
+        permitted=(command.command_type == "mt5.get_account_information" and "account-read" in context.permissions or "command:"+command.command_type in context.permissions or "class:read" in context.permissions and command.command_type.startswith(("agent.","mt5.get_")))
         return AuthorizationDecision(permitted,"authorization_denied" if not permitted else "","Authorization denied." if not permitted else "")

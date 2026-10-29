@@ -50,5 +50,5 @@ class CommandDispatcher:
         except ProtocolResolutionError as exc:
             return CommandResult(command.command_id, command.correlation_id, False, exc.code, str(exc))
         except Exception:
-            self._logger.exception("Command handler failed")
+            self._logger.error("Command handler failed")
             return CommandResult(command.command_id, command.correlation_id, False, "execution_failed", "Command execution failed.")

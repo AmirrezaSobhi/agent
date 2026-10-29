@@ -23,7 +23,7 @@ def load_settings(path):
     if path.stat().st_size > 4096:
         raise ValueError("configuration too large")
     data = json.loads(path.read_text(encoding="utf-8-sig"))
-    if set(data) != {"url", "agent_id", "token_file", "expires_at"}:
+    if set(data) - {"url", "agent_id", "token_file", "expires_at", "account_read"} or not {"url", "agent_id", "token_file", "expires_at"} <= set(data):
         raise ValueError("invalid configuration")
     uri = urlsplit(data["url"])
     identity = data["agent_id"]
@@ -79,7 +79,11 @@ def backoff(attempt, jitter=random.random):
 
 class GatewayHostingPort:
     """One owned supervisor thread, bounded receive buffer, interruptible retry."""
-    def __init__(self, primary, config_path, connector=None, logger=None):
+    def __init__(self, primary, config_path, connector=None, logger=None, account_reader=None):
+        self.sampler = None
+        if account_reader is not None:
+            from agent.infrastructure.account_snapshot import SnapshotSampler
+            self.sampler = SnapshotSampler(account_reader.read)
         self.primary = primary
         self.config_path = config_path
         self.connector = connector
@@ -186,12 +190,27 @@ class GatewayHostingPort:
         pending[echo] = ("echo", time.monotonic() + 5)
         ping = send("ping")
         pending[ping] = ("pong", time.monotonic() + 5)
+        from agent.infrastructure.account_snapshot import grant
+        generation = str(uuid4())
+        next_sample = time.monotonic()
+        def permission():
+            current, _token = load_settings(self.config_path)
+            return current["agent_id"] == identity and current["url"] == settings["url"] and grant(current) is not None
         window, count = time.monotonic(), 0
         last = window
         while not self.stop_event.is_set():
             now = time.monotonic()
             if time.time() >= settings["expires_at"] or now - last >= 25 or any(now >= p[1] for p in pending.values()):
                 raise TimeoutError("response or credential timeout")
+            if self.sampler is not None:
+                current, _token = load_settings(self.config_path)
+                interval = grant(current) if permission() else None
+                snapshot = self.sampler.take(generation)
+                if interval is not None and snapshot is not None:
+                    send("account_snapshot", payload=snapshot)
+                if interval is not None and now >= next_sample:
+                    self.sampler.start(generation, permission)
+                    next_sample = now + interval
             try:
                 m = receive(0.5)
             except TimeoutError:
@@ -215,7 +234,7 @@ class GatewayHostingPort:
                            correlation_id=m["correlation_id"])
 
 
-def configured_gateway_host(primary):
+def configured_gateway_host(primary, dispatcher=None):
     # Automatic machine configuration belongs only to the real Service-owned Core.
     # CLI/CI candidate processes must opt in explicitly, avoiding duplicate identities.
     if not os.environ.get("MT5_AGENT_GATEWAY_CONFIG") and not os.environ.get("MT5_AGENT_SHUTDOWN_EVENT"):
@@ -224,4 +243,8 @@ def configured_gateway_host(primary):
     path = NativePath(os.environ.get("MT5_AGENT_GATEWAY_CONFIG", str(default)))
     if not path.exists():
         return primary
-    return GatewayHostingPort(primary, path)
+    reader = None
+    if dispatcher is not None:
+        from agent.infrastructure.account_snapshot import AuthorizedAccountReader, grant
+        reader = AuthorizedAccountReader(dispatcher, lambda: grant(load_settings(path)[0]) is not None)
+    return GatewayHostingPort(primary, path, account_reader=reader)
