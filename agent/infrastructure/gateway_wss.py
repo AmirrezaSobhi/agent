@@ -240,7 +240,9 @@ class GatewayHostingPort:
                 except Exception:
                     permitted_now = False
                 result = completed[2]
-                if not permitted_now:
+                if time.time() >= result['expires_at']:
+                    result = dict(result, status="timeout", snapshot=None)
+                elif not permitted_now:
                     result = dict(result, status="denied", snapshot=None)
                 send("snapshot_response", correlation=completed[1], payload=result)
             if self.sampler is not None:
