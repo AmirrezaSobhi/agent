@@ -55,7 +55,7 @@ def parse_message(text, identity):
     m = json.loads(text, object_pairs_hook=unique)
     if not isinstance(m, dict) or set(m) != {"version", "type", "agent_id", "message_id", "correlation_id", "payload"}:
         raise ValueError("invalid envelope")
-    if m["version"] != "1.0" or m["agent_id"] != identity or m["type"] not in {"hello_ack", "ping", "pong", "echo", "disconnect_ack"}:
+    if m["version"] != "1.0" or m["agent_id"] != identity or m["type"] not in {"hello_ack", "ping", "pong", "echo", "disconnect_ack", "snapshot_request"}:
         raise ValueError("message not authorized")
     for key in ("message_id", "correlation_id"):
         if m[key] is None and key == "correlation_id":
@@ -66,6 +66,10 @@ def parse_message(text, identity):
     if m["type"] == "echo":
         if not isinstance(payload, dict) or set(payload) != {"text"} or not isinstance(payload["text"], str) or len(payload["text"]) > 256:
             raise ValueError("invalid echo")
+    elif m["type"] == "snapshot_request":
+        if (not isinstance(payload, dict) or set(payload) != {'version', 'agent_id', 'command_id', 'correlation_id', 'expires_at'}
+                or payload.get('correlation_id') != m['correlation_id'] or payload.get('agent_id') != identity):
+            raise ValueError("invalid snapshot request")
     elif payload != {}:
         raise ValueError("unexpected payload")
     if m["type"] == "ping" and m["correlation_id"] is not None:
@@ -81,9 +85,27 @@ class GatewayHostingPort:
     """One owned supervisor thread, bounded receive buffer, interruptible retry."""
     def __init__(self, primary, config_path, connector=None, logger=None, account_reader=None):
         self.sampler = None
+        self.command_gate = None
+        self.command_permission = lambda: False
+        self.active_generation = None
+        self.command_thread = None
+        self.command_result = None
+        self.command_lock = threading.Lock()
         if account_reader is not None:
             from agent.infrastructure.account_snapshot import SnapshotSampler
-            self.sampler = SnapshotSampler(account_reader.read)
+            from agent.infrastructure.snapshot_command import SnapshotCommandGate
+            read_lock = threading.Lock()
+            class SharedReader:
+                def read(self):
+                    if not read_lock.acquire(blocking=False):
+                        raise ValueError("account reader busy")
+                    try:
+                        return account_reader.read()
+                    finally:
+                        read_lock.release()
+            reader = SharedReader()
+            self.sampler = SnapshotSampler(reader.read)
+            self.command_gate = SnapshotCommandGate(reader, lambda: self.command_permission())
         self.primary = primary
         self.config_path = config_path
         self.connector = connector
@@ -150,6 +172,10 @@ class GatewayHostingPort:
                 # No exception messages, URL, headers, token or payload in logs.
                 self.event("gateway_connection_ended", error_type=type(exc).__name__)
             finally:
+                self.command_permission = lambda: False
+                self.active_generation = None
+                with self.command_lock:
+                    self.command_result = None
                 with self.lock:
                     self.connection = None
             if time.monotonic() - started >= 30:
@@ -192,23 +218,39 @@ class GatewayHostingPort:
         pending[ping] = ("pong", time.monotonic() + 5)
         from agent.infrastructure.account_snapshot import grant
         generation = str(uuid4())
+        self.active_generation = generation
         next_sample = time.monotonic()
         def permission():
             current, _token = load_settings(self.config_path)
             return current["agent_id"] == identity and current["url"] == settings["url"] and grant(current) is not None
+        self.command_permission = permission
         window, count = time.monotonic(), 0
         last = window
         while not self.stop_event.is_set():
             now = time.monotonic()
             if time.time() >= settings["expires_at"] or now - last >= 25 or any(now >= p[1] for p in pending.values()):
                 raise TimeoutError("response or credential timeout")
+            with self.command_lock:
+                completed = self.command_result
+                if completed is not None:
+                    self.command_result = None
+            if completed is not None and completed[0] == generation:
+                try:
+                    permitted_now = permission()
+                except Exception:
+                    permitted_now = False
+                result = completed[2]
+                if not permitted_now:
+                    result = dict(result, status="denied", snapshot=None)
+                send("snapshot_response", correlation=completed[1], payload=result)
             if self.sampler is not None:
                 current, _token = load_settings(self.config_path)
                 interval = grant(current) if permission() else None
                 snapshot = self.sampler.take(generation)
                 if interval is not None and snapshot is not None:
                     send("account_snapshot", payload=snapshot)
-                if interval is not None and now >= next_sample:
+                command_busy = self.command_thread is not None and self.command_thread.is_alive()
+                if interval is not None and now >= next_sample and not command_busy:
                     self.sampler.start(generation, permission)
                     next_sample = now + interval
             try:
@@ -224,6 +266,24 @@ class GatewayHostingPort:
             last = now
             if m["type"] == "ping":
                 send("pong", m["message_id"])
+            elif m["type"] == "snapshot_request":
+                if self.command_gate is None:
+                    raise ValueError("account reader unavailable")
+                with self.command_lock:
+                    if self.command_thread is not None and self.command_thread.is_alive():
+                        raise ValueError("account command busy")
+                    def work(request=m['payload'], message_id=m['message_id'], session_id=generation):
+                        try:
+                            if self.active_generation != session_id:
+                                return
+                            result = self.command_gate.execute(request, identity)
+                        except Exception:
+                            return
+                        with self.command_lock:
+                            if self.active_generation == session_id:
+                                self.command_result = (session_id, message_id, result)
+                    self.command_thread = threading.Thread(target=work, daemon=True, name='snapshot-command')
+                    self.command_thread.start()
             else:
                 expected = pending.pop(m["correlation_id"], None)
                 if expected is None or expected[0] != m["type"]:

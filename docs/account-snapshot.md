@@ -59,3 +59,18 @@ Existing installed binaries do not gain this operation until a separately
 approved installation. A read-only live probe returned UNSUPPORTED_OPERATION;
 current independent DEMO proof is therefore NOT VERIFIED, not false. This
 change does not authorize installing/restarting services or changing grants.
+
+## Explicit snapshot command over WSS
+
+After `hello_ack`, the Agent may receive a version 1.0 `snapshot_request`
+containing `agent_id`, `command_id`, `correlation_id` and a bounded absolute
+`expires_at`. The matching `snapshot_response` has the same request identifiers
+and expiry, a result status and, on success, the validated projected snapshot.
+The response envelope correlates with the request message ID. The existing
+`account-read` grant is checked before reading, after reading and before sending;
+only DEMO account data is returned. Periodic and command reads share one
+non-queuing reader. A busy reader reports unavailable. A process-local bounded
+ledger rejects duplicate command IDs until expiry, including across reconnects
+in the same process. It is not durable across process restart; reads are strictly
+read-only. Stale results from an earlier connection are discarded. Neither
+financial payloads nor credentials are written to Agent logs.

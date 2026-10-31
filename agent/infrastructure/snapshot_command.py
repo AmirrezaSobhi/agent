@@ -50,9 +50,11 @@ class SnapshotCommandGate:
                 return response('expired')
             if expiry > now + 30:
                 raise ValueError('excessive deadline')
-            if len(self.entries) >= self.limit or self.busy:
+            if len(self.entries) >= self.limit:
                 return response('unavailable')
             self.entries[key] = (fingerprint, expiry)
+            if self.busy:
+                return response('unavailable')
             if not self.permitted():
                 return response('denied')
             self.busy = True
@@ -65,7 +67,7 @@ class SnapshotCommandGate:
             if type(value.get('trade_mode')) is not int or value['trade_mode'] != 0:
                 return response('denied')
             sample = payload(value, self.clock())
-            return response('success' if sample['mt5_connected'] else 'unavailable', sample)
+            return response('success', sample) if sample['mt5_connected'] else response('unavailable')
         except Exception:
             return response('unavailable')
         finally:
