@@ -32,3 +32,30 @@ contain financial data. Payloads and credentials never enter Gateway event logs.
 
 This source is not installed or released by this change. A real DEMO test requires
 separate version provenance, explicit configuration and Product Owner approval.
+
+## Type-only DEMO verification (Story #49, Micro-step 5A)
+
+The existing management Named Pipe adds `account.demo_status` with an empty
+payload. The existing Windows caller-token SID allowlist is checked before any
+read. Composition supplies a dedicated ApplicationBoundary/IdentityAuthority
+with only `command:mt5.get_account_demo_status`; no trading or full-account
+permission is granted. The handler uses the existing Worker-backed
+`account_information` adapter and discards everything except trade mode before
+returning. `data` contains only `demo_verified`: JSON true for DEMO, false for
+CONTEST/REAL, or the literal string `unknown` for unavailable, invalid, denied
+or unsupported results. Missing modes, booleans and numeric strings cannot
+prove DEMO. MetaQuotes account mode reference:
+https://www.mql5.com/en/docs/constants/environment_state/accountinformation
+
+This is an explicit local management read, not an automatic WSS grant. WSS
+`account-read` opt-in/expiry and snapshot v1.0 are unchanged. No account number,
+financial values or exception text is logged or returned by this operation.
+The management protocol envelope retains request/correlation IDs but its data
+projection is type-only. Invalid nonempty payloads are rejected before reading.
+
+Local tests cover DEMO/CONTEST/REAL/unknown, denied SID without a read, rejected
+payload, credential denial, runtime failure, and sensitive-field projection.
+Existing installed binaries do not gain this operation until a separately
+approved installation. A read-only live probe returned UNSUPPORTED_OPERATION;
+current independent DEMO proof is therefore NOT VERIFIED, not false. This
+change does not authorize installing/restarting services or changing grants.

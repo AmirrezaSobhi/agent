@@ -16,6 +16,7 @@ from agent.infrastructure.http_server_host import HTTPServerHost
 from agent.infrastructure.logging_observability import LoggingOperationalObservability
 from agent.infrastructure.composite_host import CompositeHostingPort
 from agent.infrastructure.idle_host import IdleHostingPort
+from agent.infrastructure.demo_verification import DemoVerifier
 from agent.infrastructure.management_named_pipe import ManagementNamedPipeServer, build_status
 
 
@@ -63,7 +64,8 @@ def compose_agent(
         if config.http.enabled else IdleHostingPort()
     )
     management_pipe = ManagementNamedPipeServer(
-        lambda: build_status(agent), config.management.allowed_user_sids
+        lambda: build_status(agent), config.management.allowed_user_sids,
+        demo_provider=DemoVerifier(agent.mt5).observe
     )
     concrete_hosting = (http_hosting if hosting is not None else
                         CompositeHostingPort(http_hosting, management_pipe))

@@ -60,7 +60,7 @@ def parse_request(raw: bytes, *, max_bytes: int = MAX_MESSAGE_BYTES) -> dict[str
     if value.get("protocol_version") != PROTOCOL_VERSION:
         raise ManagementProtocolError("PROTOCOL_MISMATCH")
     operation = value.get("operation")
-    if operation not in ("protocol.negotiate", "status.get", "logs.query"):
+    if operation not in ("protocol.negotiate", "status.get", "logs.query", "account.demo_status"):
         raise ManagementProtocolError("UNSUPPORTED_OPERATION")
     request_id = _required_uuid(value.get("request_id"))
     correlation_id = _required_uuid(value.get("correlation_id"))
@@ -170,8 +170,9 @@ class ManagementNamedPipeServer:
     """Bounded single-request server with OS-token identity and default-deny authorization."""
 
     def __init__(self, status_provider: Callable[[], dict[str, object]], allowed_user_sids: tuple[str, ...],
-                 logger: logging.Logger | None = None) -> None:
+                 logger: logging.Logger | None = None, *, demo_provider=None) -> None:
         self._status_provider = status_provider
+        self._demo_provider = demo_provider
         self._allowed_sids = frozenset(allowed_user_sids)
         self._logger = logger or logging.getLogger(__name__)
         self._stopping = threading.Event()
@@ -342,6 +343,12 @@ class ManagementNamedPipeServer:
                 data = {"supported_versions": [PROTOCOL_VERSION], "pipe": PIPE_NAME}
             elif operation == "logs.query":
                 data = self._query_events(request["payload"])
+            elif operation == "account.demo_status":
+                if request["payload"]:
+                    raise ManagementProtocolError("INVALID_REQUEST")
+                value = self._demo_provider() if self._demo_provider else {}
+                verified = value.get("demo_verified") if isinstance(value, dict) else None
+                data = {"demo_verified": verified if type(verified) is bool else "unknown"}
             else:
                 data = self._status_provider()
                 self._record_event("INFO", "STATUS_OBSERVED", "Read-only Agent status was observed.")
