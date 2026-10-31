@@ -21,18 +21,18 @@ def test_authorized_demo_projection(mode, expected, caplog):
 
 def test_management_denies_before_read_and_projects_only_boolean(caplog):
     calls = []
-    server = ManagementNamedPipeServer(lambda: {}, ('allowed',), demo_provider=lambda:
+    server = ManagementNamedPipeServer(lambda: {}, ('S-1-5-18',), demo_provider=lambda:
                                       (calls.append(1) or {'demo_verified': True, 'login': 'PRIVATE'}))
     request = dict(protocol_version=1, request_id=str(uuid4()), correlation_id=str(uuid4()),
                    operation='account.demo_status', payload={})
     raw = json.dumps(request).encode()
     denied, _ = server._handle(raw, 'other')
     assert denied['code'] == 'UNAUTHORIZED' and calls == []
-    response, _ = server._handle(raw, 'allowed')
+    response, _ = server._handle(raw, 'S-1-5-18')
     assert response['data'] == {'demo_verified': True} and calls == [1]
     assert 'PRIVATE' not in json.dumps(response) + caplog.text
     request['payload'] = {'anything': 'PRIVATE'}
-    rejected, _ = server._handle(json.dumps(request).encode(), 'allowed')
+    rejected, _ = server._handle(json.dumps(request).encode(), 'S-1-5-18')
     assert rejected['code'] == 'INVALID_REQUEST' and calls == [1]
 
 
